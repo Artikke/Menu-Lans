@@ -687,8 +687,10 @@ body {
 <div class="nombre-section">
   <label>No. de empleado</label>
   <input type="text" id="numEmpleado" placeholder="Ej: 952" autocomplete="off" oninput="mostrarMisPedidos(); autoFillNombre(); preMarcarDias();" />
+  <div style="height:10px"></div>
+  <label>Tu nombre completo</label>
+  <input type="text" id="nombreInput" placeholder="Nombre y apellidos" autocomplete="off" autocapitalize="words" />
   <div class="nombre-confirm" id="nombreConfirm"></div>
-  <input type="text" id="nombreInput" placeholder="Nombre (solo admin)" style="display:none;margin-top:8px;" />
   <div id="misPedidos"></div>
 </div>
 
@@ -1175,23 +1177,21 @@ function findCatEntry(numEmp) {
 }
 
 function autoFillNombre() {
-  const numEmp = document.getElementById('numEmpleado').value.trim();
-  const nombreInput = document.getElementById('nombreInput');
   const confirmEl = document.getElementById('nombreConfirm');
-  const cat = findCatEntry(numEmp);
   confirmEl.textContent = '';
   confirmEl.className = 'nombre-confirm';
-  nombreInput.style.display = 'none';
-  if (cat) {
-    nombreInput.value = cat.nombre;
-  } else if (numEmp && adminVisible) {
-    // Solo el admin puede pedir para alguien fuera del catalogo; escribe el nombre a mano
-    nombreInput.style.display = '';
-    confirmEl.textContent = 'No esta en el catalogo. Escribe el nombre:';
-    confirmEl.className = 'nombre-confirm bad';
-  } else {
-    nombreInput.value = '';
-  }
+}
+
+// Compara el nombre escrito con el del catalogo (sin acentos, por palabras)
+function normalizarTexto(t) {
+  return (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(w => w.length >= 3);
+}
+function nombreCoincide(escrito, catalogo) {
+  const a = new Set(normalizarTexto(escrito));
+  const b = normalizarTexto(catalogo);
+  const comunes = b.filter(w => a.has(w)).length;
+  const necesarias = b.length <= 2 ? 1 : 2;
+  return comunes >= necesarias;
 }
 
 // ============================================================
@@ -1406,8 +1406,21 @@ async function enviarPedido() {
     document.getElementById('numEmpleado').focus();
     return;
   }
-  const nombre = (catMatch ? catMatch.nombre : document.getElementById('nombreInput').value.trim());
-  if (!nombre) { showToast('Escribe tu nombre'); document.getElementById('nombreInput').focus(); return; }
+  const nombreEscrito = document.getElementById('nombreInput').value.trim();
+  const confirmEl = document.getElementById('nombreConfirm');
+  if (normalizarTexto(nombreEscrito).length < 2) {
+    confirmEl.textContent = 'Escribe tu nombre completo (nombre y apellidos)';
+    confirmEl.className = 'nombre-confirm bad';
+    showToast('Escribe tu nombre completo'); document.getElementById('nombreInput').focus(); return;
+  }
+  if (catMatch && !nombreCoincide(nombreEscrito, catMatch.nombre)) {
+    confirmEl.textContent = 'El nombre no coincide con el numero de empleado. Revisa tu numero.';
+    confirmEl.className = 'nombre-confirm bad';
+    showToast('El nombre no coincide con el numero de empleado'); document.getElementById('nombreInput').focus(); return;
+  }
+  confirmEl.textContent = ''; confirmEl.className = 'nombre-confirm';
+  // Se guarda el nombre oficial del catalogo para que los reportes salgan uniformes
+  const nombre = catMatch ? catMatch.nombre : nombreEscrito;
   const total = Object.values(quantities).reduce((a,b)=>a+b, 0);
   if (total === 0) return;
 
@@ -1466,6 +1479,7 @@ function cerrarModal() {
   Object.keys(quantities).forEach(k => quantities[k] = 0);
   selections = {};
   ultimosDiasNuevos = null;
+  document.getElementById('nombreInput').value = '';
   mostrarMisPedidos();
   renderMenu();
 }
@@ -1498,6 +1512,7 @@ async function verificarPin() {
     if (ok) {
       adminAuth = true;
       document.getElementById('pinModal').classList.remove('open');
+      await loadFromCloud();
       if (adminLevel === 'super') mostrarCatalogoSection(true);
       toggleAdmin();
       showToast('Sesion iniciada');
@@ -1562,7 +1577,9 @@ async function unlockCatalogo() {
   const ok = await crearSesionAdmin(pin, 'super');
   if (ok) {
     adminLevel = 'super';
-    document.getElementById('adminLevelBadge').textContent = '(super)';
+    await loadFromCloud();
+    applyRoleUI();
+    renderComentarios();
     document.getElementById('superPinError').style.display = 'none';
     mostrarCatalogoSection(true);
   } else {
@@ -2695,7 +2712,7 @@ function menuMatchesThisWeek() {
 function menuHash() { return JSON.stringify(menuData.dias?.map(d => [d.dia, d.fecha, d.platoFuerte, d.platoAlternativo]) || []); }
 
 setInterval(async () => {
-  if (adminVisible) { await loadFromCloud(); renderOrders(); }
+  if (adminVisible) { await loadFromCloud(); renderOrders(); renderComentarios(); }
 }, 180000);
 setInterval(async () => {
   if (adminVisible) return;
