@@ -1,0 +1,148 @@
+1 | Olvera Roman Francisco Javier | OERF671128SQ8
+2 | Tapia Sosa Ramiro | TASR900121138
+8 | Gonzalez Fernandez Maria Guadalupe | GOFG830316224
+24 | Ortega Villa Juan Antonio | OEVJ810624UF9
+28 | Pina Zamora Gerardo | PIZG710526GT0
+36 | Grande Librado Beatriz Eugenia | GALB890817RM1
+48 | Ayala Munoz Jose | AAMJ670808C48
+50 | Nava Brito Luz Maria | NABL880120892
+57 | Barrera Alamilla Adrian Jesus | BAAA860105VB0
+58 | Pucheta Mendoza Teresa De Jesus | PUMT961031IL4
+62 | Perez Plaza Ofelia | PEPO6704028D9
+91 | Tapia Sosa Rodrigo | TASR840522438
+130 | Noriega Verdugo Hypathia | NOVH841111PKA
+183 | Lopez Camacho Nohemi | LOCN8909067K3
+228 | Aguilar Sosa Rocio | AUSR8105033S8
+242 | Garnica Barrera Andrea | GABA921001EA7
+250 | Borjas Aguilar Jesus Antonio | BOAJ931120D46
+338 | Ramirez Gomez Noe Alberto | RAGN910904QF6
+343 | Cortes Carmona Javier | COCJ950308HL3
+347 | Hernandez Velazquez Magali | HEVM860531SU8
+354 | Estrada Gonzalez Rosa Lidia | EAGR870420JIA
+457 | Gomez Hernandez Dario | GOHD0203136C6
+519 | Mendez Gomez Susana | MEGS8509035N7
+527 | Garcia Ortega Ilayalid | GAOI870222H33
+556 | Soto Dominguez Andrea | SODA941022PVA
+576 | Abundez Perales Brenda Alejandra | AUPB980916BT2
+581 | Ortiz Arredondo Alma Rosa | OIAA930912PX9
+602 | Auriostigue Bautista Juan Carlos | AUBJ8809205C4
+605 | Sosa Fernandez Jorge Eduardo | SOFJ760717GI7
+610 | Gutierrez Basulto Eduardo Alfonso | GUBE920915QZ7
+636 | Caballero Acevedo Yesica Alondra | CAAY970825B65
+675 | Jimenez Santana Maria Mercedes Viviana | JISM850828LD5
+682 | Olivares Hernandez Karina | OIHK990915KH0
+691 | Guerrero Tellez Ariatna Kae | GUTA970823JD9
+704 | Franca Lopez Tania Lorena | FALT930213S27
+706 | Medina Vargas Luis Salvador | MEVL870625T41
+716 | Becerril Parajon Tabatha Aylin | BEPT990828FP6
+744 | Ahumada Lopez Atziri Xail | AULA961023GA8
+748 | Cruz Gonzalez Alejandra | CUGA930728A6A
+756 | Sosa Ramirez Jose Juan | SORJ930311AT0
+764 | Ramirez Hernandez Daniel Rafael | RAHD981130BP8
+766 | Estrada Salgado Nilvia | EASN960710U10
+774 | Segura Cordova Jose Luis | SECL9806161HA
+790 | Aguilera Santin Diana Itzel | AUSD970923F44
+798 | Monroy Arenas Luis Manuel | MOAL991014CJ5
+820 | Bautista Isidro Luis Osvaldo | BAIL900805N96
+834 | Limon Ruiz Erika Mizraim | LIRE990105F56
+841 | Polo Perez Leonardo Alberto | POPL910218TA4
+844 | Romero Flores Andrea | ROFA990412NP3
+848 | Rebollar Pimentel Eduardo | REPE9005264S4
+851 | Marquez Perez Jimena | MAPJ951116574
+852 | Carrasco Trejo Samantha | CATS9902195H4
+857 | Hernandez Camacho Nahomi Caren | HECN050409I16
+863 | Fabela Bravo Ulises | FABU960429I61
+882 | Montes Huerta Daniel | MOHD910708DJ1
+884 | Lobato Ayala Brenda | LOAB9709287W9
+885 | Juarez Jimenez Ruben | JUJR000124N44
+888 | Martinez Delgado Ivan Alejandro | MADI010704UX1
+890 | Javier Santillan Diana Paola | JASD960517HZ2
+896 | Garcia Figueroa Paul | GAFP950913A63
+916 | Garrido Aguirre Gigi Abril | GAAG9408181TA
+917 | Dominguez Mora Dulce Faviola | DOMD980724QX7
+921 | Diaz Alfaro Cesar | DIAC860228C35
+928 | Magana Hernandez Jose Antonio | MAHA940829BG3
+929 | Solano Mendoza Osvaldo | SOMO040206FF8
+931 | Reyes Ramirez Patricia Tamara | RERP9402117Y6
+932 | Rodriguez Nava Alejandra | RONA0004042F7
+934 | Ocampo Rojas Zoe Valeria | OARZ060627RW1
+941 | Marquez Cardenas Emiliano | MACE030815AU2
+943 | Reyes Monroy Aida | REMA961101EC3
+945 | Vega Castrejon Juan Carlos | VECJ771103ED4
+946 | Enciso Puertocarrero Juan Carlos | EIPJ020308154
+950 | Rivero Tinoco Karla Joseline | RITK961208229
+952 | Anaya Minjarez Jorge Esteban | AAMJ0006075S6
+953 | Reyes Moreno Alejandra Monserrat | REMA980603KS3
+955 | Bonilla Martinez Ana Maria | BOMA000523492
+956 | Gonzalez Tapia Lizbeth | GOTL881029898
+958 | Miranda Corona Deniss Elena | MICD011122760
+964 | Rugerio Leon Adriana | RULA870301JU6
+969 | Feliciano Cruz Maria Lourdes | FECL981129UA1
+970 | Rojas Zapata Lourdes Shyomara | ROZL0404101X6
+972 | Correa Yanez Sarahi | COYS0201068S6
+975 | Victor Salinas Lizbeth | VISL910312NF6
+976 | Colin Jimenez Brisa Yamileth | COJB981227TB0
+978 | Flores Rios Daneb Sharely | FORD0107287H9
+981 | Geronimo Castro Luis Eduardo | GECL9509291G5
+986 | Gomez Morales Claudia Daniela | GOMC020630688
+990 | Hernandez Alba Ana Lilia | HEAA0006305W6
+991 | Damian Luna Myriam Fabiola | DALM010808L51
+996 | Valenzuela Chimal Ariadna | VACA940722Q60
+1000 | Dorantes Alvarez Jesus Alejandro | DOAJ010119U23
+1001 | Velazquez Moreno Adriana | VEMA971220LZ5
+1006 | Hernandez Martinez Claudia Aydelin | HEMC930823UN2
+1007 | Hernandez Diaz Juan Daniel | HEDJ990913SH0
+1008 | Aguirre Cruz Levi Hiram | AUCL980629Q97
+1009 | Rabadan Silva Ana Laura | RASA921204G73
+1011 | Contreras Munoz Esteban Alexis | COME920929JC6
+1013 | Calderon Zarraga Mariana | CAZM010112R17
+1015 | Gonzalez Vicente Yectza Guadalupe | GOVY970825TA5
+1019 | Garcia Iniestra Ximena Sofia | GAIX010702HR3
+1020 | Martinez Pena Danae | MAPD000906TI8
+1022 | De Avila Albarran Guadalupe | AIAG900907F79
+1023 | Rivero Arelio Fernanda | RIAF0102108V4
+1027 | Rivera Trujillo Silvia Arleth | RITS010112GB1
+1029 | Villanueva Hernandez Etwin Jovanny | VIHE951006BX9
+1031 | Urrutia Suarez Anel Mayte | UUSA050826I56
+1033 | Alonso Sanchez Ximena Itzuri | AOSX000407CT6
+1034 | Cruz Castillo Brenda Adriana | CUCB9012159Y9
+1036 | Hernandez Maya Miguel Yair | HEMM990402LQ2
+1039 | Bautista Gonzalez Jhoana Montserrat | BAGJ950227593
+1041 | Cota Magana Ana Isabel | COMA8712213U4
+1042 | Zamora Diaz Karla Fabiola | ZADK890715LM5
+1043 | Rosas Ceja Katia Itzel | ROCK0107035C3
+1044 | Berrocal Meza Arnol | BEMA021127CK7
+1045 | Ayala Jimenez Raul Ivan | AAJR930519I50
+1046 | Munoz Murillo Bryant Antonio | MUMB980910L26
+1047 | Rosas Olivares Shaina Xel | ROOS010417756
+1048 | Garcia Medina Nancy Arely | GAMN950511LK4
+1049 | Tovar Baez Michelle | TOBM990429RTA
+1050 | Vidal Lugardo Ariel | VILA020610Q34
+1051 | Bernardino Cruz Hetssel Alain | BECH9604173Q7
+1052 | Zuniga Vera Ramses | ZUVR0103146M3
+1054 | Garcia Menchaca Cristina Esmeralda | GAMC030918NY2
+1055 | Martinez Mondragon Maria | MAMM050205I82
+1056 | Figueroa Desachy Irving Tonatiuh | FIDI951103B51
+1057 | Jimenez Garcia Merari Uzmaita | JIGM050816690
+1058 | Romero Rivas Jose Carlos | RORC970914DX8
+1059 | Gonzalez Hernandez Karen Lizeth | GOHK010421641
+1060 | Santiago Sanchez Luis Saul | SASL020903ME8
+1061 | Ordonez Arroyo Mariana Libertad | OOAM8709071K2
+1062 | Buendia Sandoval Roberto | BUSR010612RG0
+1063 | Buenrostro Vega Arly | BUVA930107RX7
+1064 | Aguilar Alvarez Luis Alberto | AUAL811122NR9
+1065 | Ortega Salgado Raul Antonio | OESR9906225T1
+1066 | Castillo Martinez Berenice | CAMB020121EL0
+1067 | Martinez Tress Pablo Jeraid | MATP990629ER2
+1068 | Reynoso Fuentes Ana Victoria | REFA860606673
+1069 | Alvarez Laguna Alexa | AALA980614UY0
+1070 | Velasco Cordero Carol Fabiola | VECC960918CJ3
+1071 | Arreguin Corona Karla Pamela | AECK980731JQA
+1072 | Velazquez Flores Hector | VEFH050711PW1
+1074 | Luque Rodriguez Jorge Alberto | LURJ830407PL8
+1075 | Gutierrez Godinez Yareli | GUGY020125F74
+1076 | Martinez Soltero Miguel Angel | MASM9701318G3
+1077 | Frias Martinez Alan Zuriel | FIMA020205TB0
+1078 | Sanchez Vinas Miriam Alejandra | SAVM880229CBA
+1079 | Perez Eutimio Ivan | PEEI001118R13
+F1 | Perez Perez Juan | XAXX010101000

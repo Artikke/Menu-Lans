@@ -1,0 +1,2476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LANS - Menu del Comedor</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg: #f2f6fb;
+  --card: #ffffff;
+  --primary: #0b3d91;
+  --primary-light: #1e5bc6;
+  --accent: #1e88e5;
+  --accent-light: #4fa8f5;
+  --text: #1e1e1e;
+  --muted: #6b7a8c;
+  --green: #1b9e77;
+  --green-dark: #157a5c;
+  --border: rgba(11,61,145,0.12);
+  --shadow: 0 8px 32px rgba(11,61,145,0.1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* SETUP BANNER */
+.setup-banner {
+  display: none;
+  background: #fff3cd; color: #7a5b00;
+  border-bottom: 2px solid #f0c36d;
+  padding: 12px 16px; text-align: center;
+  font-size: 0.85rem; line-height: 1.5;
+}
+.setup-banner.visible { display: block; }
+.setup-banner code { background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 4px; }
+.setup-banner.visible ~ .admin-toggle { top: 80px; }
+
+/* HEADER */
+.header {
+  text-align: center;
+  padding: 22px 20px 18px;
+  background: linear-gradient(135deg, #0b3d91 0%, #1e88e5 100%);
+  color: #fff;
+}
+
+.header-logo {
+  width: 96px; height: 96px;
+  margin: 0 auto 8px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.header-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; }
+.header-logo .logo-fallback {
+  display: none;
+  font-family: 'Montserrat', sans-serif; font-weight: 800;
+  font-size: 1.7rem; letter-spacing: 2px; color: var(--primary);
+}
+.header-logo.no-logo img { display: none; }
+.header-logo.no-logo .logo-fallback { display: block; }
+
+.header h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.9rem;
+  color: #fff;
+  letter-spacing: 4px;
+  font-weight: 800;
+}
+
+.header-sub {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.header-title {
+  font-size: 0.95rem; letter-spacing: 5px; margin-top: 10px;
+  text-transform: uppercase; font-weight: 600; color: rgba(255,255,255,0.95);
+}
+
+.menu-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.menu-info .badge {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.sync-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.75);
+  margin-top: 10px;
+}
+
+.sync-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #7ee787;
+  display: inline-block;
+}
+.sync-dot.loading { background: #ffd866; animation: pulse 1s infinite; }
+.sync-dot.error { background: #ff6b6b; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* EMPLEADO */
+.nombre-section {
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+.nombre-section label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  text-align: center;
+  font-weight: 600;
+}
+.nombre-section input {
+  width: 100%;
+  padding: 13px 18px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-family: 'Inter', sans-serif;
+  text-align: center;
+  transition: border-color 0.3s;
+}
+.nombre-section input:focus { outline: none; border-color: var(--accent); }
+.nombre-section input::placeholder { color: var(--muted); }
+
+#misPedidos {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #e8f1fc;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: var(--primary);
+  display: none;
+}
+#misPedidos.visible { display: block; }
+#misPedidos .mp-title { font-weight: 700; margin-bottom: 6px; }
+#misPedidos .mp-dia { padding: 2px 0; }
+
+.water-note {
+  text-align: center;
+  padding: 6px 20px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+.night-note {
+  max-width: 520px; margin: 4px auto 0; padding: 10px 14px;
+  background: #eef3fa; border-left: 4px solid var(--accent);
+  border-radius: 8px; font-size: 0.8rem; color: #2c3e50; line-height: 1.5;
+}
+
+/* MENU GRID */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+.day-card {
+  background: var(--card);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.day-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.day-header {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  padding: 14px 20px;
+  text-align: center;
+}
+.day-header h2 { font-family: 'Montserrat', sans-serif; font-size: 1.2rem; color: #fff; margin-bottom: 2px; font-weight: 700; }
+.day-header .date { font-size: 0.8rem; color: rgba(255,255,255,0.85); }
+.meal-section { padding: 6px 18px; border-bottom: 1px solid var(--border); }
+.meal-section:last-of-type { border-bottom: none; }
+.meal-type { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--primary); margin-bottom: 4px; margin-top: 10px; font-weight: 600; }
+.meal-name { font-size: 0.95rem; color: var(--text); line-height: 1.4; margin-bottom: 4px; }
+.meal-complement { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
+
+/* ALTERNATIVA */
+.alt-section { padding: 10px 18px; background: rgba(30,136,229,0.04); border-top: 1px solid var(--border); }
+.alt-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--primary); margin-bottom: 8px; font-weight: 600; }
+.alt-options { display: flex; flex-direction: column; gap: 6px; }
+.alt-option {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--card); transition: border-color 0.2s, background 0.2s;
+}
+.alt-option:hover { border-color: var(--accent); }
+.alt-option.selected { border-color: var(--accent); background: rgba(30,136,229,0.07); }
+.alt-option input[type="radio"] { accent-color: var(--accent); }
+.alt-option-text { font-size: 0.85rem; color: var(--text); }
+.alt-option-text small { color: var(--muted); font-size: 0.75rem; }
+
+/* ORDER ROW */
+.day-order { padding: 14px 18px; background: rgba(11,61,145,0.03); border-top: 1px solid var(--border); }
+.order-toggle {
+  width: 100%; padding: 13px;
+  border: 2px solid var(--border); border-radius: 10px;
+  background: var(--bg); color: var(--muted);
+  font-family: 'Montserrat', sans-serif; font-size: 0.95rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.order-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.order-toggle.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.order-toggle.locked { opacity: 0.7; cursor: default; pointer-events: none; }
+
+/* SUMMARY BAR */
+.summary-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(15px);
+  border-top: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: center; gap: 20px;
+  z-index: 100;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  flex-wrap: wrap;
+}
+.summary-bar.visible { transform: translateY(0); }
+.summary-total { font-size: 0.95rem; color: var(--text); }
+.summary-total strong { color: var(--primary); }
+.btn-send {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; border: none;
+  padding: 12px 30px; border-radius: 10px;
+  font-size: 0.95rem; font-weight: 600;
+  cursor: pointer; font-family: 'Inter', sans-serif;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-send:hover { transform: scale(1.03); box-shadow: 0 4px 15px rgba(30,136,229,0.3); }
+
+/* MODAL */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--card); border-radius: 24px; border: 1px solid var(--border);
+  max-width: 380px; width: 100%; padding: 40px 30px 30px; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.modal .check-icon {
+  width: 64px; height: 64px; margin: 0 auto 20px;
+  background: linear-gradient(135deg, #2ecc71, #27ae60); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; color: #fff; box-shadow: 0 4px 15px rgba(46,204,113,0.3);
+}
+.modal h3 { font-family: 'Montserrat', sans-serif; color: var(--text); font-size: 1.3rem; margin-bottom: 8px; font-weight: 700; }
+.modal .modal-subtitle { color: var(--muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 6px; }
+.modal .modal-days { color: var(--primary); font-size: 0.9rem; font-weight: 600; margin: 12px 0 24px; }
+.modal .btn-row { display: flex; justify-content: center; }
+.modal .btn-close {
+  background: transparent; color: var(--muted); border: 1px solid var(--border);
+  padding: 12px 24px; border-radius: 10px; font-size: 0.9rem; cursor: pointer; font-family: 'Inter', sans-serif;
+}
+
+/* PIN MODAL */
+.pin-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px);
+  display: none; align-items: center; justify-content: center; z-index: 250; padding: 20px;
+}
+.pin-modal.open { display: flex; }
+.pin-box {
+  background: var(--card); border-radius: 20px; border: 1px solid var(--border);
+  max-width: 350px; width: 100%; padding: 30px; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.pin-box h3 { font-family: 'Montserrat', sans-serif; color: var(--primary); font-size: 1.3rem; margin-bottom: 5px; font-weight: 700; }
+.pin-box p { color: var(--muted); font-size: 0.85rem; margin-bottom: 18px; }
+.pin-box input {
+  width: 100%; padding: 14px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: 1.5rem; text-align: center;
+  font-family: 'Inter', sans-serif; letter-spacing: 8px;
+}
+.pin-box input:focus { outline: none; border-color: var(--accent); }
+.pin-box .pin-error { color: #c0392b; font-size: 0.8rem; margin-top: 8px; display: none; }
+.pin-box .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
+
+/* ADMIN */
+.admin-toggle { position: fixed; top: 15px; right: 15px; z-index: 50; }
+.admin-toggle button {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4);
+  color: #fff; padding: 8px 16px; border-radius: 8px;
+  font-size: 0.72rem; cursor: pointer; font-family: 'Inter', sans-serif;
+  letter-spacing: 1px; text-transform: uppercase; font-weight: 600;
+}
+.admin-panel { display: none; max-width: 900px; margin: 20px auto; padding: 0 20px 100px; }
+.admin-panel.visible { display: block; }
+.admin-panel h3 { font-family: 'Montserrat', sans-serif; color: var(--primary); font-size: 1.3rem; margin-bottom: 15px; text-align: center; font-weight: 700; }
+.admin-form-section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+.admin-form-section h4 { color: var(--primary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; text-align: center; }
+.form-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.form-group { flex: 1; min-width: 120px; }
+.form-group label { display: block; font-size: 0.7rem; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: 600; }
+.form-group input, .form-group select {
+  width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 0.9rem; font-family: 'Inter', sans-serif;
+}
+.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+.form-group input::placeholder { color: #aaa; }
+.day-form-card { background: rgba(11,61,145,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 15px; }
+.day-form-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.day-form-header h5 { font-family: 'Montserrat', sans-serif; color: var(--primary); font-size: 1.1rem; font-weight: 700; }
+.btn-add-day {
+  background: rgba(11,61,145,0.04); border: 1px dashed var(--primary); color: var(--primary);
+  padding: 14px; border-radius: 12px; width: 100%; font-size: 0.9rem; cursor: pointer; font-family: 'Inter', sans-serif; margin-bottom: 15px;
+}
+.btn-remove-day { background: transparent; border: none; color: #c0392b; font-size: 1.2rem; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+.admin-btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
+.admin-btn { padding: 12px 28px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; border: none; transition: transform 0.2s; }
+.admin-btn:hover { transform: scale(1.03); }
+.admin-btn.save { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; }
+.admin-btn.reset { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-wa { background: #25d366; color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 8px; }
+
+/* ORDERS */
+.orders-log { margin-top: 30px; }
+.orders-log h3 { margin-bottom: 15px; }
+.orders-table-wrap { overflow-x: auto; }
+.orders-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); min-width: 500px; }
+.orders-table th { background: rgba(11,61,145,0.08); color: var(--primary); padding: 12px 14px; text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+.orders-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 0.82rem; color: var(--text); white-space: nowrap; }
+.orders-table tr:last-child td { border-bottom: none; }
+.orders-table .total-row { background: rgba(11,61,145,0.06); font-weight: 700; }
+.no-orders { text-align: center; color: var(--muted); padding: 30px; font-size: 0.9rem; }
+.btn-export { background: var(--green-dark); color: #fff; border: none; padding: 10px 24px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+.btn-clear-orders { background: #c0392b; color: #fff; border: none; padding: 10px 24px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+.buk-q-btn { flex: 1; padding: 12px; border-radius: 10px; border: 2px solid #ddd; background: #fff; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; }
+.buk-q-active { border-color: var(--primary); background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; }
+
+.toast {
+  position: fixed; top: 20px; left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  background: var(--green); color: #fff;
+  padding: 12px 24px; border-radius: 10px;
+  font-size: 0.9rem; font-weight: 500;
+  z-index: 300; transition: transform 0.3s ease;
+  max-width: 92vw; text-align: center;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 600px) {
+  .header h1 { font-size: 1.6rem; }
+  .menu-grid { grid-template-columns: 1fr; padding: 15px; gap: 15px; }
+  .summary-bar { flex-direction: column; gap: 10px; padding: 12px 15px; }
+  .modal { padding: 20px; }
+  .form-row { flex-direction: column; }
+  .form-group { min-width: 100%; }
+}
+
+/* LOCK OVERLAY */
+.lock-overlay {
+  display: none; background: rgba(11, 61, 145, 0.95); border-radius: 16px;
+  padding: 30px 20px; margin: 20px auto; max-width: 520px; text-align: center; color: #fff;
+  animation: fadeIn 0.3s ease;
+}
+.lock-overlay.active { display: block; }
+.lock-overlay .lock-icon { font-size: 2.5rem; margin-bottom: 10px; }
+.lock-overlay h3 { font-family: 'Montserrat', sans-serif; font-size: 1.2rem; margin-bottom: 8px; }
+.lock-overlay p { font-size: 0.95rem; opacity: 0.9; line-height: 1.6; }
+.lock-overlay .lock-time { font-weight: 700; color: #9fd3ff; font-size: 1.05rem; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+.ordering-locked .nombre-section,
+.ordering-locked .menu-grid,
+.ordering-locked .summary-bar,
+.ordering-locked .water-note { opacity: 0.3; pointer-events: none; user-select: none; }
+
+/* DAY PASSED */
+.day-card.day-passed { opacity: 0.4; pointer-events: none; user-select: none; }
+.day-card.day-passed::after {
+  content: 'Este dia ya paso';
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: rgba(11,61,145,0.9); color: #fff; padding: 8px 16px; border-radius: 8px;
+  font-family: 'Montserrat', sans-serif; font-size: 0.85rem; font-weight: 600; white-space: nowrap;
+}
+
+/* CANCEL */
+.cancel-btn-float {
+  position: fixed; bottom: 80px; right: 20px; z-index: 90;
+  background: #e74c3c; color: #fff; border: none; padding: 10px 18px; border-radius: 25px;
+  font-family: 'Montserrat', sans-serif; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; box-shadow: 0 4px 12px rgba(231,76,60,0.3); transition: all 0.2s;
+}
+.cancel-btn-float:hover { background: #c0392b; transform: scale(1.05); }
+.cancel-btn-float.hidden { display: none; }
+.cancel-panel {
+  display: none; max-width: 520px; margin: 20px auto; background: #fff; border-radius: 16px;
+  border: 2px solid #e74c3c; padding: 24px 20px; box-shadow: 0 8px 24px rgba(231,76,60,0.15);
+}
+.cancel-panel.active { display: block; }
+.cancel-panel h3 { font-family: 'Montserrat', sans-serif; color: #e74c3c; margin-bottom: 15px; text-align: center; }
+.cancel-search { display: flex; gap: 10px; margin-bottom: 15px; }
+.cancel-search input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 0.95rem; }
+.cancel-search button { padding: 12px 20px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
+.cancel-results { margin-top: 10px; }
+.cancel-day-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; margin-bottom: 8px; background: var(--bg); border-radius: 10px; }
+.cancel-day-item .day-info { font-weight: 500; }
+.cancel-day-item .day-info small { color: var(--muted); display: block; font-weight: 400; }
+.cancel-day-btn { background: #e74c3c; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.cancel-day-btn:hover { background: #c0392b; }
+.cancel-empty { text-align: center; color: var(--muted); padding: 20px; }
+.cancel-close { display: block; margin: 15px auto 0; padding: 10px 30px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; font-weight: 500; }
+
+/* CORTESIAS / CATALOGO */
+.cortesias-section { margin-top: 20px; padding: 15px; background: var(--bg); border-radius: 12px; }
+.cortesias-section h4 { font-family: 'Montserrat', sans-serif; margin-bottom: 12px; color: var(--primary); }
+.cortesia-add { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.cortesia-add input { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; min-width: 100px; }
+.cortesia-add button { padding: 10px 16px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.cortesia-list { max-height: 200px; overflow-y: auto; }
+.cortesia-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; margin-bottom: 4px; background: #fff; border-radius: 8px; font-size: 0.9rem; gap: 8px; }
+.cortesia-item .cortesia-info { font-weight: 500; }
+.cortesia-item .cortesia-info small { color: var(--muted); margin-left: 8px; }
+.cortesia-remove { background: #e74c3c; color: #fff; border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
+.cortesia-dias-select { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid var(--border); }
+.cortesia-dia-check { display: flex; align-items: center; gap: 4px; font-size: 0.85rem; }
+.cortesia-dia-check input { width: 16px; height: 16px; cursor: pointer; }
+.cortesia-dia-check label { cursor: pointer; }
+.cortesia-item .cortesia-dias { font-size: 0.75rem; color: var(--accent); margin-top: 2px; }
+.cortesia-badge { display: inline-block; background: #f39c12; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-left: 6px; }
+.bulk-import textarea { width: 100%; min-height: 90px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-family: monospace; font-size: 0.8rem; resize: vertical; }
+.bulk-import button { margin-top: 8px; }
+.tiny-modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; }
+.tiny-modal { background: #fff; border-radius: 16px; padding: 30px; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.tiny-modal h3 { font-family: 'Montserrat', sans-serif; color: var(--primary); margin-bottom: 16px; text-align: center; }
+.tiny-modal label { font-weight: 600; color: var(--primary); font-size: 0.9rem; }
+.tiny-modal select, .tiny-modal input[type="number"] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-top: 4px; font-size: 0.95rem; }
+.tiny-modal .row { margin-bottom: 14px; }
+.tiny-modal .btns { display: flex; gap: 10px; }
+.tiny-modal .btns button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
+.tiny-modal .btns .cancel { border: 1px solid #ddd; background: #fff; font-weight: 600; }
+.tiny-modal .btns .go { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div class="setup-banner" id="setupBanner"></div>
+
+<!-- PIN MODAL -->
+<div class="pin-modal" id="pinModal">
+  <div class="pin-box">
+    <h3>Acceso Admin</h3>
+    <p>Ingresa el PIN para administrar</p>
+    <input type="password" id="pinInput" maxlength="8" placeholder="------" inputmode="numeric" autocomplete="off" />
+    <div class="pin-error" id="pinError">PIN incorrecto</div>
+    <div class="btn-row">
+      <button class="btn-send" onclick="verificarPin()" style="padding:10px 30px;">Entrar</button>
+      <button class="modal btn-close" onclick="cerrarPin()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN TOGGLE -->
+<div class="admin-toggle">
+  <button onclick="abrirAdmin()" id="adminToggleBtn">Admin</button>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo" id="headerLogo">
+    <img src="logo.png" alt="LANS" onerror="document.getElementById('headerLogo').classList.add('no-logo')" />
+    <span class="logo-fallback">LANS</span>
+  </div>
+  <h1>LANS</h1>
+  <div class="header-sub">Laboratorios de Referencia</div>
+  <div class="header-title">Menu del Comedor</div>
+  <div class="menu-info" id="menuInfo"></div>
+  <div class="sync-status" id="syncStatus">
+    <span class="sync-dot loading"></span> Cargando...
+  </div>
+</div>
+
+<!-- LOCK OVERLAY -->
+<div class="lock-overlay" id="lockOverlay">
+  <div class="lock-icon">&#128274;</div>
+  <h3>Pedidos Cerrados</h3>
+  <p id="lockMsg">El horario de pedidos es de <span class="lock-time">7:00 a 11:30 AM</span><br>
+  Cancelaciones: <span class="lock-time">7:00 - 11:30 AM</span> y <span class="lock-time">5:00 PM - 12:00 AM</span><br>
+  Servicio de comedor: <span class="lock-time">12:30 - 17:30</span></p>
+</div>
+
+<!-- COUNTDOWN -->
+<div id="orderCountdown" style="display:none;text-align:center;padding:8px 16px;margin:0 auto 10px;max-width:600px;border-radius:10px;font-size:0.9rem;font-weight:600;"></div>
+
+<!-- EMPLEADO -->
+<div class="nombre-section">
+  <label>No. de empleado</label>
+  <input type="text" id="numEmpleado" placeholder="Ej: 952" autocomplete="off" oninput="mostrarMisPedidos(); autoFillNombre(); preMarcarDias();" />
+  <div style="height:10px"></div>
+  <label>Tu nombre</label>
+  <input type="text" id="nombreInput" placeholder="Se llena con tu numero de empleado" readonly />
+  <div id="misPedidos"></div>
+</div>
+
+<div class="water-note">* Incluye agua del dia &middot; Servicio de 12:30 a 17:30</div>
+<div class="night-note"><strong>Turno nocturno:</strong> solicita tu comida por Teams con Axel Avila. Se entrega en contenedor desechable rotulado con tu nombre.</div>
+
+<!-- MENU GRID -->
+<div class="menu-grid" id="menuGrid"></div>
+
+<!-- SUMMARY BAR -->
+<div class="summary-bar" id="summaryBar">
+  <div class="summary-total" id="summaryText"></div>
+  <button class="btn-send" onclick="enviarPedido()">Enviar Pedido</button>
+</div>
+
+<button class="cancel-btn-float hidden" id="cancelBtnFloat" onclick="toggleCancelPanel()">Cancelar Pedido</button>
+
+<!-- CANCEL PANEL -->
+<div class="cancel-panel" id="cancelPanel">
+  <h3>Cancelar Pedido</h3>
+  <div class="cancel-search">
+    <input type="text" id="cancelNumEmp" placeholder="Tu numero de empleado" autocomplete="off" />
+    <button onclick="buscarPedido()">Buscar</button>
+  </div>
+  <div class="cancel-results" id="cancelResults"></div>
+  <button class="cancel-close" onclick="toggleCancelPanel()">Cerrar</button>
+</div>
+
+<!-- MODAL PEDIDO -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="check-icon">&#10003;</div>
+    <h3>Listo, <span id="modalNombre"></span></h3>
+    <p class="modal-subtitle" id="modalSubtitle">Tu pedido quedo registrado.</p>
+    <div class="modal-days" id="modalDias"></div>
+    <div class="btn-row">
+      <button onclick="cerrarModal()" style="background:var(--primary);color:#fff;font-weight:700;border:none;padding:14px 40px;border-radius:12px;font-size:1rem;cursor:pointer;font-family:'Inter',sans-serif;width:100%;">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-panel" id="adminPanel">
+  <h3>Administrar Menu <span id="adminLevelBadge" style="font-size:0.7rem;color:var(--muted);font-weight:400;"></span></h3>
+
+  <div class="admin-form-section">
+    <h4>Datos de la Semana</h4>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Mes</label>
+        <select id="adminMes">
+          <option>Enero</option><option>Febrero</option><option>Marzo</option>
+          <option>Abril</option><option>Mayo</option><option>Junio</option>
+          <option>Julio</option><option>Agosto</option><option>Septiembre</option>
+          <option>Octubre</option><option>Noviembre</option><option>Diciembre</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Semana #</label>
+        <input type="number" id="adminSemana" min="1" max="5" value="1" />
+      </div>
+      <div class="form-group">
+        <label>Año</label>
+        <input type="number" id="adminAnio" min="2024" max="2035" value="2026" />
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-form-section">
+    <h4>Menu por Dia</h4>
+    <div id="daysFormContainer"></div>
+    <button class="btn-add-day" onclick="addDayForm()">+ Agregar dia</button>
+  </div>
+
+  <div class="admin-btn-row">
+    <button class="admin-btn save" onclick="guardarMenu()">Guardar y Publicar</button>
+    <button class="btn-wa" onclick="compartirMenuWhatsApp()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Compartir Menu
+    </button>
+    <button class="admin-btn reset" onclick="resetMenu()">Restaurar</button>
+    <button class="admin-btn reset" onclick="cerrarSesionAdmin()">Cerrar sesion</button>
+  </div>
+
+  <!-- CORTESIAS -->
+  <div class="cortesias-section">
+    <h4>Cortesias</h4>
+    <div class="cortesia-add">
+      <input type="text" id="cortesiaNombre" placeholder="Nombre de la persona" style="flex:2" />
+      <button onclick="agregarCortesia()">Agregar</button>
+    </div>
+    <div id="cortesiaDias" style="display:none;margin-bottom:12px;"></div>
+    <div class="cortesia-list" id="cortesiaList"></div>
+  </div>
+
+  <!-- CATALOGO (super admin) -->
+  <div class="cortesias-section" id="catalogoSection" style="display:none;">
+    <h4>Catalogo de Empleados <span id="catalogoCount" style="font-weight:400;font-size:0.85rem;color:var(--muted);"></span></h4>
+    <div class="cortesia-add">
+      <input type="text" id="catNumEmp" placeholder="No. empleado" style="flex:1;max-width:120px" />
+      <input type="text" id="catNombre" placeholder="Nombre completo" style="flex:2" />
+      <input type="text" id="catRFC" placeholder="RFC" style="flex:1.5" />
+      <button onclick="agregarEmpleado()">Agregar</button>
+    </div>
+    <div style="margin-top:8px;">
+      <input type="text" id="catBuscar" placeholder="Buscar empleado..." oninput="buscarEmpleadoCat()" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid #ddd;font-size:0.9rem;" />
+    </div>
+    <div class="cortesia-list" id="catalogoList" style="max-height:300px;overflow-y:auto;margin-top:8px;"></div>
+    <details class="bulk-import" style="margin-top:12px;">
+      <summary style="cursor:pointer;font-size:0.85rem;color:var(--primary);font-weight:600;">Carga masiva (pegar lista)</summary>
+      <p style="font-size:0.78rem;color:var(--muted);margin:8px 0;">Una linea por empleado: <code>Codigo | Nombre | RFC</code> (tambien acepta tabulador o coma).</p>
+      <textarea id="bulkCatalogo" placeholder="952 | Anaya Minjarez Jorge Esteban | AAMJ0006075S6"></textarea>
+      <button class="btn-export" onclick="importarCatalogoMasivo()">Importar al catalogo</button>
+    </details>
+  </div>
+  <div class="cortesias-section" id="catalogoLockSection">
+    <h4>Catalogo de Empleados</h4>
+    <div style="text-align:center;padding:12px;">
+      <input type="password" id="superPinInput" placeholder="PIN super" maxlength="8" autocomplete="off" style="width:140px;padding:8px 12px;border-radius:8px;border:1px solid #ddd;text-align:center;font-size:1rem;" />
+      <button onclick="unlockCatalogo()" style="margin-left:8px;padding:8px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;">Desbloquear</button>
+      <div id="superPinError" style="color:#e74c3c;font-size:0.8rem;margin-top:4px;display:none;">PIN incorrecto</div>
+    </div>
+  </div>
+
+  <!-- ORDERS -->
+  <div class="orders-log">
+    <h3>Pedidos Recibidos</h3>
+    <div class="admin-btn-row" style="margin-bottom:15px;">
+      <button class="btn-wa" style="padding:10px 20px;font-size:0.82rem;" onclick="enviarOrdenCocina()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Enviar Orden a Cocina
+      </button>
+      <button class="btn-export" onclick="exportarCSV()">Exportar Excel</button>
+      <button class="btn-export" onclick="mostrarExportBUK()" style="background:linear-gradient(135deg,#8e44ad,#3498db);">Exportar BUK</button>
+      <button class="btn-export" onclick="mostrarExportFactura()" style="background:linear-gradient(135deg,#27ae60,#2ecc71);">Conciliar Factura</button>
+      <button class="btn-clear-orders" onclick="limpiarPedidos()">Limpiar / Archivar</button>
+    </div>
+    <div id="ordersContainer"></div>
+  </div>
+</div>
+
+<!-- BUK EXPORT MODAL -->
+<div id="bukModalBg" class="tiny-modal-bg">
+  <div class="tiny-modal">
+    <h3>Exportar a BUK</h3>
+    <div class="row">
+      <label>Mes</label>
+      <select id="bukMes">
+        <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+        <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+        <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+    </div>
+    <div class="row"><label>Año</label><input type="number" id="bukAnio" value="2026"/></div>
+    <div class="row">
+      <label>Quincena</label>
+      <div style="display:flex;gap:10px;margin-top:6px;">
+        <button id="bukQ1" onclick="selQuincena(1)" class="buk-q-btn buk-q-active">1 - 15</button>
+        <button id="bukQ2" onclick="selQuincena(2)" class="buk-q-btn">16 - 31</button>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="cancel" onclick="cerrarBukModal()">Cancelar</button>
+      <button class="go" onclick="exportarBUK()">Descargar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FACTURA MODAL -->
+<div id="facturaModalBg" class="tiny-modal-bg">
+  <div class="tiny-modal">
+    <h3 style="color:#27ae60;">Conciliar Factura</h3>
+    <div class="row">
+      <label>Mes</label>
+      <select id="facturaMes">
+        <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+        <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+        <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+    </div>
+    <div class="row"><label>Año</label><input type="number" id="facturaAnio" value="2026"/></div>
+    <div class="row">
+      <label>Quincena</label>
+      <div style="display:flex;gap:10px;margin-top:6px;">
+        <button id="facturaQ1" onclick="selQuincenaFactura(1)" class="buk-q-btn buk-q-active">1 - 15</button>
+        <button id="facturaQ2" onclick="selQuincenaFactura(2)" class="buk-q-btn">16 - 31</button>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="cancel" onclick="cerrarFacturaModal()">Cancelar</button>
+      <button class="cancel" onclick="exportarFactura()">CSV</button>
+      <button class="go" style="background:linear-gradient(135deg,#27ae60,#2ecc71);" onclick="exportarFacturaXLSX()">Excel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  CONFIG
+// ============================================================
+const FIREBASE_PROJECT_ID = "menu-lans";
+// Web API Key del proyecto Firebase (Configuracion del proyecto > General > Tus apps > Web).
+// Restringirla por referrer en Google Cloud Console (ver README).
+const FIREBASE_API_KEY = "PEGA_AQUI_TU_WEB_API_KEY";
+const FS_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
+const MENU_URL = "https://artikke.github.io/Menu-Lans/";
+const ALLOWED_HOSTS = ["artikke.github.io", "localhost", "127.0.0.1"];
+
+// Precios usados en los reportes BUK / conciliacion (AJUSTAR con el proveedor de LANS)
+const PRECIO_DESCUENTO_COLABORADOR = 56.71;   // lo que se descuenta al empleado por comida
+const PRECIO_BASE_PROVEEDOR = 103.45;         // precio proveedor sin IVA
+const IVA_RATE = 0.16;
+
+const EMPRESA = "LANS Laboratorios de Referencia";
+const EMPRESA_CORTA = "LANS";
+
+// ============================================================
+//  RESTRICCION POR DOMINIO
+// ============================================================
+(function domainGuard() {
+  const host = location.hostname;
+  if (!ALLOWED_HOSTS.includes(host)) {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.innerHTML = `<div style="font-family:Inter,sans-serif;text-align:center;padding:60px 20px;color:#0b3d91;">
+        <h2 style="font-family:Montserrat,sans-serif;">Acceso no permitido</h2>
+        <p style="margin-top:10px;color:#6b7a8c;">Este sistema solo funciona desde <a href="${MENU_URL}">${MENU_URL}</a></p></div>`;
+    });
+    throw new Error('Dominio no permitido: ' + host);
+  }
+})();
+
+// ============================================================
+//  FIREBASE AUTH ANONIMO (REST, sin SDK)
+// ============================================================
+const AUTH = { idToken: null, refreshToken: null, uid: null, exp: 0 };
+const LS_RT = 'lans_fb_rt';
+let authPromise = null;
+
+function setupProblem(msg) {
+  const b = document.getElementById('setupBanner');
+  b.innerHTML = msg;
+  b.classList.add('visible');
+}
+
+async function anonSignUp() {
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ returnSecureToken: true })
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error?.message || 'signUp failed');
+  return j;
+}
+
+async function refreshIdToken(rt) {
+  const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${FIREBASE_API_KEY}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(rt)}`
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error?.message || 'refresh failed');
+  return { idToken: j.id_token, refreshToken: j.refresh_token, localId: j.user_id, expiresIn: j.expires_in };
+}
+
+function applyAuth(j) {
+  AUTH.idToken = j.idToken;
+  AUTH.refreshToken = j.refreshToken;
+  AUTH.uid = j.localId;
+  AUTH.exp = Date.now() + (parseInt(j.expiresIn || '3600') * 1000);
+  try { localStorage.setItem(LS_RT, j.refreshToken); } catch (e) {}
+}
+
+async function ensureAuth(force) {
+  if (!force && AUTH.idToken && Date.now() < AUTH.exp - 60000) return AUTH.idToken;
+  if (authPromise) return authPromise;
+  authPromise = (async () => {
+    if (FIREBASE_API_KEY.startsWith('PEGA_AQUI')) {
+      setupProblem('<strong>Configuracion pendiente:</strong> falta la <code>FIREBASE_API_KEY</code> en index.html. Ver README.');
+      throw new Error('API key no configurada');
+    }
+    let stored = null;
+    try { stored = localStorage.getItem(LS_RT); } catch (e) {}
+    if (stored) {
+      try { applyAuth(await refreshIdToken(stored)); return AUTH.idToken; }
+      catch (e) { console.warn('Refresh fallo, creando nuevo usuario anonimo', e); try { localStorage.removeItem(LS_RT); } catch (_) {} }
+    }
+    try {
+      applyAuth(await anonSignUp());
+    } catch (e) {
+      if (/ADMIN_ONLY_OPERATION|OPERATION_NOT_ALLOWED/.test(e.message)) {
+        setupProblem('<strong>Configuracion pendiente:</strong> activa <em>Anonymous</em> en Firebase Authentication &rarr; Sign-in method.');
+      } else if (/API key not valid|API_KEY_INVALID/i.test(e.message)) {
+        setupProblem('<strong>Configuracion pendiente:</strong> la API key no es valida o esta restringida a otro dominio.');
+      } else {
+        setupProblem('No se pudo iniciar sesion: ' + esc(e.message));
+      }
+      throw e;
+    }
+    return AUTH.idToken;
+  })();
+  try { return await authPromise; } finally { authPromise = null; }
+}
+
+// fetch autenticado contra Firestore; reintenta una vez si el token expiro
+async function fsFetch(url, opts = {}, retry = true) {
+  const token = await ensureAuth();
+  const headers = Object.assign({}, opts.headers || {}, { 'Authorization': 'Bearer ' + token });
+  const r = await fetch(url, Object.assign({}, opts, { headers }));
+  if (r.status === 401 && retry) { await ensureAuth(true); return fsFetch(url, opts, false); }
+  return r;
+}
+
+// ============================================================
+//  FIRESTORE HELPERS
+// ============================================================
+function jsToFs(val) {
+  if (val === null || val === undefined) return { nullValue: null };
+  if (typeof val === 'boolean') return { booleanValue: val };
+  if (typeof val === 'number') return Number.isInteger(val) ? { integerValue: String(val) } : { doubleValue: val };
+  if (typeof val === 'string') return { stringValue: val };
+  if (Array.isArray(val)) return { arrayValue: { values: val.map(jsToFs) } };
+  if (typeof val === 'object') {
+    const fields = {};
+    for (const [k, v] of Object.entries(val)) fields[k] = jsToFs(v);
+    return { mapValue: { fields } };
+  }
+  return { stringValue: String(val) };
+}
+
+function fsToJs(f) {
+  if ('stringValue' in f) return f.stringValue;
+  if ('integerValue' in f) return parseInt(f.integerValue);
+  if ('doubleValue' in f) return f.doubleValue;
+  if ('booleanValue' in f) return f.booleanValue;
+  if ('nullValue' in f) return null;
+  if ('timestampValue' in f) return f.timestampValue;
+  if ('arrayValue' in f) return (f.arrayValue.values || []).map(fsToJs);
+  if ('mapValue' in f) {
+    const obj = {};
+    for (const [k, v] of Object.entries(f.mapValue.fields || {})) obj[k] = fsToJs(v);
+    return obj;
+  }
+  return null;
+}
+
+function docToObj(doc) {
+  const obj = {};
+  for (const [k, v] of Object.entries(doc.fields || {})) obj[k] = fsToJs(v);
+  return obj;
+}
+
+async function fsRead(path) {
+  const r = await fsFetch(`${FS_BASE}/${path}`);
+  if (!r.ok) return null;
+  const doc = await r.json();
+  if (!doc.fields) return null;
+  return docToObj(doc);
+}
+
+let lastFsError = '';
+async function fsWrite(path, data) {
+  const fields = {};
+  for (const [k, v] of Object.entries(data)) fields[k] = jsToFs(v);
+  const r = await fsFetch(`${FS_BASE}/${path}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields })
+  });
+  if (!r.ok) { try { lastFsError = (await r.json()).error?.message || r.status; } catch (e) { lastFsError = String(r.status); } console.warn('fsWrite', path, lastFsError); }
+  return r.ok;
+}
+
+async function fsDelete(path) {
+  const r = await fsFetch(`${FS_BASE}/${path}`, { method: 'DELETE' });
+  return r.ok;
+}
+
+async function loadFsCollection(path, pageSize = 300) {
+  const r = await fsFetch(`${FS_BASE}/${path}?pageSize=${pageSize}`);
+  if (!r.ok) return [];
+  const data = await r.json();
+  if (!data.documents) return [];
+  return data.documents.map(doc => Object.assign(docToObj(doc), { _id: doc.name.split('/').pop() }));
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+// ============================================================
+//  SESION ADMIN (validada por reglas de Firestore)
+// ============================================================
+// Crea admin_sessions/{uid} con { pin, level, createdAt: serverTimestamp }.
+// Las reglas comparan pin contra config/secrets; si no coincide -> 403.
+async function crearSesionAdmin(pin, level) {
+  await ensureAuth();
+  const name = `projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/admin_sessions/${AUTH.uid}`;
+  const body = {
+    writes: [{
+      update: { name, fields: { pin: { stringValue: pin }, level: { stringValue: level } } },
+      updateTransforms: [{ fieldPath: 'createdAt', setToServerValue: 'REQUEST_TIME' }]
+    }]
+  };
+  const r = await fsFetch(`${FS_BASE}:commit`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  });
+  return r.ok;
+}
+
+async function borrarSesionAdmin() {
+  try { await ensureAuth(); await fsDelete(`admin_sessions/${AUTH.uid}`); } catch (e) {}
+}
+
+// ============================================================
+//  STATE
+// ============================================================
+const DEFAULT_MENU = {
+  mes: "Septiembre", semana: 4, anio: 2026,
+  dias: [
+    { dia: "Lunes", fecha: 21, entrada: "Sopa de verduras", platoFuerte: "Pollo a la plancha", complemento: "Arroz blanco", postre: "Gelatina", platoAlternativo: "" },
+    { dia: "Martes", fecha: 22, entrada: "Crema de elote", platoFuerte: "Bistec encebollado", complemento: "Frijoles", postre: "Fruta", platoAlternativo: "" },
+    { dia: "Miercoles", fecha: 23, entrada: "Consome", platoFuerte: "Enchiladas verdes", complemento: "Ensalada", postre: "Flan", platoAlternativo: "" },
+    { dia: "Jueves", fecha: 24, entrada: "Sopa de fideo", platoFuerte: "Cerdo en salsa verde", complemento: "Calabacitas", postre: "Arroz con leche", platoAlternativo: "" },
+    { dia: "Viernes", fecha: 25, entrada: "Caldo tlalpeño", platoFuerte: "Pescado empanizado", complemento: "Pure de papa", postre: "Pay de limon", platoAlternativo: "" }
+  ]
+};
+
+let menuData = JSON.parse(JSON.stringify(DEFAULT_MENU));
+let ordersData = [];
+let cortesiasData = [];
+let catalogoData = {};
+let historialData = {};
+let quantities = {};
+let selections = {};
+let adminAuth = false;
+let adminLevel = null;   // 'admin' | 'super'
+let adminVisible = false;
+
+const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAY_NAMES = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
+
+function normEmp(num) { return (num || '').toString().trim().toUpperCase().replace(/^0+(?=.)/, ''); }
+function orderDocId(numEmp) { return normEmp(numEmp) || '0'; }
+
+function findCatEntry(numEmp) {
+  if (!numEmp) return null;
+  const n = normEmp(numEmp);
+  if (!n) return null;
+  return catalogoData[n] || catalogoData[numEmp] ||
+    Object.entries(catalogoData).find(([k]) => normEmp(k) === n)?.[1] || null;
+}
+
+function autoFillNombre() {
+  const numEmp = document.getElementById('numEmpleado').value.trim();
+  const nombreInput = document.getElementById('nombreInput');
+  const cat = findCatEntry(numEmp);
+  if (cat) {
+    nombreInput.value = cat.nombre;
+    nombreInput.readOnly = true;
+    nombreInput.style.background = '#e8f5e9';
+  } else if (adminVisible) {
+    nombreInput.readOnly = false;
+    nombreInput.placeholder = 'Nombre (solo admin puede pedir sin catalogo)';
+    nombreInput.style.background = '';
+  } else {
+    nombreInput.value = '';
+    nombreInput.readOnly = true;
+    nombreInput.style.background = '';
+  }
+}
+
+// ============================================================
+//  SYNC
+// ============================================================
+function setSyncStatus(s, m) {
+  const el = document.getElementById('syncStatus');
+  el.innerHTML = `<span class="sync-dot${s==='ok'?'':s==='loading'?' loading':' error'}"></span> ${m}`;
+}
+
+async function loadFromCloud() {
+  setSyncStatus('loading', 'Cargando...');
+  try {
+    await ensureAuth();
+    const [menuDoc, cortDoc, catDoc, ordersList, histList] = await Promise.all([
+      fsRead('config/menu'),
+      fsRead('config/cortesias'),
+      fsRead('config/catalogo'),
+      loadFsCollection('orders'),
+      loadFsCollection('historial', 100)
+    ]);
+    if (menuDoc?.dias) menuData = menuDoc;
+    ordersData = ordersList;
+    cortesiasData = Array.isArray(cortDoc?.items) ? cortDoc.items : [];
+    if (catDoc && typeof catDoc === 'object') catalogoData = catDoc;
+    historialData = {};
+    histList.forEach(h => { const id = h._id; delete h._id; historialData[id] = h; });
+    setSyncStatus('ok', 'Sincronizado');
+    return true;
+  } catch (e) { console.error('Load error:', e); setSyncStatus('error', 'Sin conexion'); return false; }
+}
+
+async function saveOrder(order) {
+  const clean = { nombre: order.nombre, numEmpleado: order.numEmpleado, fecha: order.fecha, total: order.total, detalle: order.detalle || {}, opciones: order.opciones || {} };
+  return fsWrite(`orders/${orderDocId(order.numEmpleado)}`, clean);
+}
+async function deleteOrder(numEmp) { return fsDelete(`orders/${orderDocId(numEmp)}`); }
+async function deleteAllOrders() {
+  const list = await loadFsCollection('orders');
+  await Promise.all(list.map(o => fsDelete(`orders/${o._id}`)));
+}
+async function saveHistorial(key) {
+  try { return await fsWrite(`historial/${key}`, historialData[key]); }
+  catch (e) { console.error('Historial save error:', e); return false; }
+}
+async function saveMenuToCloud() {
+  setSyncStatus('loading', 'Guardando menu...');
+  const ok = await fsWrite('config/menu', menuData);
+  setSyncStatus(ok ? 'ok' : 'error', ok ? 'Sincronizado' : 'Error al guardar menu');
+  return ok;
+}
+async function saveCatalogo() { return fsWrite('config/catalogo', catalogoData); }
+async function saveCortesias() { return fsWrite('config/cortesias', { items: cortesiasData }); }
+
+// ============================================================
+//  RENDER MENU
+// ============================================================
+function getDisplayMonth(fechaNum, menu) {
+  if (!menu.dias || menu.dias.length < 2) return menu.mes;
+  const firstDate = menu.dias[0].fecha;
+  if (fechaNum < firstDate) {
+    const idx = MONTH_NAMES.indexOf(menu.mes);
+    return idx >= 0 && idx < 11 ? MONTH_NAMES[idx + 1] : menu.mes;
+  }
+  return menu.mes;
+}
+
+function renderMenu() {
+  document.getElementById('menuInfo').innerHTML = `
+    <span class="badge">${esc(menuData.mes)} ${esc(menuData.anio)}</span>
+    <span class="badge">Semana ${esc(menuData.semana)}</span>
+    <span class="badge">Servicio 12:30 - 17:30</span>
+  `;
+
+  const grid = document.getElementById('menuGrid');
+  grid.innerHTML = '';
+
+  const numEmpVal = document.getElementById('numEmpleado').value.trim();
+  const numEmpNorm = normEmp(numEmpVal);
+  const pedidoPrevioActivo = numEmpNorm && ordersData.some(o => normEmp(o.numEmpleado) === numEmpNorm);
+
+  menuData.dias.forEach((d, i) => {
+    quantities[i] = quantities[i] || 0;
+    if (!selections[i]) selections[i] = 'principal';
+    const hasAlt = d.platoAlternativo && d.platoAlternativo.trim().replace(/-/g, '').length > 0;
+
+    const card = document.createElement('div');
+    const passed = !adminVisible && isDayPassed(d.dia);
+    const yaPedido = quantities[i] > 0 && pedidoPrevioActivo;
+    card.className = 'day-card' + (passed && !yaPedido ? ' day-passed' : '');
+    if (passed && !yaPedido) { quantities[i] = 0; }
+
+    let altHTML = '';
+    if (hasAlt) {
+      altHTML = `
+        <div class="alt-section">
+          <div class="alt-label">Elige tu plato</div>
+          <div class="alt-options">
+            <label class="alt-option ${selections[i]==='principal'?'selected':''}" onclick="selectOption(${i},'principal')">
+              <input type="radio" name="opt-${i}" ${selections[i]==='principal'?'checked':''} />
+              <span class="alt-option-text"><strong>${esc(d.platoFuerte)}</strong>${d.complemento ? `<br><small>${esc(d.complemento)}</small>` : ''}</span>
+            </label>
+            <label class="alt-option ${selections[i]==='alternativa'?'selected':''}" onclick="selectOption(${i},'alternativa')">
+              <input type="radio" name="opt-${i}" ${selections[i]==='alternativa'?'checked':''} />
+              <span class="alt-option-text"><strong>${esc(d.platoAlternativo)}</strong><br><small>Alternativa</small></span>
+            </label>
+          </div>
+        </div>`;
+    }
+
+    card.innerHTML = `
+      <div class="day-header">
+        <h2>${esc(d.dia)}</h2>
+        <div class="date">${esc(d.fecha)} de ${esc(getDisplayMonth(d.fecha, menuData))}</div>
+      </div>
+      <div class="meal-section">
+        <div class="meal-type">Entrada</div>
+        <div class="meal-name">${esc(d.entrada)}</div>
+      </div>
+      ${hasAlt ? '' : `
+      <div class="meal-section">
+        <div class="meal-type">Plato Fuerte</div>
+        <div class="meal-name">${esc(d.platoFuerte)}</div>
+        ${d.complemento ? `<div class="meal-complement">${esc(d.complemento)}</div>` : ''}
+      </div>`}
+      ${altHTML}
+      <div class="meal-section">
+        <div class="meal-type">Postre</div>
+        <div class="meal-name">${esc(d.postre)}</div>
+      </div>
+      <div class="day-order">
+        <button class="order-toggle ${quantities[i]>0?'active':''} ${passed && yaPedido ? 'locked' : ''}" id="qty-${i}" onclick="toggleDay(${i})">
+          ${passed && yaPedido ? '&#10003; Ya pedido' : quantities[i]>0 ? '&#10003; Pedido' : 'Pedir'}
+        </button>
+      </div>`;
+    grid.appendChild(card);
+  });
+  updateSummary();
+}
+
+function preMarcarDias() {
+  const num = document.getElementById('numEmpleado').value.trim();
+  quantities = {};
+  selections = {};
+  if (num) {
+    const numNorm = normEmp(num);
+    const pedido = ordersData.find(o => normEmp(o.numEmpleado) === numNorm);
+    if (pedido && pedido.detalle) {
+      menuData.dias.forEach((d, i) => {
+        if (pedido.detalle[d.dia]) {
+          quantities[i] = 1;
+          if (pedido.opciones && pedido.opciones[d.dia]) {
+            selections[i] = pedido.opciones[d.dia] === d.platoAlternativo ? 'alternativa' : 'principal';
+          }
+        }
+      });
+    }
+  }
+  renderMenu();
+}
+
+function selectOption(i, opt) { selections[i] = opt; renderMenu(); }
+
+function toggleDay(i) {
+  if (!adminVisible && menuData.dias[i] && isDayPassed(menuData.dias[i].dia)) return;
+  quantities[i] = quantities[i] > 0 ? 0 : 1;
+  const el = document.getElementById(`qty-${i}`);
+  el.innerHTML = quantities[i] > 0 ? '&#10003; Pedido' : 'Pedir';
+  el.className = 'order-toggle' + (quantities[i]>0?' active':'');
+  updateSummary();
+}
+
+function updateSummary() {
+  const total = Object.values(quantities).reduce((a,b)=>a+b, 0);
+  const bar = document.getElementById('summaryBar');
+  if (total > 0) {
+    bar.classList.add('visible');
+    const det = menuData.dias.map((d,i) => quantities[i]>0 ? d.dia : null).filter(Boolean).join(' | ');
+    document.getElementById('summaryText').innerHTML = `<strong>${total}</strong> comida${total!==1?'s':''} &middot; ${esc(det)}`;
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+// ============================================================
+//  ENVIAR PEDIDO
+// ============================================================
+let ultimosDiasNuevos = null;
+
+async function enviarPedido() {
+  if (!isOrderingOpen() && !adminVisible) { showToast('Pedidos cerrados. Horario: 7:00 a 11:30 AM'); return; }
+  const numEmp = document.getElementById('numEmpleado').value.trim();
+  if (!numEmp) { showToast('Escribe tu numero de empleado'); document.getElementById('numEmpleado').focus(); return; }
+  if (!/^[a-zA-Z0-9]+$/.test(numEmp)) { showToast('El numero de empleado no es valido'); document.getElementById('numEmpleado').focus(); return; }
+  const catMatch = findCatEntry(numEmp);
+  if (!catMatch && !adminVisible) {
+    showToast('Numero de empleado no encontrado. Contacta a RRHH.');
+    document.getElementById('numEmpleado').focus();
+    return;
+  }
+  const nombre = (catMatch ? catMatch.nombre : document.getElementById('nombreInput').value.trim());
+  if (!nombre) { showToast('Escribe tu nombre'); document.getElementById('nombreInput').focus(); return; }
+  const total = Object.values(quantities).reduce((a,b)=>a+b, 0);
+  if (total === 0) return;
+
+  await loadFromCloud();
+  const numNorm = normEmp(numEmp);
+  const yaExiste = ordersData.find(o => normEmp(o.numEmpleado) === numNorm);
+
+  const nuevosDias = {};
+  const nuevasOpciones = {};
+  menuData.dias.forEach((d, i) => {
+    if (quantities[i] > 0 && (adminVisible || !isDayPassed(d.dia))) {
+      nuevosDias[d.dia] = quantities[i];
+      const hasAlt = d.platoAlternativo && d.platoAlternativo.trim().replace(/-/g, '').length > 0;
+      if (hasAlt) nuevasOpciones[d.dia] = selections[i]==='alternativa' ? d.platoAlternativo : d.platoFuerte;
+    }
+  });
+  if (Object.keys(nuevosDias).length === 0) { showToast('No hay dias disponibles para pedir'); return; }
+
+  let order;
+  let esActualizacion = false;
+  if (yaExiste) {
+    const diasExistentes = Object.keys(yaExiste.detalle || {});
+    const diasNuevosReales = Object.keys(nuevosDias).filter(d => !diasExistentes.includes(d));
+    if (diasNuevosReales.length === 0) { showToast('Ya tienes pedido para esos dias'); return; }
+    ultimosDiasNuevos = diasNuevosReales;
+    yaExiste.detalle = Object.assign({}, yaExiste.detalle || {}, nuevosDias);
+    yaExiste.opciones = Object.assign({}, yaExiste.opciones || {}, nuevasOpciones);
+    yaExiste.total = Object.values(yaExiste.detalle).reduce((a,b) => a+b, 0);
+    yaExiste.fecha = new Date().toISOString();
+    order = yaExiste;
+    esActualizacion = true;
+  } else {
+    ultimosDiasNuevos = null;
+    order = { nombre, numEmpleado: numNorm, fecha: new Date().toISOString(), total, detalle: nuevosDias, opciones: nuevasOpciones };
+  }
+
+  const saved = await saveOrder(order);
+  if (!saved) { await loadFromCloud(); showToast('Error al guardar, intenta de nuevo'); return; }
+  await loadFromCloud();
+
+  const firstName = nombre.split(' ').pop() || nombre;
+  document.getElementById('modalNombre').textContent = firstName;
+  if (esActualizacion && ultimosDiasNuevos) {
+    document.getElementById('modalSubtitle').textContent = 'Se agrego a tu pedido:';
+    document.getElementById('modalDias').textContent = ultimosDiasNuevos.join(' · ');
+  } else {
+    document.getElementById('modalSubtitle').textContent = 'Tu pedido quedo registrado.';
+    document.getElementById('modalDias').textContent = Object.keys(order.detalle).join(' · ');
+  }
+  document.getElementById('modalBg').classList.add('open');
+  if (adminVisible) renderOrders();
+}
+
+function cerrarModal() {
+  document.getElementById('modalBg').classList.remove('open');
+  Object.keys(quantities).forEach(k => quantities[k] = 0);
+  selections = {};
+  ultimosDiasNuevos = null;
+  mostrarMisPedidos();
+  renderMenu();
+}
+
+// ============================================================
+//  ADMIN PIN
+// ============================================================
+function abrirAdmin() {
+  if (adminAuth) { toggleAdmin(); return; }
+  document.getElementById('pinModal').classList.add('open');
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinError').style.display = 'none';
+  setTimeout(() => document.getElementById('pinInput').focus(), 100);
+}
+
+let pinBusy = false;
+async function verificarPin() {
+  if (pinBusy) return;
+  const pin = document.getElementById('pinInput').value.trim();
+  if (!pin) return;
+  pinBusy = true;
+  const errEl = document.getElementById('pinError');
+  errEl.style.display = 'none';
+  try {
+    // Intenta como super primero; si falla, como admin. Las reglas deciden.
+    let ok = await crearSesionAdmin(pin, 'super');
+    if (ok) adminLevel = 'super';
+    else { ok = await crearSesionAdmin(pin, 'admin'); if (ok) adminLevel = 'admin'; }
+    if (ok) {
+      adminAuth = true;
+      document.getElementById('pinModal').classList.remove('open');
+      if (adminLevel === 'super') mostrarCatalogoSection(true);
+      toggleAdmin();
+    } else {
+      errEl.style.display = 'block';
+      document.getElementById('pinInput').value = '';
+      document.getElementById('pinInput').focus();
+    }
+  } catch (e) {
+    errEl.textContent = 'Sin conexion con el servidor';
+    errEl.style.display = 'block';
+  } finally { pinBusy = false; }
+}
+
+function cerrarPin() { document.getElementById('pinModal').classList.remove('open'); }
+document.getElementById('pinInput').addEventListener('keydown', e => { if (e.key==='Enter') verificarPin(); });
+document.getElementById('superPinInput').addEventListener('keydown', e => { if (e.key==='Enter') unlockCatalogo(); });
+
+function toggleAdmin() {
+  adminVisible = !adminVisible;
+  document.getElementById('adminPanel').classList.toggle('visible', adminVisible);
+  document.getElementById('adminToggleBtn').textContent = adminVisible ? 'Salir Admin' : 'Admin';
+  document.getElementById('adminLevelBadge').textContent = adminLevel === 'super' ? '(super)' : '';
+  if (adminVisible) { populateAdminForm(); renderOrders(); renderCortesias(); renderCatalogo(); resetAdminTimer(); }
+  autoFillNombre();
+  checkOrderLock();
+  renderMenu();
+}
+
+async function cerrarSesionAdmin() {
+  await borrarSesionAdmin();
+  adminAuth = false; adminLevel = null;
+  if (adminVisible) toggleAdmin();
+  mostrarCatalogoSection(false);
+  document.getElementById('superPinInput').value = '';
+  showToast('Sesion admin cerrada');
+}
+
+function mostrarCatalogoSection(show) {
+  document.getElementById('catalogoSection').style.display = show ? '' : 'none';
+  document.getElementById('catalogoLockSection').style.display = show ? 'none' : '';
+  if (show) renderCatalogo();
+}
+
+async function unlockCatalogo() {
+  const pin = document.getElementById('superPinInput').value.trim();
+  if (!pin) return;
+  const ok = await crearSesionAdmin(pin, 'super');
+  if (ok) {
+    adminLevel = 'super';
+    document.getElementById('adminLevelBadge').textContent = '(super)';
+    document.getElementById('superPinError').style.display = 'none';
+    mostrarCatalogoSection(true);
+  } else {
+    document.getElementById('superPinError').style.display = '';
+  }
+}
+
+// Admin timeout: 15 min sin actividad
+let adminLastActivity = Date.now();
+function resetAdminTimer() { adminLastActivity = Date.now(); }
+document.addEventListener('click', () => { if (adminVisible) resetAdminTimer(); });
+document.addEventListener('keydown', () => { if (adminVisible) resetAdminTimer(); });
+setInterval(() => {
+  if (adminVisible && Date.now() - adminLastActivity > 15 * 60 * 1000) {
+    cerrarSesionAdmin();
+    showToast('Sesion admin cerrada por inactividad');
+  }
+}, 60000);
+
+// ============================================================
+//  ADMIN FORM
+// ============================================================
+function populateAdminForm() {
+  document.getElementById('adminMes').value = menuData.mes;
+  document.getElementById('adminSemana').value = menuData.semana;
+  document.getElementById('adminAnio').value = menuData.anio;
+  const c = document.getElementById('daysFormContainer');
+  c.innerHTML = '';
+  menuData.dias.forEach(d => addDayForm(d));
+}
+
+function addDayForm(data) {
+  const c = document.getElementById('daysFormContainer');
+  const d = data || { dia:'Lunes', fecha:1, entrada:'', platoFuerte:'', complemento:'', postre:'', platoAlternativo:'' };
+  const card = document.createElement('div');
+  card.className = 'day-form-card';
+  card.innerHTML = `
+    <div class="day-form-header">
+      <h5>${esc(d.dia)} ${esc(d.fecha)}</h5>
+      <button class="btn-remove-day" onclick="this.closest('.day-form-card').remove()">&times;</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="max-width:160px">
+        <label>Dia</label>
+        <select class="df-dia">
+          ${['Lunes','Martes','Miercoles','Jueves','Viernes'].map(x => `<option ${d.dia===x?'selected':''}>${x}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group" style="max-width:100px">
+        <label>Fecha #</label>
+        <input type="number" class="df-fecha" min="1" max="31" value="${esc(d.fecha)}" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Entrada</label><input type="text" class="df-entrada" placeholder="Ej: Crema de brocoli" value="${esc(d.entrada)}" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Plato Fuerte</label><input type="text" class="df-plato" placeholder="Ej: Bistec encebollado" value="${esc(d.platoFuerte)}" /></div>
+      <div class="form-group"><label>Complemento (opcional)</label><input type="text" class="df-comp" placeholder="Ej: Papas salteadas" value="${esc(d.complemento || '')}" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Plato Alternativo (opcional)</label><input type="text" class="df-alt" placeholder="Ej: Pechuga a la plancha" value="${esc(d.platoAlternativo || '')}" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Postre</label><input type="text" class="df-postre" placeholder="Ej: Gelatina frutal" value="${esc(d.postre)}" /></div>
+    </div>`;
+  c.appendChild(card);
+}
+
+async function guardarMenu() {
+  const mes = document.getElementById('adminMes').value;
+  const semana = parseInt(document.getElementById('adminSemana').value);
+  const anio = parseInt(document.getElementById('adminAnio').value);
+  const cards = document.querySelectorAll('.day-form-card');
+  if (!cards.length) { showToast('Agrega al menos un dia'); return; }
+
+  const dias = [];
+  let valid = true;
+  cards.forEach(card => {
+    const dia = card.querySelector('.df-dia').value;
+    const fecha = parseInt(card.querySelector('.df-fecha').value) || 1;
+    const entrada = card.querySelector('.df-entrada').value.trim();
+    const platoFuerte = card.querySelector('.df-plato').value.trim();
+    const complemento = card.querySelector('.df-comp').value.trim();
+    const platoAlternativo = card.querySelector('.df-alt').value.trim();
+    const postre = card.querySelector('.df-postre').value.trim();
+    if (!entrada || !platoFuerte || !postre) valid = false;
+    dias.push({ dia, fecha, entrada, platoFuerte, complemento, platoAlternativo, postre });
+  });
+  if (!valid) { showToast('Llena los campos obligatorios'); return; }
+
+  menuData = { mes, semana, anio, dias };
+  const borrarPedidos = ordersData.length > 0 && confirm(`Hay ${ordersData.length} pedido(s). ¿Es semana nueva y quieres archivar y borrar los pedidos?\n\nSi solo estas corrigiendo el menu, dale Cancelar.`);
+
+  quantities = {}; selections = {};
+  const saved = await saveMenuToCloud();
+  if (!saved) { showToast('Error al guardar: ' + lastFsError); return; }
+  if (borrarPedidos) {
+    archivarPedidos();
+    await Promise.all(Object.keys(historialData).map(k => saveHistorial(k)));
+    await deleteAllOrders();
+    ordersData = [];
+    cortesiasData = [];
+    await saveCortesias();
+  }
+  showToast(borrarPedidos ? 'Menu publicado, pedidos archivados' : 'Menu actualizado');
+  renderMenu();
+  renderOrders();
+}
+
+function resetMenu() {
+  menuData = JSON.parse(JSON.stringify(DEFAULT_MENU));
+  populateAdminForm();
+  renderMenu();
+  showToast('Restaurado (no publicado)');
+}
+
+// ============================================================
+//  WHATSAPP (solo admin)
+// ============================================================
+function compartirMenuWhatsApp() {
+  let msg = `*${EMPRESA} - Menu del Comedor*\nSemana ${menuData.semana} de ${menuData.mes} ${menuData.anio}\nServicio: 12:30 a 17:30\n\n`;
+  menuData.dias.forEach(d => {
+    msg += `*${d.dia} ${d.fecha}*\n`;
+    msg += `  Entrada: ${d.entrada}\n`;
+    msg += `  Plato: ${d.platoFuerte}`;
+    if (d.complemento) msg += ` + ${d.complemento}`;
+    msg += '\n';
+    if (d.platoAlternativo) msg += `  Alternativa: ${d.platoAlternativo}\n`;
+    msg += `  Postre: ${d.postre}\n\n`;
+  });
+  msg += `Pedidos de 7:00 a 11:30 AM aqui:\n${MENU_URL}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function enviarOrdenCocina() {
+  if (!ordersData.length && !cortesiasData.length) { showToast('No hay pedidos'); return; }
+  const dayTotals = {}, dayOpciones = {};
+  menuData.dias.forEach(d => { dayTotals[d.dia] = 0; dayOpciones[d.dia] = {}; });
+  ordersData.forEach(o => {
+    menuData.dias.forEach(d => {
+      const qty = (o.detalle && o.detalle[d.dia]) || 0;
+      dayTotals[d.dia] += qty;
+      if (qty > 0 && o.opciones && o.opciones[d.dia]) {
+        const op = o.opciones[d.dia];
+        dayOpciones[d.dia][op] = (dayOpciones[d.dia][op] || 0) + qty;
+      }
+    });
+  });
+  cortesiasData.forEach(c => { menuData.dias.forEach(d => { if (c.dias && c.dias[d.dia]) dayTotals[d.dia] += 1; }); });
+  const grandTotal = Object.values(dayTotals).reduce((a,b)=>a+b, 0);
+
+  let msg = `*ORDEN ${EMPRESA_CORTA} - Semana ${menuData.semana}*\n${menuData.mes} ${menuData.anio}\nTotal: ${grandTotal} comidas\n\n`;
+  menuData.dias.forEach(d => {
+    if (dayTotals[d.dia] > 0) {
+      msg += `*${d.dia} ${d.fecha}*: ${dayTotals[d.dia]} comida${dayTotals[d.dia]!==1?'s':''}\n`;
+      const opcKeys = Object.keys(dayOpciones[d.dia]);
+      if (opcKeys.length > 0) {
+        opcKeys.forEach(op => { msg += `  - ${op}: ${dayOpciones[d.dia][op]}\n`; });
+        const totalOpc = Object.values(dayOpciones[d.dia]).reduce((a,b)=>a+b,0);
+        const sinOpc = dayTotals[d.dia] - totalOpc;
+        if (sinOpc > 0) msg += `  - ${d.platoFuerte}: ${sinOpc}\n`;
+      }
+    }
+  });
+  msg += `\n*Detalle por persona:*\n`;
+  ordersData.forEach(o => {
+    const dias = menuData.dias.filter(d => o.detalle && o.detalle[d.dia] > 0).map(d => {
+      let txt = d.dia.substring(0,3);
+      if (o.opciones && o.opciones[d.dia]) txt += `(${o.opciones[d.dia].substring(0,15)})`;
+      return txt;
+    }).join(', ');
+    msg += `${o.nombre}${o.numEmpleado ? ' #'+o.numEmpleado : ''}: ${dias} (${o.total})\n`;
+  });
+  cortesiasData.forEach(c => {
+    const dias = menuData.dias.filter(d => c.dias && c.dias[d.dia]).map(d => d.dia.substring(0,3)).join(', ');
+    msg += `${c.nombre} (cortesia): ${dias}\n`;
+  });
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ============================================================
+//  ORDERS TABLE
+// ============================================================
+function sortByEmp(list, key) {
+  return [...list].sort((a, b) => {
+    const na = parseInt(key ? a[key] : a) || 99999;
+    const nb = parseInt(key ? b[key] : b) || 99999;
+    return na - nb;
+  });
+}
+
+function renderOrders() {
+  const c = document.getElementById('ordersContainer');
+  if (!ordersData.length && !cortesiasData.length) { c.innerHTML = '<div class="no-orders">Aun no hay pedidos</div>'; return; }
+
+  const dayTotals = {};
+  menuData.dias.forEach(d => { dayTotals[d.dia] = 0; });
+  const sorted = sortByEmp(ordersData, 'numEmpleado');
+
+  let html = '<div class="orders-table-wrap"><table class="orders-table"><thead><tr>';
+  html += '<th>No.</th><th>Nombre</th><th>Tipo</th>';
+  menuData.dias.forEach(d => {
+    const label = d.dia.substring(0,3);
+    html += d.platoAlternativo ? `<th>${label} *</th>` : `<th>${label}</th>`;
+  });
+  html += '<th>Total</th><th></th></tr></thead><tbody>';
+
+  sorted.forEach(o => {
+    html += '<tr>';
+    html += `<td style="font-weight:600;color:var(--primary)">${esc(o.numEmpleado || '-')}</td>`;
+    html += `<td>${esc(o.nombre)}</td>`;
+    html += '<td>Empleado</td>';
+    menuData.dias.forEach(d => {
+      const qty = (o.detalle && o.detalle[d.dia]) || 0;
+      dayTotals[d.dia] += qty;
+      if (qty === 0) {
+        html += '<td style="color:#ccc">-</td>';
+      } else if (d.platoAlternativo && o.opciones && o.opciones[d.dia]) {
+        const isAlt = o.opciones[d.dia] !== d.platoFuerte;
+        const color = isAlt ? '#e67e22' : '#27ae60';
+        const icon = isAlt ? '&#9670;' : '&#9671;';
+        html += `<td>${icon} ${qty}<br><small style="color:${color};font-size:10px">${esc(o.opciones[d.dia].substring(0,18))}</small></td>`;
+      } else {
+        html += `<td>${qty}</td>`;
+      }
+    });
+    html += `<td><strong>${o.total}</strong></td>`;
+    html += `<td><button class="cortesia-remove" onclick="adminBorrarPedido('${esc(o.numEmpleado)}')">Borrar</button></td></tr>`;
+  });
+
+  cortesiasData.forEach(c => {
+    html += '<tr><td style="color:#ccc">-</td>';
+    html += `<td>${esc(c.nombre)}</td>`;
+    html += '<td><span class="cortesia-badge">Cortesia</span></td>';
+    let cTotal = 0;
+    menuData.dias.forEach(d => {
+      const tiene = (c.dias && c.dias[d.dia]) ? 1 : 0;
+      cTotal += tiene;
+      dayTotals[d.dia] += tiene;
+      html += tiene ? '<td>1</td>' : '<td style="color:#ccc">-</td>';
+    });
+    html += `<td><strong>${cTotal}</strong></td><td></td></tr>`;
+  });
+
+  const gt = Object.values(dayTotals).reduce((a,b)=>a+b,0);
+  html += '<tr class="total-row"><td colspan="3">TOTAL</td>';
+  menuData.dias.forEach(d => { html += `<td><strong>${dayTotals[d.dia]}</strong></td>`; });
+  html += `<td><strong>${gt}</strong></td><td></td></tr>`;
+
+  const daysWithAlt = menuData.dias.filter(d => d.platoAlternativo);
+  if (daysWithAlt.length > 0) {
+    html += '<tr><td colspan="100%" style="padding:12px 0 4px;font-weight:700;border:none;background:transparent">Desglose por opcion:</td></tr>';
+    daysWithAlt.forEach(d => {
+      const opcCounts = {};
+      ordersData.forEach(o => {
+        const qty = (o.detalle && o.detalle[d.dia]) || 0;
+        if (qty > 0) {
+          const opcion = (o.opciones && o.opciones[d.dia]) || d.platoFuerte;
+          opcCounts[opcion] = (opcCounts[opcion] || 0) + qty;
+        }
+      });
+      if (Object.keys(opcCounts).length > 0) {
+        html += `<tr><td colspan="2" style="font-weight:600">${esc(d.dia)}</td><td colspan="100%">`;
+        Object.entries(opcCounts).forEach(([opcion, count]) => {
+          html += `<span style="display:inline-block;margin-right:16px">${esc(opcion)}: <strong>${count}</strong></span>`;
+        });
+        html += '</td></tr>';
+      }
+    });
+  }
+  html += '</tbody></table></div>';
+  c.innerHTML = html;
+}
+
+async function adminBorrarPedido(numEmp) {
+  if (!confirm(`¿Borrar el pedido del empleado #${numEmp}?`)) return;
+  const ok = await deleteOrder(numEmp);
+  await loadFromCloud();
+  renderOrders();
+  showToast(ok ? 'Pedido borrado' : 'Error al borrar');
+}
+
+// ============================================================
+//  EXPORT EXCEL (semana actual)
+// ============================================================
+function exportarCSV() {
+  if (!ordersData.length && !cortesiasData.length) { showToast('No hay pedidos'); return; }
+  const hd = '#0b3d91', hd2 = '#1e88e5', lt = '#e8f1fc';
+  const bdr = 'border:1px solid #bdc3c7;padding:8px 12px;';
+  const sorted = sortByEmp(ordersData, 'numEmpleado');
+
+  let colCount = 6;
+  menuData.dias.forEach(d => { colCount += d.platoAlternativo ? 2 : 1; });
+
+  let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"/></head><body>';
+  html += '<table style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;font-size:11pt;">';
+  html += `<tr><td colspan="${colCount}" style="${bdr}background:${hd};color:#fff;font-size:16pt;font-weight:bold;text-align:center;padding:14px;">${EMPRESA} - Pedidos Semana ${menuData.semana}</td></tr>`;
+  html += `<tr><td colspan="${colCount}" style="${bdr}background:${hd2};color:#fff;font-size:11pt;text-align:center;padding:8px;">${menuData.mes} ${menuData.anio} | Generado: ${new Date().toLocaleDateString('es-MX', {day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</td></tr>`;
+  html += `<tr><td colspan="${colCount}" style="height:6px;"></td></tr>`;
+
+  const th = (t, bg) => `<th style="${bdr}background:${bg};color:#fff;font-weight:bold;text-align:center;">${t}</th>`;
+  html += '<tr>' + th('No. Emp', hd) + th('Nombre', hd) + th('Tipo', hd) + th('Fecha', hd) + th('Hora', hd);
+  menuData.dias.forEach(d => {
+    if (d.platoAlternativo) html += th(d.dia, hd2) + th('Platillo', hd2);
+    else html += th(d.dia, hd);
+  });
+  html += th('Total', hd) + '</tr>';
+
+  let rowIdx = 0;
+  sorted.forEach(o => {
+    const bg = rowIdx % 2 === 0 ? '#fff' : lt;
+    const dt = new Date(o.fecha);
+    const fecha = dt.toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'numeric'});
+    const hora = dt.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+    html += '<tr>';
+    html += `<td style="${bdr}background:${bg};text-align:center;font-weight:600;">${esc(o.numEmpleado || 'S/N')}</td>`;
+    html += `<td style="${bdr}background:${bg};text-align:left;">${esc(o.nombre)}</td>`;
+    html += `<td style="${bdr}background:${bg};text-align:center;">Empleado</td>`;
+    html += `<td style="${bdr}background:${bg};text-align:center;">${fecha}</td>`;
+    html += `<td style="${bdr}background:${bg};text-align:center;">${hora}</td>`;
+    menuData.dias.forEach(d => {
+      const qty = (o.detalle && o.detalle[d.dia]) || 0;
+      if (d.platoAlternativo) {
+        const opcion = (qty > 0 && o.opciones && o.opciones[d.dia]) ? o.opciones[d.dia] : '';
+        const opColor = (opcion && opcion !== d.platoFuerte) ? 'color:#e67e22;' : 'color:#27ae60;';
+        html += `<td style="${bdr}background:${bg};text-align:center;font-weight:600;">${qty}</td>`;
+        html += `<td style="${bdr}background:${bg};${qty > 0 ? opColor : ''}font-size:10pt;">${esc(opcion)}</td>`;
+      } else {
+        html += `<td style="${bdr}background:${bg};text-align:center;font-weight:${qty > 0 ? '600' : '400'};${qty === 0 ? 'color:#ccc;' : ''}">${qty}</td>`;
+      }
+    });
+    html += `<td style="${bdr}background:${bg};text-align:center;font-weight:bold;font-size:12pt;">${o.total}</td></tr>`;
+    rowIdx++;
+  });
+
+  cortesiasData.forEach(c => {
+    const cortBg = '#fef9e7';
+    html += '<tr>';
+    html += `<td style="${bdr}background:${cortBg};text-align:center;color:#ccc;">-</td>`;
+    html += `<td style="${bdr}background:${cortBg};text-align:left;">${esc(c.nombre)}</td>`;
+    html += `<td style="${bdr}background:#f39c12;color:#fff;font-weight:600;text-align:center;">Cortesia</td>`;
+    html += `<td style="${bdr}background:${cortBg};text-align:center;">-</td><td style="${bdr}background:${cortBg};text-align:center;">-</td>`;
+    let cTotal = 0;
+    menuData.dias.forEach(d => {
+      const tiene = (c.dias && c.dias[d.dia]) ? 1 : 0;
+      cTotal += tiene;
+      html += `<td style="${bdr}background:${cortBg};text-align:center;font-weight:${tiene?'600':'400'};${tiene===0?'color:#ccc;':''}">${tiene}</td>`;
+      if (d.platoAlternativo) html += `<td style="${bdr}background:${cortBg};"></td>`;
+    });
+    html += `<td style="${bdr}background:${cortBg};text-align:center;font-weight:bold;font-size:12pt;">${cTotal}</td></tr>`;
+  });
+
+  const dayTotals = {};
+  menuData.dias.forEach(d => { dayTotals[d.dia] = 0; });
+  ordersData.forEach(o => { menuData.dias.forEach(d => { dayTotals[d.dia] += (o.detalle && o.detalle[d.dia]) || 0; }); });
+  cortesiasData.forEach(c => { menuData.dias.forEach(d => { dayTotals[d.dia] += (c.dias && c.dias[d.dia]) ? 1 : 0; }); });
+  const gt = Object.values(dayTotals).reduce((a,b) => a+b, 0);
+
+  html += `<tr><td style="${bdr}background:${hd};color:#fff;font-weight:bold;text-align:center;" colspan="5">TOTAL</td>`;
+  menuData.dias.forEach(d => {
+    html += `<td style="${bdr}background:${hd};color:#fff;font-weight:bold;text-align:center;font-size:13pt;">${dayTotals[d.dia]}</td>`;
+    if (d.platoAlternativo) html += `<td style="${bdr}background:${hd};"></td>`;
+  });
+  html += `<td style="${bdr}background:${hd2};color:#fff;font-weight:bold;text-align:center;font-size:14pt;">${gt}</td></tr>`;
+
+  const daysWithAlt = menuData.dias.filter(d => d.platoAlternativo);
+  if (daysWithAlt.length > 0) {
+    html += `<tr><td colspan="${colCount}" style="height:10px;"></td></tr>`;
+    html += `<tr><td colspan="${colCount}" style="${bdr}background:${hd2};color:#fff;font-weight:bold;font-size:12pt;text-align:center;">DESGLOSE POR OPCION</td></tr>`;
+    daysWithAlt.forEach(d => {
+      const opcCounts = {};
+      ordersData.forEach(o => {
+        const qty = (o.detalle && o.detalle[d.dia]) || 0;
+        if (qty > 0) { const op = (o.opciones && o.opciones[d.dia]) || d.platoFuerte; opcCounts[op] = (opcCounts[op] || 0) + qty; }
+      });
+      if (Object.keys(opcCounts).length > 0) {
+        html += `<tr><td colspan="2" style="${bdr}background:${lt};font-weight:bold;">${esc(d.dia)} ${d.fecha}</td><td colspan="${colCount - 2}" style="${bdr}background:${lt};">`;
+        Object.entries(opcCounts).forEach(([op, count]) => { html += `${esc(op)}: <b>${count}</b> &nbsp;&nbsp; `; });
+        html += '</td></tr>';
+      }
+    });
+  }
+  html += '</table></body></html>';
+
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `pedidos_${EMPRESA_CORTA}_S${menuData.semana}_${menuData.mes}${menuData.anio}.xls`;
+  a.click();
+  showToast('Excel descargado');
+}
+
+// ============================================================
+//  HISTORIAL / ARCHIVO
+// ============================================================
+function getQuincenaKey(fecha) {
+  const f = new Date(fecha);
+  return `${f.getFullYear()}-${f.getMonth() + 1}-${f.getDate() <= 15 ? 'Q1' : 'Q2'}`;
+}
+
+function archivarPedidos() {
+  if (ordersData.length === 0 && cortesiasData.length === 0) return;
+  ordersData.forEach(o => {
+    const key = getQuincenaKey(o.fecha);
+    if (!historialData[key]) historialData[key] = {};
+    const emp = orderDocId(o.numEmpleado);
+    if (!historialData[key][emp]) historialData[key][emp] = { nombre: o.nombre, comidas: 0, pedidos: [] };
+    if (!historialData[key][emp].pedidos) historialData[key][emp].pedidos = [];
+    historialData[key][emp].comidas += o.total || 0;
+    historialData[key][emp].pedidos.push({ fecha: o.fecha, detalle: o.detalle, opciones: o.opciones || {}, total: o.total });
+  });
+  if (cortesiasData.length > 0) {
+    const key = getQuincenaKey(new Date().toISOString());
+    if (!historialData[key]) historialData[key] = {};
+    if (!historialData[key]._cortesias) historialData[key]._cortesias = [];
+    cortesiasData.forEach(c => {
+      const dias = c.dias ? Object.keys(c.dias).length : 0;
+      if (dias > 0) historialData[key]._cortesias.push({ nombre: c.nombre, comidas: dias });
+    });
+  }
+}
+
+async function limpiarPedidos() {
+  if (!confirm('¿Borrar todos los pedidos? Se guardaran en el historial para los reportes BUK / conciliacion.')) return;
+  await loadFromCloud();
+  archivarPedidos();
+  const histOk = await Promise.all(Object.keys(historialData).map(k => saveHistorial(k)));
+  if (histOk.some(r => !r)) { showToast('Error al guardar historial, pedidos no borrados'); return; }
+  await deleteAllOrders();
+  ordersData = [];
+  cortesiasData = [];
+  await saveCortesias();
+  renderOrders();
+  renderCortesias();
+  showToast('Pedidos archivados y limpiados');
+}
+
+// ============================================================
+//  CORTESIAS
+// ============================================================
+function renderCortesias() {
+  const diasDiv = document.getElementById('cortesiaDias');
+  diasDiv.style.display = 'block';
+  diasDiv.innerHTML = '<div class="cortesia-dias-select">' +
+    menuData.dias.map(d => `
+      <div class="cortesia-dia-check">
+        <input type="checkbox" id="cortDia-${esc(d.dia)}" value="${esc(d.dia)}" />
+        <label for="cortDia-${esc(d.dia)}">${esc(d.dia.substring(0,3))}</label>
+      </div>`).join('') + '</div>';
+
+  const list = document.getElementById('cortesiaList');
+  if (!cortesiasData.length) { list.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:8px;">No hay cortesias registradas</div>'; return; }
+  list.innerHTML = cortesiasData.map((c, i) => `
+    <div class="cortesia-item">
+      <div>
+        <span class="cortesia-info">${esc(c.nombre)}</span>
+        <div class="cortesia-dias">${esc(Object.keys(c.dias || {}).join(', ')) || 'Sin dias'}</div>
+      </div>
+      <button class="cortesia-remove" onclick="quitarCortesia(${i})">Quitar</button>
+    </div>`).join('');
+}
+
+async function agregarCortesia() {
+  const nombre = document.getElementById('cortesiaNombre').value.trim();
+  if (!nombre) { showToast('Escribe el nombre'); return; }
+  const dias = {};
+  menuData.dias.forEach(d => { const cb = document.getElementById('cortDia-' + d.dia); if (cb && cb.checked) dias[d.dia] = 1; });
+  if (Object.keys(dias).length === 0) { showToast('Selecciona al menos un dia'); return; }
+  await loadFromCloud();
+  cortesiasData.push({ nombre, dias });
+  const ok = await saveCortesias();
+  if (!ok) { showToast('Error al guardar cortesia'); return; }
+  document.getElementById('cortesiaNombre').value = '';
+  menuData.dias.forEach(d => { const cb = document.getElementById('cortDia-' + d.dia); if (cb) cb.checked = false; });
+  renderCortesias(); renderOrders();
+  showToast('Cortesia agregada');
+}
+
+async function quitarCortesia(idx) {
+  await loadFromCloud();
+  const cortesia = cortesiasData[idx];
+  let histKey = null;
+  if (cortesia) {
+    const dias = cortesia.dias ? Object.keys(cortesia.dias).length : 0;
+    if (dias > 0) {
+      histKey = getQuincenaKey(new Date().toISOString());
+      if (!historialData[histKey]) historialData[histKey] = {};
+      if (!historialData[histKey]._cortesias) historialData[histKey]._cortesias = [];
+      historialData[histKey]._cortesias.push({ nombre: cortesia.nombre, comidas: dias });
+    }
+  }
+  cortesiasData.splice(idx, 1);
+  await saveCortesias();
+  if (histKey) await saveHistorial(histKey);
+  renderCortesias(); renderOrders();
+  showToast('Cortesia archivada y eliminada');
+}
+
+function showToast(m) {
+  const t = document.getElementById('toast');
+  t.textContent = m;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ============================================================
+//  HORARIOS
+//  Pedir: L-V 7:00 - 11:30 AM
+//  Cancelar: L-V 7:00 - 11:30 AM y 5:00 PM - 12:00 AM
+//  Servicio comedor: 12:30 - 17:30
+// ============================================================
+const DAY_MAP = { 'lunes':1, 'martes':2, 'miercoles':3, 'miércoles':3, 'jueves':4, 'viernes':5, 'sabado':6, 'sábado':6, 'domingo':0 };
+
+function isDayPassed(dayName) {
+  const now = new Date();
+  const today = now.getDay();
+  const hour = now.getHours(), min = now.getMinutes();
+  const dayNum = DAY_MAP[dayName.toLowerCase().trim()];
+  if (dayNum === undefined) return false;
+  if (dayNum < today) return true;
+  if (dayNum === today && (hour > 11 || (hour === 11 && min > 30))) return true;
+  return false;
+}
+
+function isOrderingOpen() {
+  const now = new Date();
+  const day = now.getDay(), hour = now.getHours(), min = now.getMinutes();
+  if (day === 0 || day === 6) return false;
+  return hour >= 7 && (hour < 11 || (hour === 11 && min <= 30));
+}
+
+function isCancelOpen() {
+  const now = new Date();
+  const day = now.getDay(), hour = now.getHours(), min = now.getMinutes();
+  if (day === 0 || day === 6) return false;
+  return (hour >= 7 && (hour < 11 || (hour === 11 && min <= 30))) || hour >= 17;
+}
+
+function updateCountdown() {
+  const banner = document.getElementById('orderCountdown');
+  if (adminVisible) { banner.style.display = 'none'; return; }
+  const now = new Date();
+  const day = now.getDay();
+  if (day === 0 || day === 6) { banner.style.display = 'none'; return; }
+  const hour = now.getHours(), min = now.getMinutes();
+  if (isOrderingOpen()) {
+    const minsLeft = (11 * 60 + 30) - (hour * 60 + min);
+    const h = Math.floor(minsLeft / 60), m = minsLeft % 60;
+    const timeStr = h > 0 ? `${h}h ${m}min` : `${m} min`;
+    banner.style.display = 'block';
+    banner.style.background = minsLeft <= 30 ? '#fff3cd' : '#d4edda';
+    banner.style.color = minsLeft <= 30 ? '#856404' : '#155724';
+    banner.textContent = minsLeft <= 30 ? `Pedidos cierran en ${timeStr}` : `Pedidos abiertos — cierran a las 11:30 AM (${timeStr})`;
+  } else if (hour < 7) {
+    banner.style.display = 'block';
+    banner.style.background = '#d1ecf1';
+    banner.style.color = '#0c5460';
+    banner.textContent = 'Pedidos abren a las 7:00 AM';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function checkOrderLock() {
+  if (adminVisible) {
+    document.getElementById('lockOverlay').classList.remove('active');
+    document.body.classList.remove('ordering-locked');
+    document.getElementById('cancelBtnFloat').classList.remove('hidden');
+    updateCountdown();
+    return;
+  }
+  const orderOpen = isOrderingOpen();
+  const cancelOpen = isCancelOpen();
+  document.getElementById('lockOverlay').classList.toggle('active', !orderOpen);
+  document.body.classList.toggle('ordering-locked', !orderOpen);
+  document.getElementById('cancelBtnFloat').classList.toggle('hidden', !cancelOpen);
+  if (!cancelOpen) document.getElementById('cancelPanel').classList.remove('active');
+  updateCountdown();
+}
+setInterval(checkOrderLock, 60000);
+
+function diaYaPaso(diaNombre) {
+  const menuDia = menuData.dias?.find(d => d.dia === diaNombre);
+  if (!menuDia) return true;
+  let mesIdx = MONTH_NAMES.indexOf(menuData.mes);
+  if (mesIdx === -1) return true;
+  const firstDate = menuData.dias[0]?.fecha || menuDia.fecha;
+  if (menuDia.fecha < firstDate) mesIdx = mesIdx < 11 ? mesIdx + 1 : 0;
+  const fechaDia = new Date(menuData.anio, mesIdx, menuDia.fecha);
+  const ahora = new Date();
+  const hoy = new Date(ahora); hoy.setHours(0,0,0,0);
+  fechaDia.setHours(0,0,0,0);
+  if (fechaDia < hoy) return true;
+  if (fechaDia.getTime() === hoy.getTime() && (ahora.getHours() > 11 || (ahora.getHours() === 11 && ahora.getMinutes() > 30))) return true;
+  return false;
+}
+
+// ============================================================
+//  CANCELACIONES
+// ============================================================
+function toggleCancelPanel() {
+  const panel = document.getElementById('cancelPanel');
+  panel.classList.toggle('active');
+  if (panel.classList.contains('active')) {
+    document.getElementById('cancelNumEmp').value = document.getElementById('numEmpleado').value.trim();
+    document.getElementById('cancelResults').innerHTML = '';
+    if (document.getElementById('cancelNumEmp').value) buscarPedido();
+    else document.getElementById('cancelNumEmp').focus();
+    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+async function buscarPedido() {
+  const num = document.getElementById('cancelNumEmp').value.trim();
+  if (!num) { showToast('Escribe tu numero de empleado'); return; }
+  await loadFromCloud();
+  const numNorm = normEmp(num);
+  const order = ordersData.find(o => normEmp(o.numEmpleado) === numNorm);
+  const container = document.getElementById('cancelResults');
+  if (!order) { container.innerHTML = '<div class="cancel-empty">No se encontraron pedidos con ese numero</div>'; return; }
+
+  let html = `<div style="margin-bottom:8px;font-size:0.9rem;color:var(--muted);">Pedido de <strong>${esc(order.nombre)}</strong></div>`;
+  const dias = Object.keys(order.detalle || {});
+  if (dias.length === 0) { container.innerHTML = '<div class="cancel-empty">No hay dias en este pedido</div>'; return; }
+  dias.forEach(dia => {
+    const opcion = order.opciones && order.opciones[dia] ? order.opciones[dia] : '';
+    const pasado = !adminVisible && diaYaPaso(dia);
+    html += `
+      <div class="cancel-day-item">
+        <div class="day-info">${esc(dia)}${opcion ? `<small>${esc(opcion)}</small>` : ''}</div>
+        ${pasado
+          ? `<span style="color:var(--muted);font-size:0.8rem;">Ya paso</span>`
+          : `<button class="cancel-day-btn" onclick="cancelarDia('${esc(order.numEmpleado)}', '${esc(dia)}')">Cancelar</button>`}
+      </div>`;
+  });
+  container.innerHTML = html;
+}
+
+async function cancelarDia(numEmp, dia) {
+  if (!adminVisible && !isCancelOpen()) { showToast('Horario de cancelacion cerrado'); return; }
+  if (!adminVisible && diaYaPaso(dia)) { showToast('Ese dia ya paso, no se puede cancelar'); return; }
+  await loadFromCloud();
+  const order = ordersData.find(o => normEmp(o.numEmpleado) === normEmp(numEmp));
+  if (!order) { showToast('Pedido no encontrado'); return; }
+  delete order.detalle[dia];
+  if (order.opciones) delete order.opciones[dia];
+  order.total = Object.values(order.detalle).reduce((a,b) => a+b, 0);
+  const ok = Object.keys(order.detalle).length === 0 ? await deleteOrder(order.numEmpleado) : await saveOrder(order);
+  await loadFromCloud();
+  if (!ok) { showToast('Error al cancelar, intenta de nuevo'); buscarPedido(); return; }
+  showToast(`${dia} cancelado`);
+  buscarPedido();
+  mostrarMisPedidos();
+  preMarcarDias();
+  if (adminVisible) renderOrders();
+}
+
+// ============================================================
+//  MIS PEDIDOS (empleado)
+// ============================================================
+function mostrarMisPedidos() {
+  const num = document.getElementById('numEmpleado').value.trim();
+  const el = document.getElementById('misPedidos');
+  if (!num) { el.classList.remove('visible'); return; }
+  const numNorm = normEmp(num);
+  const misPedidos = ordersData.filter(o => normEmp(o.numEmpleado) === numNorm);
+  const now = new Date();
+  const qKey = getQuincenaKey(now.toISOString());
+
+  const dias = [];
+  let semanaComidas = 0;
+  misPedidos.forEach(o => {
+    semanaComidas += o.total || 0;
+    Object.entries(o.detalle || {}).forEach(([dia, qty]) => {
+      if (qty > 0) dias.push(`${dia}: ${o.opciones?.[dia] || 'Plato del dia'}`);
+    });
+  });
+
+  const meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const quincenas = [];
+  let totalHistorico = 0;
+  Object.keys(historialData).sort().forEach(key => {
+    const h = historialData[key]?.[numNorm] || historialData[key]?.[num];
+    if (h && h.comidas > 0) {
+      totalHistorico += h.comidas;
+      const parts = key.match(/(\d+)-(\d+)-(Q\d)/);
+      if (parts) quincenas.push({ label: `${meses[parseInt(parts[2])]} ${parts[1]} ${parts[3] === 'Q1' ? '(1-15)' : '(16-31)'}`, comidas: h.comidas, current: key === qKey });
+    }
+  });
+  const histQ = historialData[qKey]?.[numNorm] || historialData[qKey]?.[num];
+  const qArchivadas = histQ ? histQ.comidas : 0;
+  const qTotal = qArchivadas + semanaComidas;
+  const granTotal = totalHistorico + semanaComidas;
+  if (granTotal === 0 && semanaComidas === 0) { el.classList.remove('visible'); return; }
+
+  const q = now.getDate() <= 15 ? '1-15' : '16-' + new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  let html = `<div class="mp-title">Esta quincena (${q}): ${qTotal} comida${qTotal !== 1 ? 's' : ''}</div>`;
+  if (dias.length > 0) {
+    html += '<div style="margin-top:4px;font-size:0.8rem;color:#6b7a8c;">Esta semana:</div>';
+    dias.forEach(d => { html += `<div class="mp-dia">• ${esc(d)}</div>`; });
+  }
+  if (qArchivadas > 0) html += `<div style="margin-top:2px;font-size:0.8rem;color:#6b7a8c;">Semanas anteriores: ${qArchivadas}</div>`;
+  if (quincenas.length > 0) {
+    html += `<div style="margin-top:8px;padding-top:8px;border-top:1px solid #d5e3f5;font-weight:600;font-size:0.85rem;color:var(--primary);">Total acumulado: ${granTotal} comida${granTotal !== 1 ? 's' : ''}</div>`;
+    html += '<div style="margin-top:4px;font-size:0.78rem;color:#8a9bb0;">';
+    quincenas.forEach(x => { if (!x.current) html += `${x.label}: ${x.comidas} · `; });
+    html += '</div>';
+  }
+  el.innerHTML = html;
+  el.classList.add('visible');
+}
+
+// ============================================================
+//  CATALOGO (super)
+// ============================================================
+function renderCatalogo(filtro) {
+  const list = document.getElementById('catalogoList');
+  const entries = sortByEmp(Object.entries(catalogoData).map(([k, v]) => ({ k, v })), 'k');
+  document.getElementById('catalogoCount').textContent = `(${entries.length} empleados)`;
+  let filtered = entries;
+  if (filtro) {
+    const f = filtro.toLowerCase();
+    filtered = entries.filter(({ k, v }) => k.toLowerCase().includes(f) || (v.nombre || '').toLowerCase().includes(f) || (v.rfc || '').toLowerCase().includes(f));
+  }
+  if (filtered.length === 0) { list.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:8px;">No se encontraron empleados</div>'; return; }
+  list.innerHTML = filtered.slice(0, 60).map(({ k, v }) => `
+    <div class="cortesia-item">
+      <div>
+        <span class="cortesia-info"><strong>#${esc(k)}</strong> — ${esc(v.nombre || 'Sin nombre')}</span>
+        <div class="cortesia-dias">${esc(v.rfc || 'Sin RFC')}</div>
+      </div>
+      <button class="cortesia-remove" onclick="quitarEmpleado('${esc(k)}')">Quitar</button>
+    </div>`).join('');
+  if (filtered.length > 60) list.innerHTML += `<div style="color:var(--muted);font-size:0.8rem;padding:8px;text-align:center;">Mostrando 60 de ${filtered.length}. Usa el buscador.</div>`;
+}
+
+function buscarEmpleadoCat() { renderCatalogo(document.getElementById('catBuscar').value.trim()); }
+
+async function agregarEmpleado() {
+  const num = document.getElementById('catNumEmp').value.trim();
+  const nombre = document.getElementById('catNombre').value.trim();
+  const rfc = document.getElementById('catRFC').value.trim().toUpperCase();
+  if (!num || !nombre) { showToast('Escribe el numero y nombre'); return; }
+  if (!/^[a-zA-Z0-9]+$/.test(num)) { showToast('El numero de empleado no es valido'); return; }
+  const numNorm = normEmp(num);
+  if (catalogoData[numNorm] && !confirm(`El empleado #${numNorm} ya existe. ¿Quieres actualizarlo?`)) return;
+  await loadFromCloud();
+  catalogoData[numNorm] = { nombre, rfc };
+  const ok = await saveCatalogo();
+  if (!ok) { showToast('Error al guardar (¿PIN super?): ' + lastFsError); return; }
+  document.getElementById('catNumEmp').value = '';
+  document.getElementById('catNombre').value = '';
+  document.getElementById('catRFC').value = '';
+  renderCatalogo();
+  showToast(`Empleado #${numNorm} agregado`);
+}
+
+async function quitarEmpleado(num) {
+  if (!confirm(`¿Quitar al empleado #${num} del catalogo?`)) return;
+  await loadFromCloud();
+  delete catalogoData[num];
+  delete catalogoData[normEmp(num)];
+  const ok = await saveCatalogo();
+  renderCatalogo(document.getElementById('catBuscar').value.trim());
+  showToast(ok ? 'Empleado eliminado' : 'Error al guardar');
+}
+
+function parseCatalogoTexto(txt) {
+  const out = {};
+  txt.split(/\r?\n/).forEach(line => {
+    const l = line.trim();
+    if (!l) return;
+    const parts = l.split(/\s*\|\s*|\t|\s*,\s*/).map(s => s.trim()).filter(Boolean);
+    if (parts.length < 2) return;
+    const num = normEmp(parts[0]);
+    if (!/^[A-Z0-9]+$/.test(num)) return;
+    out[num] = { nombre: parts[1], rfc: (parts[2] || '').toUpperCase() };
+  });
+  return out;
+}
+
+async function importarCatalogoMasivo() {
+  const txt = document.getElementById('bulkCatalogo').value;
+  const parsed = parseCatalogoTexto(txt);
+  const n = Object.keys(parsed).length;
+  if (!n) { showToast('No se reconocio ninguna linea'); return; }
+  if (!confirm(`Se importaran ${n} empleados (se actualizan los que ya existen). ¿Continuar?`)) return;
+  await loadFromCloud();
+  Object.assign(catalogoData, parsed);
+  const ok = await saveCatalogo();
+  if (!ok) { showToast('Error al guardar: ' + lastFsError); return; }
+  document.getElementById('bulkCatalogo').value = '';
+  renderCatalogo();
+  showToast(`${n} empleados importados`);
+}
+
+// ============================================================
+//  BUK EXPORT (por quincena)
+// ============================================================
+let bukQuincena = 1;
+function mostrarExportBUK() {
+  const now = new Date();
+  document.getElementById('bukMes').value = now.getMonth() + 1;
+  document.getElementById('bukAnio').value = now.getFullYear();
+  selQuincena(now.getDate() <= 15 ? 1 : 2);
+  document.getElementById('bukModalBg').style.display = 'flex';
+}
+function cerrarBukModal() { document.getElementById('bukModalBg').style.display = 'none'; }
+function selQuincena(q) {
+  bukQuincena = q;
+  document.getElementById('bukQ1').className = 'buk-q-btn' + (q === 1 ? ' buk-q-active' : '');
+  document.getElementById('bukQ2').className = 'buk-q-btn' + (q === 2 ? ' buk-q-active' : '');
+}
+
+function exportarBUK() {
+  const mes = parseInt(document.getElementById('bukMes').value);
+  const anio = parseInt(document.getElementById('bukAnio').value);
+  const desde = bukQuincena === 1 ? 1 : 16;
+  const hasta = bukQuincena === 1 ? 15 : new Date(anio, mes, 0).getDate();
+  const histKey = `${anio}-${mes}-Q${bukQuincena}`;
+  const fechaDesde = new Date(anio, mes - 1, desde);
+  const fechaHasta = new Date(anio, mes - 1, hasta, 23, 59, 59);
+
+  const conteo = {};
+  if (historialData[histKey]) {
+    Object.entries(historialData[histKey]).forEach(([emp, data]) => {
+      if (emp === '_cortesias') return;
+      conteo[emp] = { nombre: data.nombre, comidas: data.comidas };
+    });
+  }
+  ordersData.forEach(o => {
+    const f = new Date(o.fecha);
+    if (f >= fechaDesde && f <= fechaHasta) {
+      const key = orderDocId(o.numEmpleado);
+      if (!conteo[key]) conteo[key] = { nombre: o.nombre, comidas: 0 };
+      conteo[key].comidas += o.total || 0;
+    }
+  });
+
+  let csv = 'Numero de Documento,Ficha/Col,Valor\n';
+  const sorted = sortByEmp(Object.entries(conteo).map(([k, v]) => ({ k, v })), 'k');
+  const sinRFC = [];
+  sorted.forEach(({ k, v }) => {
+    const cat = findCatEntry(k);
+    const rfc = cat ? cat.rfc : '';
+    if (!rfc) sinRFC.push(k);
+    csv += `${rfc || 'NO ENCONTRADO'},${k},${(v.comidas * PRECIO_DESCUENTO_COLABORADOR).toFixed(2)}\n`;
+  });
+
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `BUK_Comedor_${EMPRESA_CORTA}_${MONTH_NAMES[mes - 1]}${anio}_Q${bukQuincena}.csv`;
+  a.click();
+  cerrarBukModal();
+  showToast(sinRFC.length > 0 ? `${sinRFC.length} empleado(s) sin RFC en catalogo` : 'Reporte BUK descargado');
+}
+
+// ============================================================
+//  CONCILIACION FACTURA (por quincena)
+// ============================================================
+let facturaQuincena = 1;
+function mostrarExportFactura() {
+  const now = new Date();
+  document.getElementById('facturaMes').value = now.getMonth() + 1;
+  document.getElementById('facturaAnio').value = now.getFullYear();
+  selQuincenaFactura(now.getDate() <= 15 ? 1 : 2);
+  document.getElementById('facturaModalBg').style.display = 'flex';
+}
+function cerrarFacturaModal() { document.getElementById('facturaModalBg').style.display = 'none'; }
+function selQuincenaFactura(q) {
+  facturaQuincena = q;
+  document.getElementById('facturaQ1').className = 'buk-q-btn' + (q === 1 ? ' buk-q-active' : '');
+  document.getElementById('facturaQ2').className = 'buk-q-btn' + (q === 2 ? ' buk-q-active' : '');
+}
+
+// Convierte un pedido (fecha de registro + dias de la semana) en fechas concretas del calendario
+function fechasDePedido(fechaRegistro, detalle, fechaDesde, fechaHasta, acc) {
+  const orderDate = new Date(fechaRegistro);
+  const weekStart = new Date(orderDate);
+  weekStart.setDate(orderDate.getDate() - orderDate.getDay());
+  Object.entries(detalle || {}).forEach(([dia, qty]) => {
+    const dow = DAY_NAMES.indexOf(dia);
+    if (dow < 0) return;
+    const target = new Date(weekStart);
+    target.setDate(weekStart.getDate() + dow);
+    target.setHours(12, 0, 0, 0);
+    if (target >= fechaDesde && target <= fechaHasta) acc[target.getDate()] = (acc[target.getDate()] || 0) + qty;
+  });
+}
+
+function construirConciliacion() {
+  const mes = parseInt(document.getElementById('facturaMes').value);
+  const anio = parseInt(document.getElementById('facturaAnio').value);
+  const desde = facturaQuincena === 1 ? 1 : 16;
+  const hasta = facturaQuincena === 1 ? 15 : new Date(anio, mes, 0).getDate();
+  const histKey = `${anio}-${mes}-Q${facturaQuincena}`;
+  const fechaDesde = new Date(anio, mes - 1, desde);
+  const fechaHasta = new Date(anio, mes - 1, hasta, 23, 59, 59);
+
+  const allDays = [];
+  for (let d = desde; d <= hasta; d++) {
+    const dt = new Date(anio, mes - 1, d);
+    if (dt.getDay() >= 1 && dt.getDay() <= 5) allDays.push(d);
+  }
+
+  const personas = {};
+  if (historialData[histKey]) {
+    Object.entries(historialData[histKey]).forEach(([emp, data]) => {
+      if (emp === '_cortesias') return;
+      const cat = findCatEntry(emp);
+      if (!personas[emp]) personas[emp] = { nombre: cat ? cat.nombre : data.nombre, dias: {} };
+      if (data.pedidos && data.pedidos.length > 0) {
+        data.pedidos.forEach(p => fechasDePedido(p.fecha, p.detalle, fechaDesde, fechaHasta, personas[emp].dias));
+      } else {
+        personas[emp].totalOnly = data.comidas;
+      }
+    });
+  }
+  ordersData.forEach(o => {
+    const f = new Date(o.fecha);
+    if (f >= fechaDesde && f <= fechaHasta) {
+      const emp = orderDocId(o.numEmpleado);
+      const cat = findCatEntry(emp);
+      if (!personas[emp]) personas[emp] = { nombre: cat ? cat.nombre : o.nombre, dias: {} };
+      fechasDePedido(o.fecha, o.detalle, fechaDesde, fechaHasta, personas[emp].dias);
+    }
+  });
+
+  const cortesiasList = [];
+  if (historialData[histKey]?._cortesias) {
+    historialData[histKey]._cortesias.forEach(c => cortesiasList.push({ nombre: c.nombre, comidas: c.comidas, dias: {} }));
+  }
+  cortesiasData.forEach(c => {
+    const entry = { nombre: c.nombre, comidas: 0, dias: {} };
+    fechasDePedido(new Date().toISOString(), c.dias, fechaDesde, fechaHasta, entry.dias);
+    entry.comidas = Object.values(entry.dias).reduce((a,b)=>a+b, 0);
+    if (entry.comidas > 0) cortesiasList.push(entry);
+  });
+
+  const diaSem = ['dom','lun','mar','mie','jue','vie','sab'];
+  const dayHeaders = allDays.map(d => `${diaSem[new Date(anio, mes - 1, d).getDay()]} ${String(d).padStart(2,'0')}/${String(mes).padStart(2,'0')}`);
+  const fechaDesdeStr = `${String(desde).padStart(2,'0')}/${String(mes).padStart(2,'0')}/${anio}`;
+  const fechaHastaStr = `${String(hasta).padStart(2,'0')}/${String(mes).padStart(2,'0')}/${anio}`;
+  const sorted = sortByEmp(Object.entries(personas).map(([k, v]) => ({ k, v })), 'k');
+  return { mes, anio, allDays, personas: sorted, cortesiasList, dayHeaders, fechaDesdeStr, fechaHastaStr };
+}
+
+function exportarFactura() {
+  const c = construirConciliacion();
+  let totalColaboradores = 0, totalDescuentos = 0, cortTotalComidas = 0;
+  let csv = `${EMPRESA} - COMEDOR\nReporte del ${c.fechaDesdeStr} al ${c.fechaHastaStr}\n\n`;
+  csv += `No. Empleado,Nombre,${c.dayHeaders.join(',')},TOTAL,TOTAL DESCUENTOS\n`;
+  c.personas.forEach(({ k, v }) => {
+    let personTotal = 0;
+    const dayCols = c.allDays.map(d => { const q = v.dias[d] || 0; personTotal += q; return q || ''; });
+    if (v.totalOnly && personTotal === 0) personTotal = v.totalOnly;
+    const descuento = personTotal * PRECIO_DESCUENTO_COLABORADOR;
+    totalColaboradores += personTotal; totalDescuentos += descuento;
+    csv += `${k},"${v.nombre}",${dayCols.join(',')},${personTotal},${descuento.toFixed(2)}\n`;
+  });
+  c.cortesiasList.forEach(x => {
+    cortTotalComidas += x.comidas;
+    csv += `CORTESIA,"${x.nombre}",${c.allDays.map(() => '').join(',')},${x.comidas},0.00\n`;
+  });
+  if (c.cortesiasList.length > 0) csv += `TOTAL CORTESIAS,Cortesias,${c.allDays.map(() => '').join(',')},${cortTotalComidas},0.00\n`;
+  const granTotal = totalColaboradores + cortTotalComidas;
+  const subtotal = granTotal * PRECIO_BASE_PROVEEDOR;
+  const iva = subtotal * IVA_RATE;
+  csv += `\nTOTAL DE PEDIDOS,${granTotal}\nPRECIO BASE PROVEEDOR,${PRECIO_BASE_PROVEEDOR.toFixed(2)}\nSUBTOTAL,${subtotal.toFixed(2)}\nIVA (16%),${iva.toFixed(2)}\nTOTAL CON IVA,${(subtotal + iva).toFixed(2)}\nTOTAL DESCUENTOS COLABORADORES,${totalDescuentos.toFixed(2)}\n`;
+
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Conciliacion_${EMPRESA_CORTA}_${MONTH_NAMES[c.mes - 1]}${c.anio}_Q${facturaQuincena}.csv`;
+  a.click();
+  cerrarFacturaModal();
+  showToast('Reporte de conciliacion descargado');
+}
+
+function exportarFacturaXLSX() {
+  if (typeof XLSX === 'undefined') { showToast('Libreria Excel no disponible, usa CSV'); return; }
+  const c = construirConciliacion();
+  const wb = XLSX.utils.book_new();
+  const rows = [];
+  rows.push([`${EMPRESA} - COMEDOR`]);
+  rows.push([`Reporte del ${c.fechaDesdeStr} al ${c.fechaHastaStr}`]);
+  rows.push([]);
+  const headerRow = ['No. Empleado', 'Nombre', ...c.dayHeaders, 'TOTAL', 'TOTAL DESCUENTOS'];
+  rows.push(headerRow);
+
+  let totalColaboradores = 0, totalDescuentos = 0;
+  const dayTotals = {}; c.allDays.forEach(d => dayTotals[d] = 0);
+  c.personas.forEach(({ k, v }) => {
+    let personTotal = 0;
+    const dayCols = c.allDays.map(d => { const q = v.dias[d] || 0; personTotal += q; dayTotals[d] += q; return q || null; });
+    if (v.totalOnly && personTotal === 0) personTotal = v.totalOnly;
+    const descuento = personTotal * PRECIO_DESCUENTO_COLABORADOR;
+    totalColaboradores += personTotal; totalDescuentos += descuento;
+    rows.push([k, v.nombre, ...dayCols, personTotal, descuento]);
+  });
+
+  let cortTotalComidas = 0;
+  const cortDayTotals = {}; c.allDays.forEach(d => cortDayTotals[d] = 0);
+  c.cortesiasList.forEach(x => {
+    const dayCols = c.allDays.map(d => { const q = x.dias[d] || 0; cortDayTotals[d] += q; return q || null; });
+    cortTotalComidas += x.comidas;
+    rows.push(['CORTESIA', x.nombre, ...dayCols, x.comidas, 0]);
+  });
+  if (c.cortesiasList.length > 0) rows.push(['TOTAL CORTESIAS', 'Cortesias', ...c.allDays.map(d => cortDayTotals[d] || null), cortTotalComidas, 0]);
+
+  const granTotal = totalColaboradores + cortTotalComidas;
+  c.allDays.forEach(d => dayTotals[d] += (cortDayTotals[d] || 0));
+  rows.push(['TOTAL PEDIDOS', '', ...c.allDays.map(d => dayTotals[d] || null), granTotal, totalDescuentos]);
+
+  const subtotal = granTotal * PRECIO_BASE_PROVEEDOR;
+  const iva = subtotal * IVA_RATE;
+  rows.push([]);
+  rows.push(['TOTAL DE PEDIDOS', granTotal]);
+  rows.push(['PRECIO BASE PROVEEDOR', PRECIO_BASE_PROVEEDOR]);
+  rows.push(['SUBTOTAL', subtotal]);
+  rows.push(['IVA (16%)', iva]);
+  rows.push(['TOTAL CON IVA', subtotal + iva]);
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const totalCols = headerRow.length;
+  const headerRowIdx = 3, dataStart = 4;
+  const cortRows = c.cortesiasList.length;
+  const dataRowCount = c.personas.length + cortRows + (cortRows > 0 ? 1 : 0);
+  const totalGenRowIdx = dataStart + dataRowCount;
+  const cortTotalRowIdx = cortRows > 0 ? dataStart + c.personas.length + cortRows : -1;
+  const summaryStart = totalGenRowIdx + 2;
+
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: totalCols - 1 } }
+  ];
+  const blueFill = { fgColor: { rgb: '0B3D91' } };
+  const whiteFont = { color: { rgb: 'FFFFFF' }, bold: true, sz: 11 };
+  const centerAlign = { horizontal: 'center', vertical: 'center' };
+  const leftAlign = { horizontal: 'left', vertical: 'center' };
+  const rightAlign = { horizontal: 'right', vertical: 'center' };
+  const intFmt = '#,##0', moneyFmt = '#,##0.00';
+  const thinBorder = { top: { style: 'thin', color: { rgb: 'B0B0B0' } }, bottom: { style: 'thin', color: { rgb: 'B0B0B0' } }, left: { style: 'thin', color: { rgb: 'B0B0B0' } }, right: { style: 'thin', color: { rgb: 'B0B0B0' } } };
+  const importeColIdx = totalCols - 1;
+
+  const cell = (r, cc) => { const ref = XLSX.utils.encode_cell({ r, c: cc }); if (!ws[ref]) ws[ref] = { t: 's', v: '' }; return ws[ref]; };
+  const t = cell(0, 0); t.s = { font: { bold: true, sz: 14, color: { rgb: '0B3D91' } }, alignment: centerAlign };
+  const st = cell(1, 0); st.s = { font: { bold: true, sz: 11, color: { rgb: '555555' } }, alignment: centerAlign };
+  for (let cc = 0; cc < totalCols; cc++) cell(headerRowIdx, cc).s = { fill: blueFill, font: whiteFont, alignment: centerAlign, border: thinBorder };
+  for (let r = dataStart; r <= totalGenRowIdx; r++) {
+    for (let cc = 0; cc < totalCols; cc++) {
+      const x = cell(r, cc);
+      const isMoney = cc === importeColIdx;
+      x.s = { border: thinBorder, alignment: cc <= 1 ? leftAlign : isMoney ? rightAlign : centerAlign };
+      if (x.t === 'n') x.z = isMoney ? moneyFmt : intFmt;
+    }
+  }
+  if (cortTotalRowIdx >= 0) for (let cc = 0; cc < totalCols; cc++) { const x = cell(cortTotalRowIdx, cc); x.s = Object.assign({}, x.s, { fill: { fgColor: { rgb: 'D6EAF8' } }, font: { bold: true } }); }
+  for (let cc = 0; cc < totalCols; cc++) { const x = cell(totalGenRowIdx, cc); x.s = Object.assign({}, x.s, { fill: { fgColor: { rgb: 'E2EFDA' } }, font: { bold: true, sz: 11 } }); }
+  for (let i = 0; i < 5; i++) for (let cc = 0; cc < 2; cc++) {
+    const ref = XLSX.utils.encode_cell({ r: summaryStart + i, c: cc });
+    if (ws[ref]) { ws[ref].s = { font: { bold: cc === 0 }, alignment: cc === 0 ? leftAlign : rightAlign }; if (cc === 1 && ws[ref].t === 'n') ws[ref].z = i === 0 ? intFmt : moneyFmt; }
+  }
+  const colWidths = [{ wch: 18 }, { wch: 40 }];
+  c.allDays.forEach(() => colWidths.push({ wch: 12 }));
+  colWidths.push({ wch: 10 }, { wch: 22 });
+  ws['!cols'] = colWidths;
+  ws['!autofilter'] = { ref: `A${headerRowIdx + 1}:${XLSX.utils.encode_col(totalCols - 1)}${totalGenRowIdx + 1}` };
+  ws['!views'] = [{ state: 'frozen', ySplit: headerRowIdx + 1 }];
+  XLSX.utils.book_append_sheet(wb, ws, 'Conciliacion');
+  XLSX.writeFile(wb, `Conciliacion_${EMPRESA_CORTA}_${MONTH_NAMES[c.mes - 1]}${c.anio}_Q${facturaQuincena}.xlsx`);
+  cerrarFacturaModal();
+  showToast('Excel de conciliacion descargado');
+}
+
+// ============================================================
+//  AUTO-REFRESH: admin cada 3 min, empleados cada 5 min
+// ============================================================
+function getISOWeek(d) {
+  const date = new Date(d.getTime());
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  return { year: date.getFullYear(), week: Math.round(((date - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7) + 1 };
+}
+function menuMatchesThisWeek() {
+  if (!menuData.dias || !menuData.dias.length || !menuData.mes || !menuData.anio) return false;
+  const mesIdx = MONTH_NAMES.indexOf(menuData.mes);
+  if (mesIdx === -1) return false;
+  const menuWeek = getISOWeek(new Date(menuData.anio, mesIdx, menuData.dias[0].fecha));
+  const thisWeek = getISOWeek(new Date());
+  return menuWeek.year === thisWeek.year && menuWeek.week === thisWeek.week;
+}
+function menuHash() { return JSON.stringify(menuData.dias?.map(d => [d.dia, d.fecha, d.platoFuerte, d.platoAlternativo]) || []); }
+
+setInterval(async () => {
+  if (adminVisible) { await loadFromCloud(); renderOrders(); }
+}, 180000);
+setInterval(async () => {
+  if (adminVisible) return;
+  const wasCurrentWeek = menuMatchesThisWeek();
+  const prevHash = menuHash();
+  await loadFromCloud();
+  if (prevHash !== menuHash() || (!wasCurrentWeek && menuMatchesThisWeek())) {
+    quantities = {}; selections = {};
+    showToast('Menu actualizado');
+  }
+  mostrarMisPedidos();
+  renderMenu();
+}, 300000);
+
+// ============================================================
+//  INIT
+// ============================================================
+(async () => {
+  await loadFromCloud();
+  renderMenu();
+  checkOrderLock();
+})();
+</script>
+</body>
+</html>
