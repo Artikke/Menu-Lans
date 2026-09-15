@@ -8,7 +8,7 @@ rules_version = '2';
 //  - El admin "inicia sesion" creando admin_sessions/{uid} con el PIN;
 //    las reglas comparan el PIN contra config/secrets y guardan el nivel.
 //  - Las sesiones expiran a las 12 h.
-//  - comentarios/{id}: buzon anonimo. Cualquiera con token crea y lee; solo super borra.
+//  - comentarios/{id}: buzon anonimo. Cualquiera con token crea; admin y super leen; solo super borra.
 // ============================================================
 service cloud.firestore {
   match /databases/{db}/documents {
@@ -110,7 +110,7 @@ service cloud.firestore {
 
     // --- Buzon anonimo ---
     match /comentarios/{id} {
-      allow read: if signedIn();
+      allow read: if isAdmin();
       allow create: if signedIn() && validComentario();
       allow update: if false;
       allow delete: if isSuper();

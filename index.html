@@ -480,29 +480,30 @@ body {
 .tiny-modal .btns .go { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; }
 
 /* ===== VISTA SEMANAL COMPACTA ===== */
-.week-wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 8px; }
+.week-wrap { max-width: 1000px; margin: 0 auto; padding: 0 12px 8px; }
 .week-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); }
 .week-title { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; padding: 12px 18px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .week-title small { font-weight: 500; opacity: 0.85; font-size: 0.72rem; text-align: right; }
-.day-row { display: grid; grid-template-columns: 58px 1fr 48px; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); transition: background 0.2s; }
-.day-row:last-child { border-bottom: none; }
+#menuGrid { display: grid; grid-template-columns: repeat(5, 1fr); }
+.day-row { display: flex; flex-direction: column; border-right: 1px solid var(--border); transition: background 0.2s; min-width: 0; }
+.day-row:last-child { border-right: none; }
 .day-row.on { background: rgba(30,136,229,0.08); }
 .day-row.passed { opacity: 0.45; }
 .day-row.passed .day-btn { visibility: hidden; }
-.day-date { text-align: center; }
+.day-date { text-align: center; background: rgba(11,61,145,0.06); padding: 8px 4px 6px; border-bottom: 1px solid var(--border); }
 .day-date .dn { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 0.72rem; text-transform: uppercase; color: var(--primary); letter-spacing: 1px; }
-.day-date .dd { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.5rem; line-height: 1.1; color: var(--text); }
+.day-date .dd { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.4rem; line-height: 1.1; color: var(--text); }
 .day-row.on .day-date .dd { color: var(--accent); }
-.day-meals { min-width: 0; }
-.day-meals .main { font-weight: 600; font-size: 0.95rem; color: var(--text); line-height: 1.3; }
-.day-meals .side { font-size: 0.78rem; color: var(--muted); line-height: 1.4; margin-top: 2px; }
+.day-meals { min-width: 0; flex: 1; padding: 8px 6px 4px; text-align: center; overflow-wrap: anywhere; }
+.day-meals .main { font-weight: 600; font-size: 0.82rem; color: var(--text); line-height: 1.25; }
+.day-meals .side { font-size: 0.68rem; color: var(--muted); line-height: 1.35; margin-top: 4px; }
 .day-meals .passed-tag { font-size: 0.7rem; color: var(--muted); font-style: italic; }
-.day-btn { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg); color: var(--muted); font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; font-family: 'Inter', sans-serif; }
+.day-btn { margin: 6px auto 12px; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg); color: var(--muted); font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; font-family: 'Inter', sans-serif; }
 .day-btn:hover { border-color: var(--accent); color: var(--accent); }
 .day-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .day-btn.locked { pointer-events: none; opacity: 0.85; }
-.alt-pills { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-.alt-pill { font-size: 0.74rem; padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border); background: #fff; cursor: pointer; color: var(--text); font-family: 'Inter', sans-serif; }
+.alt-pills { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.alt-pill { font-size: 0.66rem; padding: 4px 6px; line-height: 1.2; border-radius: 20px; border: 1px solid var(--border); background: #fff; cursor: pointer; color: var(--text); font-family: 'Inter', sans-serif; }
 .alt-pill.sel { background: var(--primary); border-color: var(--primary); color: #fff; }
 .nombre-confirm { margin-top: 10px; text-align: center; font-size: 0.95rem; font-weight: 600; color: var(--green-dark); min-height: 1.2em; }
 .nombre-confirm.bad { color: #c0392b; font-weight: 500; }
@@ -523,6 +524,18 @@ body {
 .comment-item .cdel { position: absolute; top: 6px; right: 8px; background: #e74c3c; color: #fff; border: none; border-radius: 6px; font-size: 0.7rem; padding: 3px 8px; cursor: pointer; }
 .comments-empty { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 10px; }
 .role-hidden { display: none !important; }
+@media (max-width: 600px) {
+  .week-wrap { padding: 0 6px 8px; }
+  .week-title { padding: 10px 12px; font-size: 0.85rem; }
+  .week-title small { display: none; }
+  .day-date .dn { font-size: 0.62rem; letter-spacing: 0.5px; }
+  .day-date .dd { font-size: 1.15rem; }
+  .day-meals { padding: 6px 3px 2px; }
+  .day-meals .main { font-size: 0.7rem; }
+  .day-meals .side { font-size: 0.6rem; }
+  .day-btn { width: 36px; height: 36px; font-size: 1.1rem; margin: 4px auto 10px; }
+  .alt-pill { font-size: 0.58rem; padding: 3px 4px; }
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 </head>
@@ -601,10 +614,9 @@ body {
 <div class="comments-wrap">
   <div class="comments-card">
     <h3>&#128172; Buzon del comedor</h3>
-    <div class="sub">Anonimo: no se guarda tu nombre ni tu numero. Todos pueden leer los comentarios.</div>
+    <div class="sub">Anonimo: no se guarda tu nombre ni tu numero. Lo lee el equipo del comedor y Recursos Humanos.</div>
     <textarea id="comentarioTexto" maxlength="400" placeholder="Sugerencia, queja o felicitacion para el comedor..." oninput="document.getElementById('comentarioCount').textContent = this.value.length + '/400'"></textarea>
     <div class="comment-send"><small id="comentarioCount">0/400</small><button onclick="enviarComentario()">Enviar</button></div>
-    <div class="comment-list" id="comentariosList"></div>
   </div>
 </div>
 
@@ -717,6 +729,12 @@ body {
       <button onclick="unlockCatalogo()" style="margin-left:8px;padding:8px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;">Desbloquear</button>
       <div id="superPinError" style="color:#e74c3c;font-size:0.8rem;margin-top:4px;display:none;">PIN incorrecto</div>
     </div>
+  </div>
+
+  <!-- COMENTARIOS (admin y super) -->
+  <div class="orders-log">
+    <h3>&#128172; Comentarios del buzon <span id="comentariosBadge" style="font-size:0.75rem;color:var(--muted);font-weight:400;"></span></h3>
+    <div class="comment-list" id="comentariosList" style="margin-top:0;"></div>
   </div>
 
   <!-- ORDERS -->
@@ -1163,6 +1181,7 @@ function renderMenu() {
 
   const grid = document.getElementById('menuGrid');
   grid.innerHTML = '';
+  grid.style.gridTemplateColumns = `repeat(${Math.max(dias.length, 1)}, 1fr)`;
   const numEmpNorm = normEmp(document.getElementById('numEmpleado').value.trim());
   const pedidoPrevioActivo = numEmpNorm && ordersData.some(o => normEmp(o.numEmpleado) === numEmpNorm);
 
@@ -1188,7 +1207,7 @@ function renderMenu() {
           <button class="alt-pill ${selections[i]==='principal'?'sel':''}" onclick="selectOption(${i},'principal')">${esc(d.platoFuerte)}</button>
           <button class="alt-pill ${selections[i]==='alternativa'?'sel':''}" onclick="selectOption(${i},'alternativa')">${esc(d.platoAlternativo)}</button>
         </div>` : ''}
-        ${passed && !yaPedido ? '<div class="passed-tag">Este dia ya paso</div>' : ''}
+        ${passed && !yaPedido ? '<div class="passed-tag">Ya paso</div>' : ''}
         ${passed && yaPedido ? '<div class="passed-tag">Ya pedido</div>' : ''}
       </div>
       <button class="day-btn ${on ? 'on' : ''} ${passed && yaPedido ? 'locked' : ''}" id="qty-${i}" onclick="toggleDay(${i})" aria-label="Pedir ${esc(d.dia)}">${on ? '&#10003;' : '+'}</button>`;
@@ -1864,14 +1883,14 @@ async function enviarComentario() {
   ta.value = '';
   document.getElementById('comentarioCount').textContent = '0/400';
   showToast('Gracias, tu comentario quedo registrado');
-  await loadFromCloud();
-  renderComentarios();
 }
 
 function renderComentarios() {
   const list = document.getElementById('comentariosList');
   if (!list) return;
-  if (!comentariosData.length) { list.innerHTML = '<div class="comments-empty">Aun no hay comentarios. Se el primero.</div>'; return; }
+  const badge = document.getElementById('comentariosBadge');
+  if (badge) badge.textContent = comentariosData.length ? `(${comentariosData.length})` : '';
+  if (!comentariosData.length) { list.innerHTML = '<div class="comments-empty">Aun no hay comentarios</div>'; return; }
   list.innerHTML = comentariosData.slice(0, 50).map(c => {
     const f = new Date(c.fecha);
     const fs = isNaN(f) ? '' : `${f.getDate()}/${f.getMonth()+1}/${f.getFullYear()} ${f.getHours()}:${String(f.getMinutes()).padStart(2,'0')}`;
