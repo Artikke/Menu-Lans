@@ -565,6 +565,36 @@ body {
 .comment-item .cdel { position: absolute; top: 6px; right: 8px; background: #e74c3c; color: #fff; border: none; border-radius: 6px; font-size: 0.7rem; padding: 3px 8px; cursor: pointer; }
 .comments-empty { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 10px; }
 .role-hidden { display: none !important; }
+/* ===== BUZON FLOTANTE ===== */
+.buzon-btn-float {
+  position: fixed; bottom: 80px; left: 20px; z-index: 90;
+  background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; border: none;
+  padding: 11px 18px; border-radius: 25px; font-family: 'Montserrat', sans-serif;
+  font-size: 0.85rem; font-weight: 600; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(11,61,145,0.3); transition: transform 0.2s;
+}
+.buzon-btn-float:hover { transform: scale(1.05); }
+.buzon-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9999; align-items: center; justify-content: center; padding: 16px; }
+.buzon-overlay.active { display: flex; }
+.buzon-modal { background: #fff; border-radius: 18px; padding: 24px 20px; max-width: 440px; width: 100%; max-height: 92vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.buzon-modal h3 { font-family: 'Montserrat', sans-serif; color: var(--primary); margin-bottom: 4px; text-align: center; font-size: 1.15rem; }
+.buzon-modal .buzon-subtitle { text-align: center; color: var(--muted); font-size: 0.8rem; margin-bottom: 14px; line-height: 1.4; }
+.buzon-modal label { font-weight: 600; color: var(--primary); font-size: 0.82rem; display: block; margin-bottom: 4px; margin-top: 10px; }
+.buzon-modal textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); font-family: 'Inter', sans-serif; font-size: 0.95rem; resize: vertical; min-height: 90px; }
+.buzon-modal textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(30,136,229,0.12); }
+.buzon-foto-area { border: 2px dashed #cfd8e3; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; font-size: 0.88rem; color: var(--muted); }
+.buzon-foto-area:hover { border-color: var(--accent); background: #f3f8fe; }
+.buzon-foto-area.has-photo { border-color: var(--green); background: #f0faf5; }
+.buzon-foto-area input[type="file"] { display: none; }
+.buzon-foto-preview { max-width: 100%; max-height: 220px; border-radius: 8px; margin-top: 8px; display: none; }
+.buzon-foto-preview.visible { display: inline-block; }
+.buzon-btns { display: flex; gap: 10px; margin-top: 18px; }
+.buzon-btns button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 700; font-family: 'Montserrat', sans-serif; font-size: 0.9rem; cursor: pointer; }
+.buzon-btn-cancel { background: #ecf0f1; color: #7f8c8d; }
+.buzon-btn-send { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; }
+.buzon-btn-send:disabled { opacity: 0.6; cursor: wait; }
+.comment-item .cfoto { display: block; max-width: 100%; max-height: 260px; border-radius: 8px; margin-top: 8px; cursor: pointer; }
+@media (max-width: 600px) { .buzon-btn-float { bottom: 78px; left: 12px; padding: 10px 14px; font-size: 0.78rem; } }
 @media (max-width: 600px) {
   .week-wrap { padding: 0 6px 8px; }
   .week-title { padding: 10px 12px; font-size: 0.85rem; }
@@ -645,13 +675,25 @@ body {
 <div class="water-note">* Incluye agua del dia &middot; Servicio de 12:30 a 17:30</div>
 <div class="night-note"><strong>Turno nocturno:</strong> solicita tu comida por Teams con Axel Avila. Se entrega en contenedor desechable rotulado con tu nombre.</div>
 
-<!-- BUZON ANONIMO -->
-<div class="comments-wrap">
-  <div class="comments-card">
+<!-- BUZON ANONIMO: boton flotante + modal -->
+<button class="buzon-btn-float" id="buzonBtnFloat" onclick="abrirBuzon()">&#128172; Comentarios</button>
+<div class="buzon-overlay" id="buzonOverlay" onclick="if(event.target===this)cerrarBuzon()">
+  <div class="buzon-modal">
     <h3>&#128172; Buzon del comedor</h3>
-    <div class="sub">Anonimo: no se guarda tu nombre ni tu numero. Lo lee el equipo del comedor y Recursos Humanos.</div>
-    <textarea id="comentarioTexto" maxlength="400" placeholder="Sugerencia, queja o felicitacion para el comedor..." oninput="document.getElementById('comentarioCount').textContent = this.value.length + '/400'"></textarea>
-    <div class="comment-send"><small id="comentarioCount">0/400</small><button onclick="enviarComentario()">Enviar</button></div>
+    <p class="buzon-subtitle">Anonimo: no se guarda tu nombre ni tu numero. Lo lee el comedor y Recursos Humanos.</p>
+    <label>Tu comentario *</label>
+    <textarea id="comentarioTexto" maxlength="400" placeholder="Sugerencia, queja o felicitacion..." oninput="document.getElementById('comentarioCount').textContent = this.value.length + '/400'"></textarea>
+    <div style="text-align:right;font-size:0.72rem;color:var(--muted);margin-top:4px;" id="comentarioCount">0/400</div>
+    <label>Foto (opcional)</label>
+    <div class="buzon-foto-area" id="buzonFotoArea" onclick="document.getElementById('buzonFotoInput').click()">
+      <div id="buzonFotoPlaceholder">&#128247; Toca para tomar o subir una foto</div>
+      <input type="file" id="buzonFotoInput" accept="image/*" capture="environment" onchange="previsualizarFoto(this)" />
+      <img class="buzon-foto-preview" id="buzonFotoPreview" alt="" />
+    </div>
+    <div class="buzon-btns">
+      <button class="buzon-btn-cancel" onclick="cerrarBuzon()">Cancelar</button>
+      <button class="buzon-btn-send" id="buzonBtnSend" onclick="enviarComentario()">Enviar</button>
+    </div>
   </div>
 </div>
 
@@ -1932,18 +1974,65 @@ async function quitarCortesia(idx) {
 //  BUZON ANONIMO (coleccion comentarios/{autoId})
 // ============================================================
 let comentarioBusy = false;
+let buzonFotoBase64 = null;
+
+function abrirBuzon() {
+  document.getElementById('buzonOverlay').classList.add('active');
+  document.getElementById('comentarioTexto').value = '';
+  document.getElementById('comentarioCount').textContent = '0/400';
+  document.getElementById('buzonFotoInput').value = '';
+  document.getElementById('buzonFotoPreview').classList.remove('visible');
+  document.getElementById('buzonFotoArea').classList.remove('has-photo');
+  document.getElementById('buzonFotoPlaceholder').style.display = '';
+  buzonFotoBase64 = null;
+  setTimeout(() => document.getElementById('comentarioTexto').focus(), 100);
+}
+
+function cerrarBuzon() { document.getElementById('buzonOverlay').classList.remove('active'); }
+
+function previsualizarFoto(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  if (file.size > 15 * 1024 * 1024) { showToast('La foto es muy grande (max 15MB)'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 800;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) { if (w > h) { h = Math.round(h * MAX / w); w = MAX; } else { w = Math.round(w * MAX / h); h = MAX; } }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      let q = 0.7;
+      buzonFotoBase64 = canvas.toDataURL('image/jpeg', q);
+      while (buzonFotoBase64.length > 600000 && q > 0.3) { q -= 0.1; buzonFotoBase64 = canvas.toDataURL('image/jpeg', q); }
+      const preview = document.getElementById('buzonFotoPreview');
+      preview.src = buzonFotoBase64;
+      preview.classList.add('visible');
+      document.getElementById('buzonFotoArea').classList.add('has-photo');
+      document.getElementById('buzonFotoPlaceholder').style.display = 'none';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 async function enviarComentario() {
   if (comentarioBusy) return;
-  const ta = document.getElementById('comentarioTexto');
-  const texto = ta.value.trim();
+  const texto = document.getElementById('comentarioTexto').value.trim();
   if (texto.length < 3) { showToast('Escribe un comentario'); return; }
   if (texto.length > 400) { showToast('Maximo 400 caracteres'); return; }
   comentarioBusy = true;
-  const ok = await fsCreate('comentarios', { texto, fecha: new Date().toISOString() });
+  const btn = document.getElementById('buzonBtnSend');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  const data = { texto, fecha: new Date().toISOString() };
+  if (buzonFotoBase64) data.foto = buzonFotoBase64;
+  const ok = await fsCreate('comentarios', data);
   comentarioBusy = false;
+  btn.disabled = false; btn.textContent = 'Enviar';
   if (!ok) { showToast('No se pudo enviar, intenta de nuevo'); return; }
-  ta.value = '';
-  document.getElementById('comentarioCount').textContent = '0/400';
+  cerrarBuzon();
   showToast('Gracias, tu comentario quedo registrado');
 }
 
@@ -1956,7 +2045,8 @@ function renderComentarios() {
   list.innerHTML = comentariosData.slice(0, 50).map(c => {
     const f = new Date(c.fecha);
     const fs = isNaN(f) ? '' : `${f.getDate()}/${f.getMonth()+1}/${f.getFullYear()} ${f.getHours()}:${String(f.getMinutes()).padStart(2,'0')}`;
-    return `<div class="comment-item">${esc(c.texto)}<div class="cdate">${fs}</div>${isAdminLevel() ? `<button class="cdel" onclick="borrarComentario('${esc(c._id)}')">Borrar</button>` : ''}</div>`;
+    const foto = (typeof c.foto === 'string' && c.foto.startsWith('data:image/')) ? `<img class="cfoto" src="${c.foto}" onclick="window.open(this.src)" alt="foto" />` : '';
+    return `<div class="comment-item">${esc(c.texto)}${foto}<div class="cdate">${fs}</div>${isAdminLevel() ? `<button class="cdel" onclick="borrarComentario('${esc(c._id)}')">Borrar</button>` : ''}</div>`;
   }).join('');
 }
 

@@ -61,9 +61,10 @@ service cloud.firestore {
 
     function validComentario() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['texto', 'fecha'])
+      return d.keys().hasOnly(['texto', 'fecha', 'foto'])
         && d.texto is string && d.texto.size() >= 3 && d.texto.size() <= 400
-        && d.fecha is string && d.fecha.size() <= 40;
+        && d.fecha is string && d.fecha.size() <= 40
+        && (!('foto' in d) || (d.foto is string && d.foto.size() <= 700000));
     }
 
     // --- Secretos: nadie los lee ni escribe desde el cliente ---
