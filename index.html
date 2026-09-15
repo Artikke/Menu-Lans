@@ -409,7 +409,7 @@ body {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
 .ordering-locked .nombre-section,
-.ordering-locked .menu-grid,
+.ordering-locked .week-wrap,
 .ordering-locked .summary-bar,
 .ordering-locked .water-note { opacity: 0.3; pointer-events: none; user-select: none; }
 
@@ -478,6 +478,51 @@ body {
 .tiny-modal .btns button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
 .tiny-modal .btns .cancel { border: 1px solid #ddd; background: #fff; font-weight: 600; }
 .tiny-modal .btns .go { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; }
+
+/* ===== VISTA SEMANAL COMPACTA ===== */
+.week-wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 8px; }
+.week-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); }
+.week-title { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; padding: 12px 18px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.week-title small { font-weight: 500; opacity: 0.85; font-size: 0.72rem; text-align: right; }
+.day-row { display: grid; grid-template-columns: 58px 1fr 48px; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); transition: background 0.2s; }
+.day-row:last-child { border-bottom: none; }
+.day-row.on { background: rgba(30,136,229,0.08); }
+.day-row.passed { opacity: 0.45; }
+.day-row.passed .day-btn { visibility: hidden; }
+.day-date { text-align: center; }
+.day-date .dn { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 0.72rem; text-transform: uppercase; color: var(--primary); letter-spacing: 1px; }
+.day-date .dd { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.5rem; line-height: 1.1; color: var(--text); }
+.day-row.on .day-date .dd { color: var(--accent); }
+.day-meals { min-width: 0; }
+.day-meals .main { font-weight: 600; font-size: 0.95rem; color: var(--text); line-height: 1.3; }
+.day-meals .side { font-size: 0.78rem; color: var(--muted); line-height: 1.4; margin-top: 2px; }
+.day-meals .passed-tag { font-size: 0.7rem; color: var(--muted); font-style: italic; }
+.day-btn { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg); color: var(--muted); font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; font-family: 'Inter', sans-serif; }
+.day-btn:hover { border-color: var(--accent); color: var(--accent); }
+.day-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.day-btn.locked { pointer-events: none; opacity: 0.85; }
+.alt-pills { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.alt-pill { font-size: 0.74rem; padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border); background: #fff; cursor: pointer; color: var(--text); font-family: 'Inter', sans-serif; }
+.alt-pill.sel { background: var(--primary); border-color: var(--primary); color: #fff; }
+.nombre-confirm { margin-top: 10px; text-align: center; font-size: 0.95rem; font-weight: 600; color: var(--green-dark); min-height: 1.2em; }
+.nombre-confirm.bad { color: #c0392b; font-weight: 500; }
+
+/* ===== BUZON ===== */
+.comments-wrap { max-width: 640px; margin: 20px auto 0; padding: 0 16px; }
+.comments-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 16px; }
+.comments-card h3 { font-family: 'Montserrat', sans-serif; color: var(--primary); font-size: 1rem; margin-bottom: 4px; }
+.comments-card .sub { font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; line-height: 1.4; }
+.comments-card textarea { width: 100%; min-height: 70px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 0.9rem; resize: vertical; }
+.comments-card textarea:focus { outline: none; border-color: var(--accent); }
+.comment-send { margin-top: 8px; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+.comment-send small { color: var(--muted); font-size: 0.72rem; }
+.comment-send button { background: var(--primary); color: #fff; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+.comment-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.comment-item { background: var(--bg); border-radius: 10px; padding: 10px 12px; font-size: 0.88rem; line-height: 1.45; position: relative; white-space: pre-wrap; word-break: break-word; }
+.comment-item .cdate { font-size: 0.7rem; color: var(--muted); margin-top: 4px; white-space: normal; }
+.comment-item .cdel { position: absolute; top: 6px; right: 8px; background: #e74c3c; color: #fff; border: none; border-radius: 6px; font-size: 0.7rem; padding: 3px 8px; cursor: pointer; }
+.comments-empty { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 10px; }
+.role-hidden { display: none !important; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 </head>
@@ -536,17 +581,32 @@ body {
 <div class="nombre-section">
   <label>No. de empleado</label>
   <input type="text" id="numEmpleado" placeholder="Ej: 952" autocomplete="off" oninput="mostrarMisPedidos(); autoFillNombre(); preMarcarDias();" />
-  <div style="height:10px"></div>
-  <label>Tu nombre</label>
-  <input type="text" id="nombreInput" placeholder="Se llena con tu numero de empleado" readonly />
+  <div class="nombre-confirm" id="nombreConfirm"></div>
+  <input type="text" id="nombreInput" placeholder="Nombre (solo admin)" style="display:none;margin-top:8px;" />
   <div id="misPedidos"></div>
+</div>
+
+<!-- MENU SEMANAL COMPACTO -->
+<div class="week-wrap">
+  <div class="week-card">
+    <div class="week-title"><span id="weekTitle">Menu de la semana</span><small>Toca el circulo del dia que quieres comer</small></div>
+    <div id="menuGrid"></div>
+  </div>
 </div>
 
 <div class="water-note">* Incluye agua del dia &middot; Servicio de 12:30 a 17:30</div>
 <div class="night-note"><strong>Turno nocturno:</strong> solicita tu comida por Teams con Axel Avila. Se entrega en contenedor desechable rotulado con tu nombre.</div>
 
-<!-- MENU GRID -->
-<div class="menu-grid" id="menuGrid"></div>
+<!-- BUZON ANONIMO -->
+<div class="comments-wrap">
+  <div class="comments-card">
+    <h3>&#128172; Buzon del comedor</h3>
+    <div class="sub">Anonimo: no se guarda tu nombre ni tu numero. Todos pueden leer los comentarios.</div>
+    <textarea id="comentarioTexto" maxlength="400" placeholder="Sugerencia, queja o felicitacion para el comedor..." oninput="document.getElementById('comentarioCount').textContent = this.value.length + '/400'"></textarea>
+    <div class="comment-send"><small id="comentarioCount">0/400</small><button onclick="enviarComentario()">Enviar</button></div>
+    <div class="comment-list" id="comentariosList"></div>
+  </div>
+</div>
 
 <!-- SUMMARY BAR -->
 <div class="summary-bar" id="summaryBar">
@@ -582,7 +642,7 @@ body {
 
 <!-- ADMIN PANEL -->
 <div class="admin-panel" id="adminPanel">
-  <h3>Administrar Menu <span id="adminLevelBadge" style="font-size:0.7rem;color:var(--muted);font-weight:400;"></span></h3>
+  <h3>Panel <span id="adminLevelBadge" style="font-size:0.7rem;color:var(--muted);font-weight:400;"></span></h3>
 
   <div class="admin-form-section">
     <h4>Datos de la Semana</h4>
@@ -620,7 +680,7 @@ body {
   </div>
 
   <!-- CORTESIAS -->
-  <div class="cortesias-section">
+  <div class="cortesias-section" data-min-role="admin">
     <h4>Cortesias</h4>
     <div class="cortesia-add">
       <input type="text" id="cortesiaNombre" placeholder="Nombre de la persona" style="flex:2" />
@@ -650,7 +710,7 @@ body {
       <button class="btn-export" onclick="importarCatalogoMasivo()">Importar al catalogo</button>
     </details>
   </div>
-  <div class="cortesias-section" id="catalogoLockSection">
+  <div class="cortesias-section" id="catalogoLockSection" data-min-role="admin">
     <h4>Catalogo de Empleados</h4>
     <div style="text-align:center;padding:12px;">
       <input type="password" id="superPinInput" placeholder="PIN super" maxlength="8" autocomplete="off" style="width:140px;padding:8px 12px;border-radius:8px;border:1px solid #ddd;text-align:center;font-size:1rem;" />
@@ -662,7 +722,7 @@ body {
   <!-- ORDERS -->
   <div class="orders-log">
     <h3>Pedidos Recibidos</h3>
-    <div class="admin-btn-row" style="margin-bottom:15px;">
+    <div class="admin-btn-row" style="margin-bottom:15px;" data-min-role="admin">
       <button class="btn-export" onclick="exportarCSV()">Exportar Excel</button>
       <button class="btn-export" onclick="mostrarExportBUK()" style="background:linear-gradient(135deg,#8e44ad,#3498db);">Exportar BUK</button>
       <button class="btn-export" onclick="mostrarExportFactura()" style="background:linear-gradient(135deg,#27ae60,#2ecc71);">Conciliar Factura</button>
@@ -907,6 +967,16 @@ async function fsWrite(path, data) {
   return r.ok;
 }
 
+async function fsCreate(collection, data) {
+  const fields = {};
+  for (const [k, v] of Object.entries(data)) fields[k] = jsToFs(v);
+  const r = await fsFetch(`${FS_BASE}/${collection}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields })
+  });
+  if (!r.ok) { try { lastFsError = (await r.json()).error?.message || r.status; } catch (e) { lastFsError = String(r.status); } }
+  return r.ok;
+}
+
 async function fsDelete(path) {
   const r = await fsFetch(`${FS_BASE}/${path}`, { method: 'DELETE' });
   return r.ok;
@@ -965,6 +1035,7 @@ let ordersData = [];
 let cortesiasData = [];
 let catalogoData = {};
 let historialData = {};
+let comentariosData = [];
 let quantities = {};
 let selections = {};
 let adminAuth = false;
@@ -988,19 +1059,26 @@ function findCatEntry(numEmp) {
 function autoFillNombre() {
   const numEmp = document.getElementById('numEmpleado').value.trim();
   const nombreInput = document.getElementById('nombreInput');
+  const confirmEl = document.getElementById('nombreConfirm');
   const cat = findCatEntry(numEmp);
+  nombreInput.style.display = 'none';
   if (cat) {
     nombreInput.value = cat.nombre;
-    nombreInput.readOnly = true;
-    nombreInput.style.background = '#e8f5e9';
-  } else if (adminVisible) {
-    nombreInput.readOnly = false;
-    nombreInput.placeholder = 'Nombre (solo admin puede pedir sin catalogo)';
-    nombreInput.style.background = '';
+    confirmEl.textContent = '\u2713 ' + cat.nombre;
+    confirmEl.className = 'nombre-confirm';
+  } else if (numEmp && adminVisible) {
+    nombreInput.style.display = '';
+    if (nombreInput.value === '' || findCatEntry(nombreInput.dataset.for || '')) nombreInput.value = '';
+    confirmEl.textContent = 'No esta en el catalogo. Escribe el nombre:';
+    confirmEl.className = 'nombre-confirm bad';
+  } else if (numEmp.length >= 2 && Object.keys(catalogoData).length) {
+    nombreInput.value = '';
+    confirmEl.textContent = 'Numero no encontrado. Revisa o contacta a RRHH.';
+    confirmEl.className = 'nombre-confirm bad';
   } else {
     nombreInput.value = '';
-    nombreInput.readOnly = true;
-    nombreInput.style.background = '';
+    confirmEl.textContent = '';
+    confirmEl.className = 'nombre-confirm';
   }
 }
 
@@ -1016,13 +1094,15 @@ async function loadFromCloud() {
   setSyncStatus('loading', 'Cargando...');
   try {
     await ensureAuth();
-    const [menuDoc, cortDoc, catDoc, ordersList, histList] = await Promise.all([
+    const [menuDoc, cortDoc, catDoc, ordersList, histList, comList] = await Promise.all([
       fsRead('config/menu'),
       fsRead('config/cortesias'),
       fsRead('config/catalogo'),
       loadFsCollection('orders'),
-      loadFsCollection('historial', 100)
+      loadFsCollection('historial', 100),
+      loadFsCollection('comentarios', 100)
     ]);
+    comentariosData = comList.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
     if (menuDoc?.dias) menuData = menuDoc;
     ordersData = ordersList;
     cortesiasData = Array.isArray(cortDoc?.items) ? cortDoc.items : [];
@@ -1075,70 +1155,46 @@ function renderMenu() {
     <span class="badge">Semana ${esc(menuData.semana)}</span>
     <span class="badge">Servicio 12:30 - 17:30</span>
   `;
+  const dias = menuData.dias || [];
+  if (dias.length) {
+    const f1 = dias[0].fecha, f2 = dias[dias.length - 1].fecha;
+    document.getElementById('weekTitle').textContent = `Semana del ${f1} al ${f2} de ${getDisplayMonth(f2, menuData)}`;
+  }
 
   const grid = document.getElementById('menuGrid');
   grid.innerHTML = '';
-
-  const numEmpVal = document.getElementById('numEmpleado').value.trim();
-  const numEmpNorm = normEmp(numEmpVal);
+  const numEmpNorm = normEmp(document.getElementById('numEmpleado').value.trim());
   const pedidoPrevioActivo = numEmpNorm && ordersData.some(o => normEmp(o.numEmpleado) === numEmpNorm);
 
-  menuData.dias.forEach((d, i) => {
+  dias.forEach((d, i) => {
     quantities[i] = quantities[i] || 0;
     if (!selections[i]) selections[i] = 'principal';
     const hasAlt = d.platoAlternativo && d.platoAlternativo.trim().replace(/-/g, '').length > 0;
-
-    const card = document.createElement('div');
     const passed = !adminVisible && isDayPassed(d.dia);
     const yaPedido = quantities[i] > 0 && pedidoPrevioActivo;
-    card.className = 'day-card' + (passed && !yaPedido ? ' day-passed' : '');
-    if (passed && !yaPedido) { quantities[i] = 0; }
+    if (passed && !yaPedido) quantities[i] = 0;
+    const on = quantities[i] > 0;
 
-    let altHTML = '';
-    if (hasAlt) {
-      altHTML = `
-        <div class="alt-section">
-          <div class="alt-label">Elige tu plato</div>
-          <div class="alt-options">
-            <label class="alt-option ${selections[i]==='principal'?'selected':''}" onclick="selectOption(${i},'principal')">
-              <input type="radio" name="opt-${i}" ${selections[i]==='principal'?'checked':''} />
-              <span class="alt-option-text"><strong>${esc(d.platoFuerte)}</strong>${d.complemento ? `<br><small>${esc(d.complemento)}</small>` : ''}</span>
-            </label>
-            <label class="alt-option ${selections[i]==='alternativa'?'selected':''}" onclick="selectOption(${i},'alternativa')">
-              <input type="radio" name="opt-${i}" ${selections[i]==='alternativa'?'checked':''} />
-              <span class="alt-option-text"><strong>${esc(d.platoAlternativo)}</strong><br><small>Alternativa</small></span>
-            </label>
-          </div>
-        </div>`;
-    }
-
-    card.innerHTML = `
-      <div class="day-header">
-        <h2>${esc(d.dia)}</h2>
-        <div class="date">${esc(d.fecha)} de ${esc(getDisplayMonth(d.fecha, menuData))}</div>
+    const row = document.createElement('div');
+    row.className = 'day-row' + (on ? ' on' : '') + (passed && !yaPedido ? ' passed' : '');
+    const platoTxt = hasAlt ? (selections[i] === 'alternativa' ? d.platoAlternativo : d.platoFuerte) : d.platoFuerte;
+    const sideParts = [d.entrada, (!hasAlt || selections[i] === 'principal') && d.complemento ? d.complemento : null, d.postre].filter(Boolean);
+    row.innerHTML = `
+      <div class="day-date"><div class="dn">${esc(d.dia.substring(0,3))}</div><div class="dd">${esc(d.fecha)}</div></div>
+      <div class="day-meals">
+        <div class="main">${esc(platoTxt)}</div>
+        <div class="side">${esc(sideParts.join(' · '))}</div>
+        ${hasAlt && !(passed && !yaPedido) ? `<div class="alt-pills">
+          <button class="alt-pill ${selections[i]==='principal'?'sel':''}" onclick="selectOption(${i},'principal')">${esc(d.platoFuerte)}</button>
+          <button class="alt-pill ${selections[i]==='alternativa'?'sel':''}" onclick="selectOption(${i},'alternativa')">${esc(d.platoAlternativo)}</button>
+        </div>` : ''}
+        ${passed && !yaPedido ? '<div class="passed-tag">Este dia ya paso</div>' : ''}
+        ${passed && yaPedido ? '<div class="passed-tag">Ya pedido</div>' : ''}
       </div>
-      <div class="meal-section">
-        <div class="meal-type">Entrada</div>
-        <div class="meal-name">${esc(d.entrada)}</div>
-      </div>
-      ${hasAlt ? '' : `
-      <div class="meal-section">
-        <div class="meal-type">Plato Fuerte</div>
-        <div class="meal-name">${esc(d.platoFuerte)}</div>
-        ${d.complemento ? `<div class="meal-complement">${esc(d.complemento)}</div>` : ''}
-      </div>`}
-      ${altHTML}
-      <div class="meal-section">
-        <div class="meal-type">Postre</div>
-        <div class="meal-name">${esc(d.postre)}</div>
-      </div>
-      <div class="day-order">
-        <button class="order-toggle ${quantities[i]>0?'active':''} ${passed && yaPedido ? 'locked' : ''}" id="qty-${i}" onclick="toggleDay(${i})">
-          ${passed && yaPedido ? '&#10003; Ya pedido' : quantities[i]>0 ? '&#10003; Pedido' : 'Pedir'}
-        </button>
-      </div>`;
-    grid.appendChild(card);
+      <button class="day-btn ${on ? 'on' : ''} ${passed && yaPedido ? 'locked' : ''}" id="qty-${i}" onclick="toggleDay(${i})" aria-label="Pedir ${esc(d.dia)}">${on ? '&#10003;' : '+'}</button>`;
+    grid.appendChild(row);
   });
+  if (!dias.length) grid.innerHTML = '<div class="comments-empty">Aun no hay menu publicado</div>';
   updateSummary();
 }
 
@@ -1168,10 +1224,7 @@ function selectOption(i, opt) { selections[i] = opt; renderMenu(); }
 function toggleDay(i) {
   if (!adminVisible && menuData.dias[i] && isDayPassed(menuData.dias[i].dia)) return;
   quantities[i] = quantities[i] > 0 ? 0 : 1;
-  const el = document.getElementById(`qty-${i}`);
-  el.innerHTML = quantities[i] > 0 ? '&#10003; Pedido' : 'Pedir';
-  el.className = 'order-toggle' + (quantities[i]>0?' active':'');
-  updateSummary();
+  renderMenu();
 }
 
 function updateSummary() {
@@ -1286,15 +1339,17 @@ async function verificarPin() {
   const errEl = document.getElementById('pinError');
   errEl.style.display = 'none';
   try {
-    // Intenta como super primero; si falla, como admin. Las reglas deciden.
-    let ok = await crearSesionAdmin(pin, 'super');
-    if (ok) adminLevel = 'super';
-    else { ok = await crearSesionAdmin(pin, 'admin'); if (ok) adminLevel = 'admin'; }
+    // Intenta super, luego admin, luego comedor. Las reglas deciden cual PIN es.
+    let ok = false;
+    for (const lvl of ['super', 'admin', 'comedor']) {
+      if (await crearSesionAdmin(pin, lvl)) { adminLevel = lvl; ok = true; break; }
+    }
     if (ok) {
       adminAuth = true;
       document.getElementById('pinModal').classList.remove('open');
       if (adminLevel === 'super') mostrarCatalogoSection(true);
       toggleAdmin();
+      showToast('Sesion iniciada');
     } else {
       errEl.style.display = 'block';
       document.getElementById('pinInput').value = '';
@@ -1314,8 +1369,9 @@ function toggleAdmin() {
   adminVisible = !adminVisible;
   document.getElementById('adminPanel').classList.toggle('visible', adminVisible);
   document.getElementById('adminToggleBtn').textContent = adminVisible ? 'Salir Admin' : 'Admin';
-  document.getElementById('adminLevelBadge').textContent = adminLevel === 'super' ? '(super)' : '';
-  if (adminVisible) { populateAdminForm(); renderOrders(); renderCortesias(); renderCatalogo(); resetAdminTimer(); }
+  applyRoleUI();
+  if (adminVisible) { populateAdminForm(); renderOrders(); if (isAdminLevel()) { renderCortesias(); renderCatalogo(); } resetAdminTimer(); }
+  renderComentarios();
   autoFillNombre();
   checkOrderLock();
   renderMenu();
@@ -1325,9 +1381,21 @@ async function cerrarSesionAdmin() {
   await borrarSesionAdmin();
   adminAuth = false; adminLevel = null;
   if (adminVisible) toggleAdmin();
+  applyRoleUI();
   mostrarCatalogoSection(false);
   document.getElementById('superPinInput').value = '';
   showToast('Sesion admin cerrada');
+}
+
+const ROLE_RANK = { comedor: 1, admin: 2, super: 3 };
+function isAdminLevel() { return adminAuth && (ROLE_RANK[adminLevel] || 0) >= 2; }
+function applyRoleUI() {
+  const rank = ROLE_RANK[adminLevel] || 0;
+  document.querySelectorAll('[data-min-role]').forEach(el => {
+    el.classList.toggle('role-hidden', rank < (ROLE_RANK[el.dataset.minRole] || 0));
+  });
+  const labels = { comedor: 'Comedor: editar menu y ver pedidos', admin: 'Recursos Humanos', super: 'Super admin' };
+  document.getElementById('adminLevelBadge').textContent = adminLevel ? '· ' + labels[adminLevel] : '';
 }
 
 function mostrarCatalogoSection(show) {
@@ -1435,7 +1503,7 @@ async function guardarMenu() {
   if (!valid) { showToast('Llena los campos obligatorios'); return; }
 
   menuData = { mes, semana, anio, dias };
-  const borrarPedidos = ordersData.length > 0 && confirm(`Hay ${ordersData.length} pedido(s). ¿Es semana nueva y quieres archivar y borrar los pedidos?\n\nSi solo estas corrigiendo el menu, dale Cancelar.`);
+  const borrarPedidos = isAdminLevel() && ordersData.length > 0 && confirm(`Hay ${ordersData.length} pedido(s). ¿Es semana nueva y quieres archivar y borrar los pedidos?\n\nSi solo estas corrigiendo el menu, dale Cancelar.`);
 
   quantities = {}; selections = {};
   const saved = await saveMenuToCloud();
@@ -1507,7 +1575,7 @@ function renderOrders() {
       }
     });
     html += `<td><strong>${o.total}</strong></td>`;
-    html += `<td><button class="cortesia-remove" onclick="adminBorrarPedido('${esc(o.numEmpleado)}')">Borrar</button></td></tr>`;
+    html += isAdminLevel() ? `<td><button class="cortesia-remove" onclick="adminBorrarPedido('${esc(o.numEmpleado)}')">Borrar</button></td></tr>` : '<td></td></tr>';
   });
 
   cortesiasData.forEach(c => {
@@ -1778,6 +1846,46 @@ async function quitarCortesia(idx) {
   showToast('Cortesia archivada y eliminada');
 }
 
+// ============================================================
+//  BUZON ANONIMO (coleccion comentarios/{autoId})
+// ============================================================
+let comentarioBusy = false;
+async function enviarComentario() {
+  if (comentarioBusy) return;
+  const ta = document.getElementById('comentarioTexto');
+  const texto = ta.value.trim();
+  if (texto.length < 3) { showToast('Escribe un comentario'); return; }
+  if (texto.length > 400) { showToast('Maximo 400 caracteres'); return; }
+  comentarioBusy = true;
+  const ok = await fsCreate('comentarios', { texto, fecha: new Date().toISOString() });
+  comentarioBusy = false;
+  if (!ok) { showToast('No se pudo enviar, intenta de nuevo'); return; }
+  ta.value = '';
+  document.getElementById('comentarioCount').textContent = '0/400';
+  showToast('Gracias, tu comentario quedo registrado');
+  await loadFromCloud();
+  renderComentarios();
+}
+
+function renderComentarios() {
+  const list = document.getElementById('comentariosList');
+  if (!list) return;
+  if (!comentariosData.length) { list.innerHTML = '<div class="comments-empty">Aun no hay comentarios. Se el primero.</div>'; return; }
+  list.innerHTML = comentariosData.slice(0, 50).map(c => {
+    const f = new Date(c.fecha);
+    const fs = isNaN(f) ? '' : `${f.getDate()}/${f.getMonth()+1}/${f.getFullYear()} ${f.getHours()}:${String(f.getMinutes()).padStart(2,'0')}`;
+    return `<div class="comment-item">${esc(c.texto)}<div class="cdate">${fs}</div>${isAdminLevel() ? `<button class="cdel" onclick="borrarComentario('${esc(c._id)}')">Borrar</button>` : ''}</div>`;
+  }).join('');
+}
+
+async function borrarComentario(id) {
+  if (!confirm('¿Borrar este comentario?')) return;
+  const ok = await fsDelete('comentarios/' + id);
+  await loadFromCloud();
+  renderComentarios();
+  showToast(ok ? 'Comentario borrado' : 'No se pudo borrar');
+}
+
 function showToast(m) {
   const t = document.getElementById('toast');
   t.textContent = m;
@@ -1793,7 +1901,10 @@ function showToast(m) {
 // ============================================================
 const DAY_MAP = { 'lunes':1, 'martes':2, 'miercoles':3, 'miércoles':3, 'jueves':4, 'viernes':5, 'sabado':6, 'sábado':6, 'domingo':0 };
 
+// Un dia del menu "ya paso" segun su fecha real (mes/anio del menu), no solo el dia de la semana.
+// Asi el menu de la proxima semana no aparece bloqueado si se publica antes.
 function isDayPassed(dayName) {
+  if (menuData && menuData.mes && menuData.anio && Array.isArray(menuData.dias)) return diaYaPaso(dayName);
   const now = new Date();
   const today = now.getDay();
   const hour = now.getHours(), min = now.getMinutes();
@@ -2390,6 +2501,7 @@ setInterval(async () => {
   }
   mostrarMisPedidos();
   renderMenu();
+  renderComentarios();
 }, 300000);
 
 // ============================================================
@@ -2398,6 +2510,7 @@ setInterval(async () => {
 (async () => {
   await loadFromCloud();
   renderMenu();
+  renderComentarios();
   checkOrderLock();
 })();
 </script>

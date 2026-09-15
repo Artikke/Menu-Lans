@@ -33,9 +33,10 @@ Un solo `index.html` (CSS/JS inline) + Firestore via REST, hospedado en GitHub P
 
 ### 1.4 Crear los PINs (documento protegido)
 1. https://console.firebase.google.com/project/menu-lans/firestore/data
-2. Crear coleccion `config` > documento `secrets` con dos campos tipo **string**:
-   - `adminPin` -> PIN para Vivi / Lupita / Axel (publicar menu, ver pedidos, exportar)
-   - `superPin` -> PIN para editar el catalogo de empleados
+2. Crear coleccion `config` > documento `secrets` con tres campos tipo **string**:
+   - `comedorPin` -> PIN del comedor: editar/publicar el menu y ver los pedidos. Nada mas.
+   - `adminPin` -> PIN de Recursos Humanos (Vivi / Lupita): todo menos el catalogo (cortesias, exportar, limpiar, borrar comentarios)
+   - `superPin` -> PIN para editar el catalogo de empleados (Jorge)
 3. Recomendado: **6 digitos** (las reglas validan el PIN en el servidor; nadie puede leer `config/secrets`).
 
 ### 1.5 Cargar el catalogo de empleados (143)
@@ -74,6 +75,8 @@ Sube un `logo.png` (cuadrado, fondo blanco o transparente) a la raiz del repo. S
 | PINs | Hardcodeados en el HTML | En `config/secrets`, ilegible desde el cliente; validados por reglas |
 | Sesion admin | Solo en el navegador | `admin_sessions/{uid}` creada por reglas, expira a las 12 h |
 | Catalogo | PIN en HTML | Solo sesion nivel `super` puede escribir |
+| Roles | Uno | Tres niveles (comedor / admin / super) validados en reglas |
+| Buzon | Nombre + foto, solo admin lo ve | Anonimo, publico, texto de 3 a 400 caracteres, solo admin borra |
 | Dominio | Ninguno | Guard en JS + restriccion de API key por referrer |
 
 Flujo de admin: el navegador escribe `admin_sessions/{uid}` con `{pin, level, createdAt}`.
@@ -93,10 +96,11 @@ Limitaciones conocidas (mismas que PROESA por diseño sin login de empleado):
 config/menu        { mes, semana, anio, dias:[{dia, fecha, entrada, platoFuerte, complemento, platoAlternativo, postre}] }
 config/catalogo    { "952": { nombre, rfc }, "F1": { nombre, rfc }, ... }
 config/cortesias   { items: [{ nombre, dias: { Lunes:1, ... } }] }
-config/secrets     { adminPin, superPin }          <- solo lectura por reglas
+config/secrets     { comedorPin, adminPin, superPin }          <- solo lectura por reglas
 orders/{numEmp}    { nombre, numEmpleado, fecha, total, detalle:{Lunes:1}, opciones:{Lunes:"Plato"} }
 historial/{AAAA-M-Qn}  { "952": { nombre, comidas, pedidos:[...] }, _cortesias:[...] }
-admin_sessions/{uid}   { pin, level:'admin'|'super', createdAt }
+admin_sessions/{uid}   { pin, level:'comedor'|'admin'|'super', createdAt }
+comentarios/{autoId}   { texto, fecha }   <- buzon anonimo
 ```
 
 ## 4. Precios de reportes
