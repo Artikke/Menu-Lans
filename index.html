@@ -686,7 +686,7 @@ body {
 <!-- EMPLEADO -->
 <div class="nombre-section">
   <label>No. de empleado</label>
-  <input type="text" id="numEmpleado" placeholder="Ej: 952" autocomplete="off" oninput="mostrarMisPedidos(); autoFillNombre(); preMarcarDias();" />
+  <input type="text" id="numEmpleado" placeholder="Ej: 952" autocomplete="off" oninput="onNumEmpInput()" />
   <div style="height:10px"></div>
   <label>Tu nombre completo</label>
   <input type="text" id="nombreInput" placeholder="Nombre y apellidos" autocomplete="off" autocapitalize="words" />
@@ -1155,6 +1155,8 @@ let cortesiasData = [];
 let catalogoData = {};
 let historialData = {};
 let comentariosData = [];
+let catalogoRfcData = {};   // solo super: { num: rfc }
+let lastLoadAt = 0;
 let quantities = {};
 let selections = {};
 let adminAuth = false;
@@ -1174,6 +1176,20 @@ function findCatEntry(numEmp) {
   if (!n) return null;
   return catalogoData[n] || catalogoData[numEmp] ||
     Object.entries(catalogoData).find(([k]) => normEmp(k) === n)?.[1] || null;
+}
+
+let numEmpTimer = null;
+function onNumEmpInput() {
+  autoFillNombre();
+  mostrarMisPedidos();
+  preMarcarDias();
+  clearTimeout(numEmpTimer);
+  numEmpTimer = setTimeout(async () => {
+    const n = document.getElementById('numEmpleado').value.trim();
+    if (!adminAuth) await loadMyOrder(n);
+    mostrarMisPedidos();
+    preMarcarDias();
+  }, 450);
 }
 
 function autoFillNombre() {
@@ -1202,28 +1218,58 @@ function setSyncStatus(s, m) {
   el.innerHTML = `<span class="sync-dot${s==='ok'?'':s==='loading'?' loading':' error'}"></span> ${m}`;
 }
 
+// Empleado: solo lee menu, catalogo (nombres) y SU pedido (3 lecturas).
+// Admin/super: carga completa (pedidos, cortesias, historial, comentarios, RFC).
 async function loadFromCloud() {
   setSyncStatus('loading', 'Cargando...');
   try {
     await ensureAuth();
-    const [menuDoc, cortDoc, catDoc, ordersList, histList, comList] = await Promise.all([
-      fsRead('config/menu'),
-      fsRead('config/cortesias'),
-      fsRead('config/catalogo'),
-      loadFsCollection('orders'),
-      loadFsCollection('historial', 100),
-      loadFsCollection('comentarios', 100)
-    ]);
-    comentariosData = comList.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
-    if (menuDoc?.dias) menuData = menuDoc;
-    ordersData = ordersList;
-    cortesiasData = Array.isArray(cortDoc?.items) ? cortDoc.items : [];
-    if (catDoc && typeof catDoc === 'object') catalogoData = catDoc;
-    historialData = {};
-    histList.forEach(h => { const id = h._id; delete h._id; historialData[id] = h; });
+    if (adminAuth) {
+      const [menuDoc, cortDoc, catDoc, rfcDoc, ordersList, histList, comList] = await Promise.all([
+        fsRead('config/menu'),
+        fsRead('config/cortesias'),
+        fsRead('config/catalogo'),
+        fsRead('config/catalogo_rfc'),
+        loadFsCollection('orders'),
+        loadFsCollection('historial', 100),
+        loadFsCollection('comentarios', 100)
+      ]);
+      if (menuDoc?.dias) menuData = menuDoc;
+      ordersData = ordersList;
+      cortesiasData = Array.isArray(cortDoc?.items) ? cortDoc.items : [];
+      if (catDoc && typeof catDoc === 'object') catalogoData = catDoc;
+      if (rfcDoc && typeof rfcDoc === 'object') catalogoRfcData = rfcDoc;
+      historialData = {};
+      histList.forEach(h => { const id = h._id; delete h._id; historialData[id] = h; });
+      comentariosData = comList.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+    } else {
+      const numEmp = document.getElementById('numEmpleado').value.trim();
+      const [menuDoc, catDoc, myOrder] = await Promise.all([
+        fsRead('config/menu'),
+        fsRead('config/catalogo'),
+        numEmp ? fsRead('orders/' + orderDocId(numEmp)) : Promise.resolve(null)
+      ]);
+      if (menuDoc?.dias) menuData = menuDoc;
+      if (catDoc && typeof catDoc === 'object') catalogoData = catDoc;
+      ordersData = myOrder ? [myOrder] : [];
+    }
+    lastLoadAt = Date.now();
     setSyncStatus('ok', 'Sincronizado');
     return true;
   } catch (e) { console.error('Load error:', e); setSyncStatus('error', 'Sin conexion'); return false; }
+}
+
+// Lee solo el pedido de un empleado (1 lectura). En modo admin recarga todo.
+async function loadMyOrder(numEmp) {
+  if (adminAuth) return loadFromCloud();
+  try {
+    await ensureAuth();
+    const n = normEmp(numEmp);
+    if (!n) { ordersData = []; return true; }
+    const o = await fsRead('orders/' + orderDocId(n));
+    ordersData = o ? [o] : [];
+    return true;
+  } catch (e) { console.error('loadMyOrder', e); return false; }
 }
 
 async function saveOrder(order) {
@@ -1245,7 +1291,13 @@ async function saveMenuToCloud() {
   setSyncStatus(ok ? 'ok' : 'error', ok ? 'Sincronizado' : 'Error al guardar menu');
   return ok;
 }
-async function saveCatalogo() { return fsWrite('config/catalogo', catalogoData); }
+async function saveCatalogo() {
+  const clean = {};
+  for (const [k, v] of Object.entries(catalogoData)) clean[k] = { nombre: (v && v.nombre) || '' };
+  catalogoData = clean;
+  return fsWrite('config/catalogo', clean);
+}
+async function saveCatalogoRfc() { return fsWrite('config/catalogo_rfc', catalogoRfcData); }
 async function saveCortesias() { return fsWrite('config/cortesias', { items: cortesiasData }); }
 
 // ============================================================
@@ -1396,7 +1448,7 @@ function updateSummary() {
 let ultimosDiasNuevos = null;
 
 async function enviarPedido() {
-  if (!isOrderingOpen() && !adminVisible) { showToast('Pedidos cerrados. Horario: 7:00 a 11:30 AM'); return; }
+  if (!isOrderingOpen() && !isAdminLevel()) { showToast('Pedidos cerrados. Horario: 7:00 a 11:30 AM'); return; }
   const numEmp = document.getElementById('numEmpleado').value.trim();
   if (!numEmp) { showToast('Escribe tu numero de empleado'); document.getElementById('numEmpleado').focus(); return; }
   if (!/^[a-zA-Z0-9]+$/.test(numEmp)) { showToast('El numero de empleado no es valido'); document.getElementById('numEmpleado').focus(); return; }
@@ -1424,7 +1476,7 @@ async function enviarPedido() {
   const total = Object.values(quantities).reduce((a,b)=>a+b, 0);
   if (total === 0) return;
 
-  await loadFromCloud();
+  await loadMyOrder(numEmp);
   const numNorm = normEmp(numEmp);
   const yaExiste = ordersData.find(o => normEmp(o.numEmpleado) === numNorm);
 
@@ -1458,8 +1510,8 @@ async function enviarPedido() {
   }
 
   const saved = await saveOrder(order);
-  if (!saved) { await loadFromCloud(); showToast('Error al guardar, intenta de nuevo'); return; }
-  await loadFromCloud();
+  if (!saved) { await loadMyOrder(numEmp); showToast(/PERMISSION_DENIED|insufficient/i.test(lastFsError) ? 'Fuera de horario o datos invalidos. Intenta de nuevo.' : 'Error al guardar, intenta de nuevo'); return; }
+  await loadMyOrder(numEmp);
 
   const firstName = nombre.split(' ').pop() || nombre;
   document.getElementById('modalNombre').textContent = firstName;
@@ -2044,14 +2096,14 @@ function previsualizarFoto(input) {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const MAX = 800;
+      const MAX = 640;
       let w = img.width, h = img.height;
       if (w > MAX || h > MAX) { if (w > h) { h = Math.round(h * MAX / w); w = MAX; } else { w = Math.round(w * MAX / h); h = MAX; } }
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      let q = 0.7;
+      let q = 0.6;
       buzonFotoBase64 = canvas.toDataURL('image/jpeg', q);
-      while (buzonFotoBase64.length > 600000 && q > 0.3) { q -= 0.1; buzonFotoBase64 = canvas.toDataURL('image/jpeg', q); }
+      while (buzonFotoBase64.length > 150000 && q > 0.25) { q -= 0.1; buzonFotoBase64 = canvas.toDataURL('image/jpeg', q); }
       const preview = document.getElementById('buzonFotoPreview');
       preview.src = buzonFotoBase64;
       preview.classList.add('visible');
@@ -2230,7 +2282,7 @@ function toggleCancelPanel() {
 async function buscarPedido() {
   const num = document.getElementById('cancelNumEmp').value.trim();
   if (!num) { showToast('Escribe tu numero de empleado'); return; }
-  await loadFromCloud();
+  await loadMyOrder(num);
   const numNorm = normEmp(num);
   const order = ordersData.find(o => normEmp(o.numEmpleado) === numNorm);
   const container = document.getElementById('cancelResults');
@@ -2254,16 +2306,16 @@ async function buscarPedido() {
 }
 
 async function cancelarDia(numEmp, dia) {
-  if (!adminVisible && !isCancelOpen()) { showToast('Horario de cancelacion cerrado'); return; }
-  if (!adminVisible && diaYaPaso(dia)) { showToast('Ese dia ya paso, no se puede cancelar'); return; }
-  await loadFromCloud();
+  if (!isAdminLevel() && !isCancelOpen()) { showToast('Horario de cancelacion cerrado'); return; }
+  if (!isAdminLevel() && diaYaPaso(dia)) { showToast('Ese dia ya paso, no se puede cancelar'); return; }
+  await loadMyOrder(numEmp);
   const order = ordersData.find(o => normEmp(o.numEmpleado) === normEmp(numEmp));
   if (!order) { showToast('Pedido no encontrado'); return; }
   delete order.detalle[dia];
   if (order.opciones) delete order.opciones[dia];
   order.total = Object.values(order.detalle).reduce((a,b) => a+b, 0);
   const ok = Object.keys(order.detalle).length === 0 ? await deleteOrder(order.numEmpleado) : await saveOrder(order);
-  await loadFromCloud();
+  await loadMyOrder(numEmp);
   if (!ok) { showToast('Error al cancelar, intenta de nuevo'); buscarPedido(); return; }
   showToast(`${dia} cancelado`);
   buscarPedido();
@@ -2311,7 +2363,10 @@ function mostrarMisPedidos() {
   if (granTotal === 0 && semanaComidas === 0) { el.classList.remove('visible'); return; }
 
   const q = now.getDate() <= 15 ? '1-15' : '16-' + new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-  let html = `<div class="mp-title">Esta quincena (${q}): ${qTotal} comida${qTotal !== 1 ? 's' : ''}</div>`;
+  const tieneHist = Object.keys(historialData).length > 0;
+  let html = tieneHist
+    ? `<div class="mp-title">Esta quincena (${q}): ${qTotal} comida${qTotal !== 1 ? 's' : ''}</div>`
+    : `<div class="mp-title">Tu pedido de esta semana: ${semanaComidas} comida${semanaComidas !== 1 ? 's' : ''}</div>`;
   if (dias.length > 0) {
     html += '<div style="margin-top:4px;font-size:0.8rem;color:#6b7a8c;">Esta semana:</div>';
     dias.forEach(d => { html += `<div class="mp-dia">• ${esc(d)}</div>`; });
@@ -2337,14 +2392,14 @@ function renderCatalogo(filtro) {
   let filtered = entries;
   if (filtro) {
     const f = filtro.toLowerCase();
-    filtered = entries.filter(({ k, v }) => k.toLowerCase().includes(f) || (v.nombre || '').toLowerCase().includes(f) || (v.rfc || '').toLowerCase().includes(f));
+    filtered = entries.filter(({ k, v }) => k.toLowerCase().includes(f) || (v.nombre || '').toLowerCase().includes(f) || (catalogoRfcData[k] || '').toLowerCase().includes(f));
   }
   if (filtered.length === 0) { list.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:8px;">No se encontraron empleados</div>'; return; }
   list.innerHTML = filtered.slice(0, 60).map(({ k, v }) => `
     <div class="cortesia-item">
       <div>
         <span class="cortesia-info"><strong>#${esc(k)}</strong> — ${esc(v.nombre || 'Sin nombre')}</span>
-        <div class="cortesia-dias">${esc(v.rfc || 'Sin RFC')}</div>
+        <div class="cortesia-dias">${esc(catalogoRfcData[k] || 'Sin RFC')}</div>
       </div>
       <button class="cortesia-remove" onclick="quitarEmpleado('${esc(k)}')">Quitar</button>
     </div>`).join('');
@@ -2362,8 +2417,9 @@ async function agregarEmpleado() {
   const numNorm = normEmp(num);
   if (catalogoData[numNorm] && !confirm(`El empleado #${numNorm} ya existe. ¿Quieres actualizarlo?`)) return;
   await loadFromCloud();
-  catalogoData[numNorm] = { nombre, rfc };
-  const ok = await saveCatalogo();
+  catalogoData[numNorm] = { nombre };
+  if (rfc) catalogoRfcData[numNorm] = rfc;
+  const ok = (await saveCatalogo()) && (await saveCatalogoRfc());
   if (!ok) { showToast('Error al guardar (¿PIN super?): ' + lastFsError); return; }
   document.getElementById('catNumEmp').value = '';
   document.getElementById('catNombre').value = '';
@@ -2377,7 +2433,9 @@ async function quitarEmpleado(num) {
   await loadFromCloud();
   delete catalogoData[num];
   delete catalogoData[normEmp(num)];
-  const ok = await saveCatalogo();
+  delete catalogoRfcData[num];
+  delete catalogoRfcData[normEmp(num)];
+  const ok = (await saveCatalogo()) && (await saveCatalogoRfc());
   renderCatalogo(document.getElementById('catBuscar').value.trim());
   showToast(ok ? 'Empleado eliminado' : 'Error al guardar');
 }
@@ -2403,8 +2461,11 @@ async function importarCatalogoMasivo() {
   if (!n) { showToast('No se reconocio ninguna linea'); return; }
   if (!confirm(`Se importaran ${n} empleados (se actualizan los que ya existen). ¿Continuar?`)) return;
   await loadFromCloud();
-  Object.assign(catalogoData, parsed);
-  const ok = await saveCatalogo();
+  for (const [k, v] of Object.entries(parsed)) {
+    catalogoData[k] = { nombre: v.nombre };
+    if (v.rfc) catalogoRfcData[k] = v.rfc;
+  }
+  const ok = (await saveCatalogo()) && (await saveCatalogoRfc());
   if (!ok) { showToast('Error al guardar: ' + lastFsError); return; }
   document.getElementById('bulkCatalogo').value = '';
   renderCatalogo();
@@ -2458,8 +2519,7 @@ function exportarBUK() {
   const sorted = sortByEmp(Object.entries(conteo).map(([k, v]) => ({ k, v })), 'k');
   const sinRFC = [];
   sorted.forEach(({ k, v }) => {
-    const cat = findCatEntry(k);
-    const rfc = cat ? cat.rfc : '';
+    const rfc = catalogoRfcData[k] || catalogoRfcData[normEmp(k)] || '';
     if (!rfc) sinRFC.push(k);
     csv += `${rfc || 'NO ENCONTRADO'},${k},${(v.comidas * PRECIO_DESCUENTO_COLABORADOR).toFixed(2)}\n`;
   });
@@ -2711,11 +2771,16 @@ function menuMatchesThisWeek() {
 }
 function menuHash() { return JSON.stringify(menuData.dias?.map(d => [d.dia, d.fecha, d.platoFuerte, d.platoAlternativo]) || []); }
 
-setInterval(async () => {
-  if (adminVisible) { await loadFromCloud(); renderOrders(); renderComentarios(); }
-}, 180000);
-setInterval(async () => {
-  if (adminVisible) return;
+function tabVisible() { return document.visibilityState !== 'hidden'; }
+
+async function refreshAdmin() {
+  await loadFromCloud();
+  renderOrders();
+  renderComentarios();
+  if (isAdminLevel()) renderCortesias();
+}
+
+async function refreshEmpleado() {
   const wasCurrentWeek = menuMatchesThisWeek();
   const prevHash = menuHash();
   await loadFromCloud();
@@ -2725,8 +2790,20 @@ setInterval(async () => {
   }
   mostrarMisPedidos();
   renderMenu();
-  renderComentarios();
+}
+
+// Admin cada 5 min, empleados cada 5 min; nada si la pestaña esta oculta
+setInterval(async () => {
+  if (!tabVisible()) return;
+  if (adminVisible) await refreshAdmin(); else await refreshEmpleado();
 }, 300000);
+
+// Al volver a la pestaña tras un rato, refrescar una vez
+document.addEventListener('visibilitychange', async () => {
+  if (!tabVisible() || Date.now() - lastLoadAt < 240000) return;
+  if (adminVisible) await refreshAdmin(); else await refreshEmpleado();
+  checkOrderLock();
+});
 
 // ============================================================
 //  INIT

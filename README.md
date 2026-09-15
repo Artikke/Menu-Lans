@@ -77,6 +77,9 @@ Sube un `logo.png` (cuadrado, fondo blanco o transparente) a la raiz del repo. S
 | Roles | Uno | Dos niveles (admin = comedor, super = RRHH) validados en reglas |
 | Buzon | Nombre + foto, solo admin lo ve | Anonimo, publico, texto de 3 a 400 caracteres, solo admin borra |
 | Dominio | Ninguno | Guard en JS + restriccion de API key por referrer |
+| Horarios | Solo en el navegador | Tambien en reglas (hora de Mexico): pedir 7:00-11:30, cancelar 7:00-11:30 y 17:00-24:00 |
+| Lecturas | Cada empleado descarga todos los pedidos | Cada empleado lee solo su pedido; listar requiere admin |
+| RFC | Visible para cualquier empleado | Documento aparte, solo super |
 
 Flujo de admin: el navegador escribe `admin_sessions/{uid}` con `{pin, level, createdAt}`.
 Las reglas comparan `pin` con `config/secrets`; si no coincide la escritura falla (403) y el
@@ -93,7 +96,8 @@ Limitaciones conocidas (mismas que PROESA por diseño sin login de empleado):
 
 ```
 config/menu        { mes, semana, anio, dias:[{dia, fecha, entrada, platoFuerte, complemento, platoAlternativo, postre}] }
-config/catalogo    { "952": { nombre, rfc }, "F1": { nombre, rfc }, ... }
+config/catalogo    { "952": { nombre }, "F1": { nombre }, ... }   <- legible por empleados
+config/catalogo_rfc { "952": "AAMJ0006075S6", ... }              <- solo super (reporte BUK)
 config/cortesias   { items: [{ nombre, dias: { Lunes:1, ... } }] }
 config/secrets     { adminPin, superPin }          <- solo lectura por reglas
 orders/{numEmp}    { nombre, numEmpleado, fecha, total, detalle:{Lunes:1}, opciones:{Lunes:"Plato"} }

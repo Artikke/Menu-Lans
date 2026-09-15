@@ -110,14 +110,22 @@ async function main() {
   if (MERGE) {
     r = await fetch(`${FS_BASE}/config/catalogo`, { headers: H });
     if (r.ok) { const doc = await r.json(); const cur = {}; for (const [k, v] of Object.entries(doc.fields || {})) cur[k] = fsToJs(v); final = Object.assign(cur, catalogo); }
+    r = await fetch(`${FS_BASE}/config/catalogo_rfc`, { headers: H });
+    if (r.ok) { const doc = await r.json(); for (const [k, v] of Object.entries(doc.fields || {})) { if (final[k] && !final[k].rfc) final[k].rfc = fsToJs(v); } }
   }
 
-  // 4. Escribir catalogo
-  const fields = {};
-  for (const [k, v] of Object.entries(final)) fields[k] = jsToFs(v);
+  // 4. Escribir catalogo (solo nombres, legible por empleados) y RFCs aparte (solo super)
+  const fields = {}, fieldsRfc = {};
+  for (const [k, v] of Object.entries(final)) {
+    fields[k] = jsToFs({ nombre: v.nombre });
+    if (v.rfc) fieldsRfc[k] = jsToFs(v.rfc);
+  }
   r = await fetch(`${FS_BASE}/config/catalogo`, { method: 'PATCH', headers: H, body: JSON.stringify({ fields }) });
   if (!r.ok) { j = await r.json(); console.error('Error al escribir config/catalogo:', j.error?.message); process.exit(1); }
-  console.log(`config/catalogo escrito con ${Object.keys(final).length} empleados.`);
+  console.log(`config/catalogo escrito con ${Object.keys(final).length} empleados (sin RFC).`);
+  r = await fetch(`${FS_BASE}/config/catalogo_rfc`, { method: 'PATCH', headers: H, body: JSON.stringify({ fields: fieldsRfc }) });
+  if (!r.ok) { j = await r.json(); console.error('Error al escribir config/catalogo_rfc:', j.error?.message); process.exit(1); }
+  console.log(`config/catalogo_rfc escrito con ${Object.keys(fieldsRfc).length} RFCs.`);
 
   // 5. Limpiar sesion
   await fetch(`${FS_BASE}/admin_sessions/${uid}`, { method: 'DELETE', headers: H });

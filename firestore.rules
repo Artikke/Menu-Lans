@@ -2,13 +2,17 @@ rules_version = '2';
 // ============================================================
 //  Reglas de Firestore - Menu LANS
 //  - Todo requiere token (Firebase Auth anonimo). Sin token = nada.
-//  - Los PINs viven en config/secrets y NUNCA se pueden leer desde el cliente:
+//  - PINs en config/secrets, ilegibles desde el cliente:
 //      adminPin -> nivel "admin": comedor, editar menu y ver pedidos
-//      superPin -> nivel "super": RRHH, todo (cortesias, reportes, limpiar, catalogo)
+//      superPin -> nivel "super": RRHH, todo (cortesias, reportes, limpiar, catalogo, RFC)
 //  - El admin "inicia sesion" creando admin_sessions/{uid} con el PIN;
-//    las reglas comparan el PIN contra config/secrets y guardan el nivel.
-//  - Las sesiones expiran a las 12 h.
-//  - comentarios/{id}: buzon anonimo. Cualquiera con token crea; admin y super leen; solo super borra.
+//    las reglas comparan el PIN contra config/secrets y guardan el nivel. Expira a las 12 h.
+//  - Horarios (hora de Mexico, UTC-6) se hacen cumplir aqui, no solo en el navegador:
+//      pedir:    L-V 7:00 - 11:30
+//      cancelar: L-V 7:00 - 11:30 y 17:00 - 24:00
+//  - Empleados solo pueden leer SU pedido (get); listar todos requiere admin.
+//  - RFCs viven en config/catalogo_rfc, solo super.
+//  - comentarios/{id}: buzon anonimo. Cualquiera crea; admin/super leen; solo super borra.
 // ============================================================
 service cloud.firestore {
   match /databases/{db}/documents {
@@ -43,6 +47,23 @@ service cloud.firestore {
       return hasSession() && level() == 'super';
     }
 
+    // --- Hora local de Mexico (UTC-6, sin horario de verano) ---
+    function mxMin() {
+      return ((request.time.hours() + 18) % 24) * 60 + request.time.minutes();
+    }
+    // 1 = lunes ... 7 = domingo, en hora local
+    function mxDow() {
+      return request.time.hours() < 6
+        ? (request.time.dayOfWeek() == 1 ? 7 : request.time.dayOfWeek() - 1)
+        : request.time.dayOfWeek();
+    }
+    function pedidosAbiertos() {
+      return mxDow() <= 5 && mxMin() >= 420 && mxMin() <= 690;      // 7:00 - 11:30
+    }
+    function cancelAbierto() {
+      return mxDow() <= 5 && (pedidosAbiertos() || mxMin() >= 1020); // + 17:00 - 24:00
+    }
+
     function catalogo() {
       return get(/databases/$(db)/documents/config/catalogo).data;
     }
@@ -59,12 +80,16 @@ service cloud.firestore {
         && id in catalogo();
     }
 
+    function esCancelacion() {
+      return request.resource.data.detalle.size() < resource.data.detalle.size();
+    }
+
     function validComentario() {
       let d = request.resource.data;
       return d.keys().hasOnly(['texto', 'fecha', 'foto'])
         && d.texto is string && d.texto.size() >= 3 && d.texto.size() <= 400
         && d.fecha is string && d.fecha.size() <= 40
-        && (!('foto' in d) || (d.foto is string && d.foto.size() <= 700000));
+        && (!('foto' in d) || (d.foto is string && d.foto.size() <= 250000));
     }
 
     // --- Secretos: nadie los lee ni escribe desde el cliente ---
@@ -74,18 +99,16 @@ service cloud.firestore {
 
     // --- Configuracion ---
     match /config/{doc} {
-      allow read: if signedIn() && doc != 'secrets';
-      allow write: if doc != 'secrets' && (
-        (doc == 'catalogo' && isSuper())
-        || (doc == 'menu' && isAdmin())
-        || (doc != 'catalogo' && doc != 'menu' && isSuper())
-      );
+      allow read: if (signedIn() && doc in ['menu', 'catalogo'])
+        || (isAdmin() && doc == 'cortesias')
+        || (isSuper() && doc == 'catalogo_rfc');
+      allow write: if (doc == 'menu' && isAdmin())
+        || (doc in ['cortesias', 'catalogo', 'catalogo_rfc'] && isSuper());
     }
 
-    // --- Historial por quincena ---
+    // --- Historial por quincena (solo reportes) ---
     match /historial/{quincena} {
-      allow read: if signedIn();
-      allow write: if isSuper();
+      allow read, write: if isSuper();
     }
 
     // --- Sesiones de admin (una por navegador/uid) ---
@@ -104,9 +127,12 @@ service cloud.firestore {
 
     // --- Pedidos: un documento por numero de empleado ---
     match /orders/{id} {
-      allow read: if signedIn();
-      allow create, update: if isSuper() || (signedIn() && validOrder(id));
-      allow delete: if signedIn();
+      allow get: if signedIn();
+      allow list: if isAdmin();
+      allow create: if isSuper() || (signedIn() && validOrder(id) && pedidosAbiertos());
+      allow update: if isSuper() || (signedIn() && validOrder(id)
+        && (pedidosAbiertos() || (cancelAbierto() && esCancelacion())));
+      allow delete: if isSuper() || (signedIn() && cancelAbierto());
     }
 
     // --- Buzon anonimo ---
