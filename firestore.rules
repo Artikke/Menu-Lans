@@ -3,13 +3,12 @@ rules_version = '2';
 //  Reglas de Firestore - Menu LANS
 //  - Todo requiere token (Firebase Auth anonimo). Sin token = nada.
 //  - Los PINs viven en config/secrets y NUNCA se pueden leer desde el cliente:
-//      comedorPin -> nivel "comedor": editar menu y ver pedidos
-//      adminPin   -> nivel "admin":   todo menos catalogo (RRHH)
-//      superPin   -> nivel "super":   todo, incluido catalogo
+//      adminPin -> nivel "admin": comedor, editar menu y ver pedidos
+//      superPin -> nivel "super": RRHH, todo (cortesias, reportes, limpiar, catalogo)
 //  - El admin "inicia sesion" creando admin_sessions/{uid} con el PIN;
 //    las reglas comparan el PIN contra config/secrets y guardan el nivel.
 //  - Las sesiones expiran a las 12 h.
-//  - comentarios/{id}: buzon anonimo. Cualquiera con token crea y lee; solo admin borra.
+//  - comentarios/{id}: buzon anonimo. Cualquiera con token crea y lee; solo super borra.
 // ============================================================
 service cloud.firestore {
   match /databases/{db}/documents {
@@ -34,10 +33,6 @@ service cloud.firestore {
 
     function level() {
       return get(sessionPath()).data.level;
-    }
-
-    function isComedor() {
-      return hasSession() && level() in ['comedor', 'admin', 'super'];
     }
 
     function isAdmin() {
@@ -81,15 +76,15 @@ service cloud.firestore {
       allow read: if signedIn() && doc != 'secrets';
       allow write: if doc != 'secrets' && (
         (doc == 'catalogo' && isSuper())
-        || (doc == 'menu' && isComedor())
-        || (doc != 'catalogo' && doc != 'menu' && isAdmin())
+        || (doc == 'menu' && isAdmin())
+        || (doc != 'catalogo' && doc != 'menu' && isSuper())
       );
     }
 
     // --- Historial por quincena ---
     match /historial/{quincena} {
       allow read: if signedIn();
-      allow write: if isAdmin();
+      allow write: if isSuper();
     }
 
     // --- Sesiones de admin (una por navegador/uid) ---
@@ -103,14 +98,13 @@ service cloud.firestore {
         && (
           (request.resource.data.level == 'super' && request.resource.data.pin == secrets().superPin)
           || (request.resource.data.level == 'admin' && request.resource.data.pin == secrets().adminPin)
-          || (request.resource.data.level == 'comedor' && 'comedorPin' in secrets() && request.resource.data.pin == secrets().comedorPin)
         );
     }
 
     // --- Pedidos: un documento por numero de empleado ---
     match /orders/{id} {
       allow read: if signedIn();
-      allow create, update: if isAdmin() || (signedIn() && validOrder(id));
+      allow create, update: if isSuper() || (signedIn() && validOrder(id));
       allow delete: if signedIn();
     }
 
@@ -119,7 +113,7 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create: if signedIn() && validComentario();
       allow update: if false;
-      allow delete: if isAdmin();
+      allow delete: if isSuper();
     }
 
     // Todo lo demas: bloqueado
