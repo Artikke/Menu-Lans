@@ -327,8 +327,8 @@ body {
 /* ADMIN */
 .admin-toggle { position: fixed; top: 15px; right: 15px; z-index: 50; }
 .admin-toggle button {
-  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4);
-  color: #fff; padding: 8px 16px; border-radius: 8px;
+  background: var(--primary); border: 1px solid rgba(255,255,255,0.5);
+  color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.2); padding: 8px 16px; border-radius: 8px;
   font-size: 0.72rem; cursor: pointer; font-family: 'Inter', sans-serif;
   letter-spacing: 1px; text-transform: uppercase; font-weight: 600;
 }
@@ -359,7 +359,6 @@ body {
 .admin-btn:hover { transform: scale(1.03); }
 .admin-btn.save { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; }
 .admin-btn.reset { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-.btn-wa { background: #25d366; color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 8px; }
 
 /* ORDERS */
 .orders-log { margin-top: 30px; }
@@ -616,10 +615,6 @@ body {
 
   <div class="admin-btn-row">
     <button class="admin-btn save" onclick="guardarMenu()">Guardar y Publicar</button>
-    <button class="btn-wa" onclick="compartirMenuWhatsApp()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      Compartir Menu
-    </button>
     <button class="admin-btn reset" onclick="resetMenu()">Restaurar</button>
     <button class="admin-btn reset" onclick="cerrarSesionAdmin()">Cerrar sesion</button>
   </div>
@@ -668,10 +663,6 @@ body {
   <div class="orders-log">
     <h3>Pedidos Recibidos</h3>
     <div class="admin-btn-row" style="margin-bottom:15px;">
-      <button class="btn-wa" style="padding:10px 20px;font-size:0.82rem;" onclick="enviarOrdenCocina()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        Enviar Orden a Cocina
-      </button>
       <button class="btn-export" onclick="exportarCSV()">Exportar Excel</button>
       <button class="btn-export" onclick="mostrarExportBUK()" style="background:linear-gradient(135deg,#8e44ad,#3498db);">Exportar BUK</button>
       <button class="btn-export" onclick="mostrarExportFactura()" style="background:linear-gradient(135deg,#27ae60,#2ecc71);">Conciliar Factura</button>
@@ -1467,70 +1458,6 @@ function resetMenu() {
   populateAdminForm();
   renderMenu();
   showToast('Restaurado (no publicado)');
-}
-
-// ============================================================
-//  WHATSAPP (solo admin)
-// ============================================================
-function compartirMenuWhatsApp() {
-  let msg = `*${EMPRESA} - Menu del Comedor*\nSemana ${menuData.semana} de ${menuData.mes} ${menuData.anio}\nServicio: 12:30 a 17:30\n\n`;
-  menuData.dias.forEach(d => {
-    msg += `*${d.dia} ${d.fecha}*\n`;
-    msg += `  Entrada: ${d.entrada}\n`;
-    msg += `  Plato: ${d.platoFuerte}`;
-    if (d.complemento) msg += ` + ${d.complemento}`;
-    msg += '\n';
-    if (d.platoAlternativo) msg += `  Alternativa: ${d.platoAlternativo}\n`;
-    msg += `  Postre: ${d.postre}\n\n`;
-  });
-  msg += `Pedidos de 7:00 a 11:30 AM aqui:\n${MENU_URL}`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-}
-
-function enviarOrdenCocina() {
-  if (!ordersData.length && !cortesiasData.length) { showToast('No hay pedidos'); return; }
-  const dayTotals = {}, dayOpciones = {};
-  menuData.dias.forEach(d => { dayTotals[d.dia] = 0; dayOpciones[d.dia] = {}; });
-  ordersData.forEach(o => {
-    menuData.dias.forEach(d => {
-      const qty = (o.detalle && o.detalle[d.dia]) || 0;
-      dayTotals[d.dia] += qty;
-      if (qty > 0 && o.opciones && o.opciones[d.dia]) {
-        const op = o.opciones[d.dia];
-        dayOpciones[d.dia][op] = (dayOpciones[d.dia][op] || 0) + qty;
-      }
-    });
-  });
-  cortesiasData.forEach(c => { menuData.dias.forEach(d => { if (c.dias && c.dias[d.dia]) dayTotals[d.dia] += 1; }); });
-  const grandTotal = Object.values(dayTotals).reduce((a,b)=>a+b, 0);
-
-  let msg = `*ORDEN ${EMPRESA_CORTA} - Semana ${menuData.semana}*\n${menuData.mes} ${menuData.anio}\nTotal: ${grandTotal} comidas\n\n`;
-  menuData.dias.forEach(d => {
-    if (dayTotals[d.dia] > 0) {
-      msg += `*${d.dia} ${d.fecha}*: ${dayTotals[d.dia]} comida${dayTotals[d.dia]!==1?'s':''}\n`;
-      const opcKeys = Object.keys(dayOpciones[d.dia]);
-      if (opcKeys.length > 0) {
-        opcKeys.forEach(op => { msg += `  - ${op}: ${dayOpciones[d.dia][op]}\n`; });
-        const totalOpc = Object.values(dayOpciones[d.dia]).reduce((a,b)=>a+b,0);
-        const sinOpc = dayTotals[d.dia] - totalOpc;
-        if (sinOpc > 0) msg += `  - ${d.platoFuerte}: ${sinOpc}\n`;
-      }
-    }
-  });
-  msg += `\n*Detalle por persona:*\n`;
-  ordersData.forEach(o => {
-    const dias = menuData.dias.filter(d => o.detalle && o.detalle[d.dia] > 0).map(d => {
-      let txt = d.dia.substring(0,3);
-      if (o.opciones && o.opciones[d.dia]) txt += `(${o.opciones[d.dia].substring(0,15)})`;
-      return txt;
-    }).join(', ');
-    msg += `${o.nombre}${o.numEmpleado ? ' #'+o.numEmpleado : ''}: ${dias} (${o.total})\n`;
-  });
-  cortesiasData.forEach(c => {
-    const dias = menuData.dias.filter(d => c.dias && c.dias[d.dia]).map(d => d.dia.substring(0,3)).join(', ');
-    msg += `${c.nombre} (cortesia): ${dias}\n`;
-  });
-  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 // ============================================================
