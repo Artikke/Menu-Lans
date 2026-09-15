@@ -480,7 +480,48 @@ body {
 .tiny-modal .btns .go { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; }
 
 /* ===== VISTA SEMANAL COMPACTA ===== */
-.week-wrap { max-width: 1000px; margin: 0 auto; padding: 0 12px 8px; }
+.week-wrap { max-width: 1300px; margin: 0 auto; }
+.menu-grid { grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.day-card { display: flex; flex-direction: column; }
+.day-card .day-order { margin-top: auto; }
+.day-header .d-short { display: none; }
+@media (max-width: 900px) {
+  .menu-grid { gap: 8px; padding: 12px 8px; }
+  .day-card { border-radius: 10px; }
+  .day-header { padding: 8px 4px; }
+  .day-header h2 { font-size: 0.85rem; }
+  .day-header .date { font-size: 0.65rem; }
+  .meal-section { padding: 4px 8px; }
+  .meal-type { font-size: 0.55rem; letter-spacing: 1px; margin-top: 6px; }
+  .meal-name { font-size: 0.75rem; }
+  .meal-complement { font-size: 0.65rem; }
+  .day-order { padding: 8px; }
+  .order-toggle { padding: 8px 4px; font-size: 0.75rem; }
+}
+@media (max-width: 600px) {
+  .menu-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 10px 4px; }
+  .day-card { border-radius: 8px; }
+  .day-card:hover { transform: none; }
+  .day-header { padding: 6px 2px; }
+  .day-header h2 { font-size: 0.62rem; letter-spacing: 0; }
+  .day-header .date { font-size: 0.55rem; }
+  .day-header .d-long { display: none; }
+  .day-header .d-short { display: inline; }
+  .meal-section { padding: 2px 4px; }
+  .meal-type { font-size: 0.42rem; letter-spacing: 0.5px; margin-top: 5px; margin-bottom: 2px; }
+  .meal-name { font-size: 0.6rem; line-height: 1.2; overflow-wrap: anywhere; margin-bottom: 2px; }
+  .meal-complement { font-size: 0.52rem; margin-bottom: 3px; overflow-wrap: anywhere; }
+  .day-order { padding: 6px 3px; }
+  .order-toggle { padding: 7px 2px; font-size: 0.58rem; border-radius: 6px; border-width: 1px; }
+  .day-card.day-passed::after { font-size: 0.5rem; padding: 4px 5px; white-space: normal; width: 90%; text-align: center; }
+  .alt-section { padding: 4px 3px; }
+  .alt-label { font-size: 0.42rem; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .alt-options { gap: 3px; }
+  .alt-option { padding: 4px 3px; gap: 3px; border-radius: 5px; }
+  .alt-option input[type="radio"] { width: 10px; height: 10px; margin: 0; }
+  .alt-option-text { font-size: 0.55rem; line-height: 1.2; overflow-wrap: anywhere; }
+  .alt-option-text small { font-size: 0.48rem; }
+}
 .week-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); }
 .week-title { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; padding: 12px 18px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .week-title small { font-weight: 500; opacity: 0.85; font-size: 0.72rem; text-align: right; }
@@ -569,7 +610,6 @@ body {
     <img src="logo.png" alt="LANS" onerror="document.getElementById('headerLogo').classList.add('no-logo')" />
     <span class="logo-fallback">LANS</span>
   </div>
-  <h1>LANS</h1>
   <div class="header-sub">Laboratorios de Referencia</div>
   <div class="header-title">Menu del Comedor</div>
   <div class="menu-info" id="menuInfo"></div>
@@ -600,12 +640,7 @@ body {
 </div>
 
 <!-- MENU SEMANAL COMPACTO -->
-<div class="week-wrap">
-  <div class="week-card">
-    <div class="week-title"><span id="weekTitle">Menu de la semana</span><small>Toca el circulo del dia que quieres comer</small></div>
-    <div id="menuGrid"></div>
-  </div>
-</div>
+<div class="week-wrap"><div class="menu-grid" id="menuGrid"></div></div>
 
 <div class="water-note">* Incluye agua del dia &middot; Servicio de 12:30 a 17:30</div>
 <div class="night-note"><strong>Turno nocturno:</strong> solicita tu comida por Teams con Axel Avila. Se entrega en contenedor desechable rotulado con tu nombre.</div>
@@ -1174,16 +1209,13 @@ function renderMenu() {
     <span class="badge">Servicio 12:30 - 17:30</span>
   `;
   const dias = menuData.dias || [];
-  if (dias.length) {
-    const f1 = dias[0].fecha, f2 = dias[dias.length - 1].fecha;
-    document.getElementById('weekTitle').textContent = `Semana del ${f1} al ${f2} de ${getDisplayMonth(f2, menuData)}`;
-  }
 
   const grid = document.getElementById('menuGrid');
   grid.innerHTML = '';
   grid.style.gridTemplateColumns = `repeat(${Math.max(dias.length, 1)}, 1fr)`;
   const numEmpNorm = normEmp(document.getElementById('numEmpleado').value.trim());
   const pedidoPrevioActivo = numEmpNorm && ordersData.some(o => normEmp(o.numEmpleado) === numEmpNorm);
+  const MES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
   dias.forEach((d, i) => {
     quantities[i] = quantities[i] || 0;
@@ -1192,26 +1224,56 @@ function renderMenu() {
     const passed = !adminVisible && isDayPassed(d.dia);
     const yaPedido = quantities[i] > 0 && pedidoPrevioActivo;
     if (passed && !yaPedido) quantities[i] = 0;
-    const on = quantities[i] > 0;
+    const mesLargo = getDisplayMonth(d.fecha, menuData);
+    const mesCorto = MES_CORTO[MONTH_NAMES.indexOf(mesLargo)] || mesLargo;
 
-    const row = document.createElement('div');
-    row.className = 'day-row' + (on ? ' on' : '') + (passed && !yaPedido ? ' passed' : '');
-    const platoTxt = hasAlt ? (selections[i] === 'alternativa' ? d.platoAlternativo : d.platoFuerte) : d.platoFuerte;
-    const sideParts = [d.entrada, (!hasAlt || selections[i] === 'principal') && d.complemento ? d.complemento : null, d.postre].filter(Boolean);
-    row.innerHTML = `
-      <div class="day-date"><div class="dn">${esc(d.dia.substring(0,3))}</div><div class="dd">${esc(d.fecha)}</div></div>
-      <div class="day-meals">
-        <div class="main">${esc(platoTxt)}</div>
-        <div class="side">${esc(sideParts.join(' · '))}</div>
-        ${hasAlt && !(passed && !yaPedido) ? `<div class="alt-pills">
-          <button class="alt-pill ${selections[i]==='principal'?'sel':''}" onclick="selectOption(${i},'principal')">${esc(d.platoFuerte)}</button>
-          <button class="alt-pill ${selections[i]==='alternativa'?'sel':''}" onclick="selectOption(${i},'alternativa')">${esc(d.platoAlternativo)}</button>
-        </div>` : ''}
-        ${passed && !yaPedido ? '<div class="passed-tag">Ya paso</div>' : ''}
-        ${passed && yaPedido ? '<div class="passed-tag">Ya pedido</div>' : ''}
+    const card = document.createElement('div');
+    card.className = 'day-card' + (passed && !yaPedido ? ' day-passed' : '');
+
+    let altHTML = '';
+    if (hasAlt) {
+      altHTML = `
+        <div class="alt-section">
+          <div class="alt-label">Elige tu plato</div>
+          <div class="alt-options">
+            <label class="alt-option ${selections[i]==='principal'?'selected':''}" onclick="selectOption(${i},'principal')">
+              <input type="radio" name="opt-${i}" ${selections[i]==='principal'?'checked':''} />
+              <span class="alt-option-text"><strong>${esc(d.platoFuerte)}</strong>${d.complemento ? `<br><small>${esc(d.complemento)}</small>` : ''}</span>
+            </label>
+            <label class="alt-option ${selections[i]==='alternativa'?'selected':''}" onclick="selectOption(${i},'alternativa')">
+              <input type="radio" name="opt-${i}" ${selections[i]==='alternativa'?'checked':''} />
+              <span class="alt-option-text"><strong>${esc(d.platoAlternativo)}</strong><br><small>Alternativa</small></span>
+            </label>
+          </div>
+        </div>`;
+    }
+
+    card.innerHTML = `
+      <div class="day-header">
+        <h2>${esc(d.dia)}</h2>
+        <div class="date"><span class="d-long">${esc(d.fecha)} de ${esc(mesLargo)}</span><span class="d-short">${esc(d.fecha)} ${esc(mesCorto)}</span></div>
       </div>
-      <button class="day-btn ${on ? 'on' : ''} ${passed && yaPedido ? 'locked' : ''}" id="qty-${i}" onclick="toggleDay(${i})" aria-label="Pedir ${esc(d.dia)}">${on ? '&#10003;' : '+'}</button>`;
-    grid.appendChild(row);
+      <div class="meal-section">
+        <div class="meal-type">Entrada</div>
+        <div class="meal-name">${esc(d.entrada)}</div>
+      </div>
+      ${hasAlt ? '' : `
+      <div class="meal-section">
+        <div class="meal-type">Plato Fuerte</div>
+        <div class="meal-name">${esc(d.platoFuerte)}</div>
+        ${d.complemento ? `<div class="meal-complement">${esc(d.complemento)}</div>` : ''}
+      </div>`}
+      ${altHTML}
+      <div class="meal-section">
+        <div class="meal-type">Postre</div>
+        <div class="meal-name">${esc(d.postre)}</div>
+      </div>
+      <div class="day-order">
+        <button class="order-toggle ${quantities[i]>0?'active':''} ${passed && yaPedido ? 'locked' : ''}" id="qty-${i}" onclick="toggleDay(${i})">
+          ${passed && yaPedido ? '&#10003; Ya pedido' : quantities[i]>0 ? '&#10003; Pedido' : 'Pedir'}
+        </button>
+      </div>`;
+    grid.appendChild(card);
   });
   if (!dias.length) grid.innerHTML = '<div class="comments-empty">Aun no hay menu publicado</div>';
   updateSummary();
