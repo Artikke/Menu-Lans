@@ -326,6 +326,19 @@ body {
 
 /* ADMIN */
 .admin-toggle { position: fixed; top: 15px; right: 15px; z-index: 50; }
+.night-pill {
+  position: fixed; top: 15px; left: 15px; z-index: 50;
+  background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.35);
+  color: #fff; padding: 7px 12px; border-radius: 20px; font-size: 0.72rem; line-height: 1.3;
+  backdrop-filter: blur(6px); max-width: 60vw; cursor: default;
+}
+.night-pill strong { font-weight: 700; }
+.night-pill .np-short { display: none; }
+@media (max-width: 600px) {
+  .night-pill { top: 12px; left: 10px; padding: 6px 10px; font-size: 0.62rem; max-width: 62vw; }
+  .night-pill .np-long { display: none; }
+  .night-pill .np-short { display: inline; }
+}
 .admin-toggle button {
   background: var(--primary); border: 1px solid rgba(255,255,255,0.5);
   color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.2); padding: 8px 16px; border-radius: 8px;
@@ -629,6 +642,11 @@ body {
   </div>
 </div>
 
+<!-- TURNO NOCTURNO (arriba izquierda) -->
+<div class="night-pill" title="Turno nocturno: solicita tu comida por Teams con Axel Avila. Se entrega en contenedor desechable rotulado con tu nombre.">
+  &#127769; <strong>Turno nocturno:</strong> <span class="np-long">solicita tu comida por Teams con Axel Avila</span><span class="np-short">por Teams con Axel Avila</span>
+</div>
+
 <!-- ADMIN TOGGLE -->
 <div class="admin-toggle">
   <button onclick="abrirAdmin()" id="adminToggleBtn">Admin</button>
@@ -673,7 +691,6 @@ body {
 <div class="week-wrap"><div class="menu-grid" id="menuGrid"></div></div>
 
 <div class="water-note">* Incluye agua del dia &middot; Servicio de 12:30 a 17:30</div>
-<div class="night-note"><strong>Turno nocturno:</strong> solicita tu comida por Teams con Axel Avila. Se entrega en contenedor desechable rotulado con tu nombre.</div>
 
 <!-- BUZON ANONIMO: boton flotante + modal -->
 <button class="buzon-btn-float" id="buzonBtnFloat" onclick="abrirBuzon()">&#128172; Comentarios</button>
@@ -1156,24 +1173,18 @@ function autoFillNombre() {
   const nombreInput = document.getElementById('nombreInput');
   const confirmEl = document.getElementById('nombreConfirm');
   const cat = findCatEntry(numEmp);
+  confirmEl.textContent = '';
+  confirmEl.className = 'nombre-confirm';
   nombreInput.style.display = 'none';
   if (cat) {
     nombreInput.value = cat.nombre;
-    confirmEl.textContent = '\u2713 ' + cat.nombre;
-    confirmEl.className = 'nombre-confirm';
   } else if (numEmp && adminVisible) {
+    // Solo el admin puede pedir para alguien fuera del catalogo; escribe el nombre a mano
     nombreInput.style.display = '';
-    if (nombreInput.value === '' || findCatEntry(nombreInput.dataset.for || '')) nombreInput.value = '';
     confirmEl.textContent = 'No esta en el catalogo. Escribe el nombre:';
-    confirmEl.className = 'nombre-confirm bad';
-  } else if (numEmp.length >= 2 && Object.keys(catalogoData).length) {
-    nombreInput.value = '';
-    confirmEl.textContent = 'Numero no encontrado. Revisa o contacta a RRHH.';
     confirmEl.className = 'nombre-confirm bad';
   } else {
     nombreInput.value = '';
-    confirmEl.textContent = '';
-    confirmEl.className = 'nombre-confirm';
   }
 }
 
@@ -2143,6 +2154,13 @@ function checkOrderLock() {
   updateCountdown();
 }
 setInterval(checkOrderLock, 60000);
+
+// La etiqueta de turno nocturno vive sobre el header azul; se oculta al bajar
+window.addEventListener('scroll', () => {
+  const p = document.querySelector('.night-pill');
+  if (p) p.style.opacity = window.scrollY > 120 ? '0' : '1';
+  if (p) p.style.pointerEvents = window.scrollY > 120 ? 'none' : '';
+}, { passive: true });
 
 function diaYaPaso(diaNombre) {
   const menuDia = menuData.dias?.find(d => d.dia === diaNombre);
