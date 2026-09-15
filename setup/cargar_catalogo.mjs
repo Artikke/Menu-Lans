@@ -3,6 +3,7 @@
 //  Carga el catalogo de empleados LANS en Firestore (config/catalogo)
 //
 //  Uso:
+//    node setup/cargar_catalogo.mjs            (toma la key de index.html y pregunta el PIN)
 //    node setup/cargar_catalogo.mjs --key <WEB_API_KEY> --pin <SUPER_PIN> [--project menu-lans] [--file setup/catalogo_lans.txt]
 //
 //  Requisitos previos (ver README):
@@ -17,19 +18,30 @@
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createInterface } from 'node:readline/promises';
 
 const args = process.argv.slice(2);
 const getArg = (name, def) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : def; };
-const API_KEY = getArg('--key', process.env.FIREBASE_API_KEY);
-const SUPER_PIN = getArg('--pin', process.env.SUPER_PIN);
+const __dir0 = dirname(fileURLToPath(import.meta.url));
+function keyFromIndex() {
+  try { const m = readFileSync(resolve(__dir0, "..", "index.html"), "utf8").match(/FIREBASE_API_KEY = "([^"]+)"/); return m && !m[1].startsWith("PEGA_AQUI") ? m[1] : null; } catch (e) { return null; }
+}
+const API_KEY = getArg('--key', process.env.FIREBASE_API_KEY || keyFromIndex());
+let SUPER_PIN = getArg('--pin', process.env.SUPER_PIN);
 const PROJECT = getArg('--project', 'menu-lans');
 const __dir = dirname(fileURLToPath(import.meta.url));
 const FILE = resolve(getArg('--file', resolve(__dir, 'catalogo_lans.txt')));
 const MERGE = args.includes('--merge');
 
-if (!API_KEY || !SUPER_PIN) {
-  console.error('Faltan argumentos. Uso: node setup/cargar_catalogo.mjs --key <WEB_API_KEY> --pin <SUPER_PIN>');
+if (!API_KEY) {
+  console.error('No encontre la API key. Pegala en index.html o usa --key <WEB_API_KEY>');
   process.exit(1);
+}
+if (!SUPER_PIN) {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  SUPER_PIN = (await rl.question('Escribe el SUPER PIN y presiona Enter: ')).trim();
+  rl.close();
+  if (!SUPER_PIN) { console.error('PIN vacio.'); process.exit(1); }
 }
 
 const FS_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
