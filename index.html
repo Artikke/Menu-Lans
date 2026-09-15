@@ -745,7 +745,7 @@ body {
 const FIREBASE_PROJECT_ID = "menu-lans";
 // Web API Key del proyecto Firebase (Configuracion del proyecto > General > Tus apps > Web).
 // Restringirla por referrer en Google Cloud Console (ver README).
-const FIREBASE_API_KEY = "PEGA_AQUI_TU_WEB_API_KEY";
+const FIREBASE_API_KEY = "AIzaSyBlW1wezI0sxz6MAKVOcj9HM2OIGFIOWY8";
 const FS_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
 const MENU_URL = "https://artikke.github.io/Menu-Lans/";
 const ALLOWED_HOSTS = ["artikke.github.io", "localhost", "127.0.0.1"];
@@ -831,7 +831,9 @@ async function ensureAuth(force) {
     try {
       applyAuth(await anonSignUp());
     } catch (e) {
-      if (/ADMIN_ONLY_OPERATION|OPERATION_NOT_ALLOWED/.test(e.message)) {
+      if (/CONFIGURATION_NOT_FOUND/.test(e.message)) {
+        setupProblem('<strong>Configuracion pendiente:</strong> en Firebase Console entra a <em>Authentication</em> y pulsa <em>Comenzar</em>, luego habilita <em>Anonymous</em>.');
+      } else if (/ADMIN_ONLY_OPERATION|OPERATION_NOT_ALLOWED/.test(e.message)) {
         setupProblem('<strong>Configuracion pendiente:</strong> activa <em>Anonymous</em> en Firebase Authentication &rarr; Sign-in method.');
       } else if (/API key not valid|API_KEY_INVALID/i.test(e.message)) {
         setupProblem('<strong>Configuracion pendiente:</strong> la API key no es valida o esta restringida a otro dominio.');
