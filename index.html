@@ -688,8 +688,8 @@ body {
   <label>No. de empleado</label>
   <input type="text" id="numEmpleado" placeholder="Tu numero de empleado" autocomplete="off" oninput="onNumEmpInput()" />
   <div style="height:10px"></div>
-  <label>Tu nombre completo</label>
-  <input type="text" id="nombreInput" placeholder="Nombre y apellidos" autocomplete="off" autocapitalize="words" />
+  <label>Tu nombre</label>
+  <input type="text" id="nombreInput" placeholder="Se llena solo con tu numero de empleado" autocomplete="off" autocapitalize="words" />
   <div class="nombre-confirm" id="nombreConfirm"></div>
   <div id="misPedidos"></div>
 </div>
@@ -1161,6 +1161,7 @@ let selections = {};
 let adminAuth = false;
 let adminLevel = null;   // 'admin' | 'super'
 let adminVisible = false;
+let menuPublicado = false;   // true solo si config/menu existe en Firestore
 let menuCarouselReady = false;
 
 const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -1191,10 +1192,31 @@ function onNumEmpInput() {
   }, 450);
 }
 
+// Como en PROESA: al escribir el numero, el nombre se llena solo y queda bloqueado.
 function autoFillNombre() {
+  const numEmp = document.getElementById('numEmpleado').value.trim();
+  const nombreInput = document.getElementById('nombreInput');
   const confirmEl = document.getElementById('nombreConfirm');
+  const cat = findCatEntry(numEmp);
   confirmEl.textContent = '';
   confirmEl.className = 'nombre-confirm';
+  if (cat) {
+    nombreInput.value = cat.nombre;
+    nombreInput.readOnly = true;
+    nombreInput.style.background = '#e8f5e9';
+    nombreInput.style.color = '#1b5e20';
+    nombreInput.style.fontWeight = '600';
+  } else {
+    if (nombreInput.readOnly) nombreInput.value = '';
+    nombreInput.readOnly = false;
+    nombreInput.style.background = '';
+    nombreInput.style.color = '';
+    nombreInput.style.fontWeight = '';
+    if (numEmp.length >= 2 && Object.keys(catalogoData).length && !adminVisible) {
+      confirmEl.textContent = 'Numero no encontrado. Revisa tu numero o contacta a Talento Humano.';
+      confirmEl.className = 'nombre-confirm bad';
+    }
+  }
 }
 
 // Compara el nombre escrito con el del catalogo (sin acentos, por palabras)
@@ -1233,6 +1255,7 @@ async function loadFromCloud() {
         loadFsCollection('historial', 100),
         loadFsCollection('comentarios', 100)
       ]);
+      menuPublicado = !!(menuDoc && menuDoc.dias);
       if (menuDoc?.dias) menuData = menuDoc;
       ordersData = ordersList;
       cortesiasData = Array.isArray(cortDoc?.items) ? cortDoc.items : [];
@@ -1248,6 +1271,7 @@ async function loadFromCloud() {
         fsRead('config/catalogo'),
         numEmp ? fsRead('orders/' + orderDocId(numEmp)) : Promise.resolve(null)
       ]);
+      menuPublicado = !!(menuDoc && menuDoc.dias);
       if (menuDoc?.dias) menuData = menuDoc;
       if (catDoc && typeof catDoc === 'object') catalogoData = catDoc;
       ordersData = myOrder ? [myOrder] : [];
@@ -1313,6 +1337,17 @@ function getDisplayMonth(fechaNum, menu) {
 }
 
 function renderMenu() {
+  if (!menuPublicado && !adminVisible) {
+    document.getElementById('menuInfo').innerHTML = '<span class="badge">Servicio 12:30 - 17:30</span>';
+    const g = document.getElementById('menuGrid');
+    g.style.gridTemplateColumns = '1fr';
+    g.innerHTML = '<div class="comments-empty" style="padding:40px 16px;font-size:1rem;">Aun no hay menu publicado para esta semana.<br>Vuelve a intentar en unos minutos.</div>';
+    const hint = document.querySelector('.swipe-hint'); if (hint) hint.style.display = 'none';
+    quantities = {}; selections = {};
+    updateSummary();
+    return;
+  }
+  { const hint = document.querySelector('.swipe-hint'); if (hint) hint.style.display = ''; }
   document.getElementById('menuInfo').innerHTML = `
     <span class="badge">${esc(menuData.mes)} ${esc(menuData.anio)}</span>
     <span class="badge">Semana ${esc(menuData.semana)}</span>
@@ -1447,6 +1482,7 @@ function updateSummary() {
 let ultimosDiasNuevos = null;
 
 async function enviarPedido() {
+  if (!menuPublicado && !isAdminLevel()) { showToast('Aun no hay menu publicado'); return; }
   if (!isOrderingOpen() && !isAdminLevel()) { showToast('Pedidos cerrados. Horario: 7:00 a 11:30 AM'); return; }
   const numEmp = document.getElementById('numEmpleado').value.trim();
   if (!numEmp) { showToast('Escribe tu numero de empleado'); document.getElementById('numEmpleado').focus(); return; }
@@ -1531,6 +1567,8 @@ function cerrarModal() {
   selections = {};
   ultimosDiasNuevos = null;
   document.getElementById('nombreInput').value = '';
+  document.getElementById('numEmpleado').value = '';
+  autoFillNombre();
   mostrarMisPedidos();
   renderMenu();
 }
