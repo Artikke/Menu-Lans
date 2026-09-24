@@ -10,6 +10,8 @@ rules_version = '2';
 //  - Horarios (hora de Mexico, UTC-6) se hacen cumplir aqui, no solo en el navegador:
 //      pedir:    L-V 7:00 - 11:30
 //      cancelar: L-V 7:00 - 11:30 y 17:00 - 24:00
+//      turno nocturno (catalogo turno = 'noche'): ademas sab y dom todo el dia,
+//                                                 y lun a jue 17:00 - 24:00
 //  - Empleados solo pueden leer SU pedido (get); listar todos requiere admin.
 //  - RFCs viven en config/catalogo_rfc, solo super.
 //  - comentarios/{id}: buzon anonimo. Cualquiera crea; admin/super leen; solo super borra.
@@ -58,14 +60,31 @@ service cloud.firestore {
         : request.time.dayOfWeek();
     }
     function pedidosAbiertos() {
-      return mxDow() <= 5 && mxMin() >= 420 && mxMin() <= 690;      // 7:00 - 11:30
+      return mxDow() <= 5 && mxMin() >= 420 && mxMin() <= 690;      // L-V 7:00 - 11:30
     }
     function cancelAbierto() {
-      return mxDow() <= 5 && (pedidosAbiertos() || mxMin() >= 1020); // + 17:00 - 24:00
+      return mxDow() <= 5 && (pedidosAbiertos() || mxMin() >= 1020); // + L-V 17:00 - 24:00
+    }
+    // Ventana del turno nocturno: sab y dom todo el dia; lun a jue 17:00 - 24:00
+    function nocheAbierta() {
+      return mxDow() >= 6 || (mxDow() <= 4 && mxMin() >= 1020);
     }
 
     function catalogo() {
       return get(/databases/$(db)/documents/config/catalogo).data;
+    }
+
+    function esNocturno(id) {
+      let c = catalogo();
+      return id in c && 'turno' in c[id] && c[id].turno == 'noche';
+    }
+
+    function puedePedir(id) {
+      return pedidosAbiertos() || (esNocturno(id) && nocheAbierta());
+    }
+
+    function puedeCancelar(id) {
+      return cancelAbierto() || (esNocturno(id) && nocheAbierta());
     }
 
     function validOrder(id) {
@@ -129,10 +148,10 @@ service cloud.firestore {
     match /orders/{id} {
       allow get: if signedIn();
       allow list: if isAdmin();
-      allow create: if isSuper() || (signedIn() && validOrder(id) && pedidosAbiertos());
+      allow create: if isSuper() || (signedIn() && validOrder(id) && puedePedir(id));
       allow update: if isSuper() || (signedIn() && validOrder(id)
-        && (pedidosAbiertos() || (cancelAbierto() && esCancelacion())));
-      allow delete: if isSuper() || (signedIn() && cancelAbierto());
+        && (puedePedir(id) || (puedeCancelar(id) && esCancelacion())));
+      allow delete: if isSuper() || (signedIn() && puedeCancelar(id));
     }
 
     // --- Buzon anonimo ---

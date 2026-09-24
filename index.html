@@ -422,7 +422,6 @@ body {
 .lock-overlay .lock-time { font-weight: 700; color: #9fd3ff; font-size: 1.05rem; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-.ordering-locked .nombre-section,
 .ordering-locked .week-wrap,
 .ordering-locked .summary-bar,
 .ordering-locked .water-note { opacity: 0.3; pointer-events: none; user-select: none; }
@@ -583,6 +582,11 @@ body {
 .comment-item .cdel { position: absolute; top: 6px; right: 8px; background: #e74c3c; color: #fff; border: none; border-radius: 6px; font-size: 0.7rem; padding: 3px 8px; cursor: pointer; }
 .comments-empty { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 10px; }
 .role-hidden { display: none !important; }
+.badge-noche { display: inline-block; background: #3d4f8a; color: #fff; padding: 2px 7px; border-radius: 4px; font-size: 0.68rem; font-weight: 600; margin-left: 6px; white-space: nowrap; }
+.admin-aviso { background: #fff3cd; color: #7a5b00; border: 1px solid #f0c36d; border-radius: 10px; padding: 10px 14px; margin: 0 0 14px; font-size: 0.85rem; line-height: 1.4; display: none; }
+.admin-aviso.visible { display: block; }
+.cat-noche-btn { background: #fff; border: 1px solid var(--border); color: var(--muted); padding: 4px 8px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; margin-right: 6px; }
+.cat-noche-btn.on { background: #3d4f8a; border-color: #3d4f8a; color: #fff; }
 /* ===== BUZON FLOTANTE ===== */
 .buzon-btn-float {
   position: fixed; bottom: 80px; left: 20px; z-index: 90;
@@ -648,8 +652,8 @@ body {
 </div>
 
 <!-- TURNO NOCTURNO (arriba izquierda) -->
-<div class="night-pill" title="Turno nocturno: solicita tu comida por Teams con Axel Avila. Se entrega en contenedor desechable rotulado con tu nombre.">
-  &#127769; <strong>Turno nocturno:</strong> <span class="np-long">solicita tu comida por Teams con Axel Avila</span><span class="np-short">por Teams con Axel Avila</span>
+<div class="night-pill" title="Turno nocturno: escribe tu numero y pide aqui tu semana. Sabado y domingo todo el dia, y de lunes a jueves de 5 PM a 12 AM para el dia siguiente. Se entrega en contenedor rotulado con tu nombre.">
+  &#127769; <strong>Turno nocturno:</strong> <span class="np-long">pide aqui sab-dom o lun-jue de 5 PM a 12 AM</span><span class="np-short">sab-dom y lun-jue 5 PM a 12 AM</span>
 </div>
 
 <!-- ADMIN TOGGLE -->
@@ -678,6 +682,7 @@ body {
   <p id="lockMsg">El horario de pedidos es de <span class="lock-time">7:00 a 11:30 AM</span><br>
   Cancelaciones: <span class="lock-time">7:00 - 11:30 AM</span> y <span class="lock-time">5:00 PM - 12:00 AM</span><br>
   Servicio de comedor: <span class="lock-time">12:30 - 17:30</span></p>
+  <p id="lockNoche" style="margin-top:12px;font-size:0.85rem;opacity:0.9;">&#127769; <strong>Turno nocturno:</strong> escribe tu numero de empleado abajo para pedir. Tu ventana: <span class="lock-time">sab y dom</span> todo el dia, y <span class="lock-time">lun a jue de 5 PM a 12 AM</span>.</p>
 </div>
 
 <!-- COUNTDOWN -->
@@ -755,6 +760,7 @@ body {
 <!-- ADMIN PANEL -->
 <div class="admin-panel" id="adminPanel">
   <h3>Panel <span id="adminLevelBadge" style="font-size:0.7rem;color:var(--muted);font-weight:400;"></span></h3>
+  <div class="admin-aviso" id="adminAvisoMenu"></div>
 
   <div class="admin-form-section">
     <h4>Datos de la Semana</h4>
@@ -809,6 +815,7 @@ body {
       <input type="text" id="catNumEmp" placeholder="No. empleado" style="flex:1;max-width:120px" />
       <input type="text" id="catNombre" placeholder="Nombre completo" style="flex:2" />
       <input type="text" id="catRFC" placeholder="RFC" style="flex:1.5" />
+      <label style="display:flex;align-items:center;gap:4px;font-size:0.8rem;white-space:nowrap;"><input type="checkbox" id="catNoche" /> &#127769; Nocturno</label>
       <button onclick="agregarEmpleado()">Agregar</button>
     </div>
     <div style="margin-top:8px;">
@@ -817,7 +824,7 @@ body {
     <div class="cortesia-list" id="catalogoList" style="max-height:300px;overflow-y:auto;margin-top:8px;"></div>
     <details class="bulk-import" style="margin-top:12px;">
       <summary style="cursor:pointer;font-size:0.85rem;color:var(--primary);font-weight:600;">Carga masiva (pegar lista)</summary>
-      <p style="font-size:0.78rem;color:var(--muted);margin:8px 0;">Una linea por empleado: <code>Codigo | Nombre | RFC</code> (tambien acepta tabulador o coma).</p>
+      <p style="font-size:0.78rem;color:var(--muted);margin:8px 0;">Una linea por empleado: <code>Codigo | Nombre | RFC | noche</code> (la cuarta columna es opcional; tambien acepta tabulador o coma).</p>
       <textarea id="bulkCatalogo" placeholder="952 | Anaya Minjarez Jorge Esteban | AAMJ0006075S6"></textarea>
       <button class="btn-export" onclick="importarCatalogoMasivo()">Importar al catalogo</button>
     </details>
@@ -1178,11 +1185,27 @@ function findCatEntry(numEmp) {
     Object.entries(catalogoData).find(([k]) => normEmp(k) === n)?.[1] || null;
 }
 
+// --- Turno nocturno: marcado en el catalogo como turno = 'noche' ---
+function esNocturno(numEmp) {
+  const c = findCatEntry(numEmp);
+  return !!(c && c.turno === 'noche');
+}
+function esNocturnoActual() {
+  return esNocturno(document.getElementById('numEmpleado').value.trim());
+}
+// Ventana nocturna: sabado y domingo todo el dia; lunes a jueves de 17:00 a 24:00
+function nocheAbierta() {
+  const now = new Date();
+  const d = now.getDay(), h = now.getHours();
+  return d === 0 || d === 6 || (d >= 1 && d <= 4 && h >= 17);
+}
+
 let numEmpTimer = null;
 function onNumEmpInput() {
   autoFillNombre();
   mostrarMisPedidos();
   preMarcarDias();
+  checkOrderLock();
   clearTimeout(numEmpTimer);
   numEmpTimer = setTimeout(async () => {
     const n = document.getElementById('numEmpleado').value.trim();
@@ -1316,7 +1339,7 @@ async function saveMenuToCloud() {
 }
 async function saveCatalogo() {
   const clean = {};
-  for (const [k, v] of Object.entries(catalogoData)) clean[k] = { nombre: (v && v.nombre) || '' };
+  for (const [k, v] of Object.entries(catalogoData)) { clean[k] = { nombre: (v && v.nombre) || '' }; if (v && v.turno === 'noche') clean[k].turno = 'noche'; }
   catalogoData = clean;
   return fsWrite('config/catalogo', clean);
 }
@@ -1691,7 +1714,30 @@ setInterval(() => {
 // ============================================================
 //  ADMIN FORM
 // ============================================================
+// Devuelve la fecha (Date) del primer dia del menu publicado, o null
+function fechaInicioMenu() {
+  if (!menuPublicado || !menuData.dias || !menuData.dias.length) return null;
+  const mesIdx = MONTH_NAMES.indexOf(menuData.mes);
+  if (mesIdx === -1) return null;
+  return new Date(menuData.anio, mesIdx, menuData.dias[0].fecha);
+}
+function avisoMenuProximaSemana() {
+  const el = document.getElementById('adminAvisoMenu');
+  if (!el) return;
+  const hoy = new Date();
+  const dow = hoy.getDay();
+  if (!(dow === 5 || dow === 6 || dow === 0)) { el.classList.remove('visible'); return; }
+  const lunes = new Date(hoy); lunes.setHours(0,0,0,0);
+  lunes.setDate(hoy.getDate() + ((8 - dow) % 7 || 7));
+  const ini = fechaInicioMenu();
+  const cubre = ini && ini.getTime() >= lunes.getTime() - 86400000;
+  if (cubre) { el.classList.remove('visible'); return; }
+  el.innerHTML = `&#9888;&#65039; <strong>El menu de la proxima semana (lunes ${lunes.getDate()}) aun no esta publicado.</strong> El turno nocturno pide desde el sabado; captura el menu y pulsa "Guardar y Publicar".`;
+  el.classList.add('visible');
+}
+
 function populateAdminForm() {
+  avisoMenuProximaSemana();
   document.getElementById('adminMes').value = menuData.mes;
   document.getElementById('adminSemana').value = menuData.semana;
   document.getElementById('adminAnio').value = menuData.anio;
@@ -1817,7 +1863,8 @@ function renderOrders() {
     html += '<tr>';
     html += `<td style="font-weight:600;color:var(--primary)">${esc(o.numEmpleado || '-')}</td>`;
     html += `<td>${esc(o.nombre)}</td>`;
-    html += '<td>Empleado</td>';
+    const noct = esNocturno(o.numEmpleado);
+    html += noct ? '<td><span class="badge-noche" style="margin:0">&#127769; Nocturno</span></td>' : '<td>Empleado</td>';
     menuData.dias.forEach(d => {
       const qty = (o.detalle && o.detalle[d.dia]) || 0;
       dayTotals[d.dia] += qty;
@@ -1854,6 +1901,15 @@ function renderOrders() {
   html += '<tr class="total-row"><td colspan="3">TOTAL</td>';
   menuData.dias.forEach(d => { html += `<td><strong>${dayTotals[d.dia]}</strong></td>`; });
   html += `<td><strong>${gt}</strong></td><td></td></tr>`;
+  // Contenedores para turno nocturno (subconjunto del total)
+  const nocTotals = {}; let nocGt = 0;
+  menuData.dias.forEach(d => { nocTotals[d.dia] = 0; });
+  ordersData.forEach(o => { if (esNocturno(o.numEmpleado)) menuData.dias.forEach(d => { const q = (o.detalle && o.detalle[d.dia]) || 0; nocTotals[d.dia] += q; nocGt += q; }); });
+  if (nocGt > 0) {
+    html += '<tr style="background:#eef0fa"><td colspan="3">&#127769; De los cuales, contenedores turno nocturno</td>';
+    menuData.dias.forEach(d => { html += `<td>${nocTotals[d.dia] || '-'}</td>`; });
+    html += `<td><strong>${nocGt}</strong></td><td></td></tr>`;
+  }
 
   const daysWithAlt = menuData.dias.filter(d => d.platoAlternativo);
   if (daysWithAlt.length > 0) {
@@ -1923,7 +1979,7 @@ function exportarCSV() {
     html += '<tr>';
     html += `<td style="${bdr}background:${bg};text-align:center;font-weight:600;">${esc(o.numEmpleado || 'S/N')}</td>`;
     html += `<td style="${bdr}background:${bg};text-align:left;">${esc(o.nombre)}</td>`;
-    html += `<td style="${bdr}background:${bg};text-align:center;">Empleado</td>`;
+    html += `<td style="${bdr}background:${bg};text-align:center;">${esNocturno(o.numEmpleado) ? 'Nocturno' : 'Empleado'}</td>`;
     html += `<td style="${bdr}background:${bg};text-align:center;">${fecha}</td>`;
     html += `<td style="${bdr}background:${bg};text-align:center;">${hora}</td>`;
     menuData.dias.forEach(d => {
@@ -2221,14 +2277,19 @@ function isDayPassed(dayName) {
   return false;
 }
 
-function isOrderingOpen() {
+function horarioNormalAbierto() {
   const now = new Date();
   const day = now.getDay(), hour = now.getHours(), min = now.getMinutes();
   if (day === 0 || day === 6) return false;
   return hour >= 7 && (hour < 11 || (hour === 11 && min <= 30));
 }
+function isOrderingOpen() {
+  if (esNocturnoActual() && nocheAbierta()) return true;
+  return horarioNormalAbierto();
+}
 
 function isCancelOpen() {
+  if (esNocturnoActual() && nocheAbierta()) return true;
   const now = new Date();
   const day = now.getDay(), hour = now.getHours(), min = now.getMinutes();
   if (day === 0 || day === 6) return false;
@@ -2240,9 +2301,16 @@ function updateCountdown() {
   if (adminVisible) { banner.style.display = 'none'; return; }
   const now = new Date();
   const day = now.getDay();
+  if (esNocturnoActual() && nocheAbierta()) {
+    banner.style.display = 'block';
+    banner.style.background = '#e3e7f7';
+    banner.style.color = '#2c3a6b';
+    banner.textContent = '\u{1F319} Turno nocturno: puedes pedir tu semana ahora (se entrega en contenedor rotulado)';
+    return;
+  }
   if (day === 0 || day === 6) { banner.style.display = 'none'; return; }
   const hour = now.getHours(), min = now.getMinutes();
-  if (isOrderingOpen()) {
+  if (horarioNormalAbierto()) {
     const minsLeft = (11 * 60 + 30) - (hour * 60 + min);
     const h = Math.floor(minsLeft / 60), m = minsLeft % 60;
     const timeStr = h > 0 ? `${h}h ${m}min` : `${m} min`;
@@ -2270,6 +2338,8 @@ function checkOrderLock() {
   }
   const orderOpen = isOrderingOpen();
   const cancelOpen = isCancelOpen();
+  const hayNocturnos = Object.values(catalogoData).some(v => v && v.turno === 'noche');
+  document.getElementById('lockNoche').style.display = hayNocturnos && nocheAbierta() ? '' : 'none';
   document.getElementById('lockOverlay').classList.toggle('active', !orderOpen);
   document.body.classList.toggle('ordering-locked', !orderOpen);
   document.getElementById('cancelBtnFloat').classList.toggle('hidden', !cancelOpen);
@@ -2435,12 +2505,25 @@ function renderCatalogo(filtro) {
   list.innerHTML = filtered.slice(0, 60).map(({ k, v }) => `
     <div class="cortesia-item">
       <div>
-        <span class="cortesia-info"><strong>#${esc(k)}</strong> — ${esc(v.nombre || 'Sin nombre')}</span>
+        <span class="cortesia-info"><strong>#${esc(k)}</strong> — ${esc(v.nombre || 'Sin nombre')}${v.turno === 'noche' ? '<span class="badge-noche">&#127769; Nocturno</span>' : ''}</span>
         <div class="cortesia-dias">${esc(catalogoRfcData[k] || 'Sin RFC')}</div>
       </div>
-      <button class="cortesia-remove" onclick="quitarEmpleado('${esc(k)}')">Quitar</button>
+      <div style="white-space:nowrap;">
+        <button class="cat-noche-btn ${v.turno === 'noche' ? 'on' : ''}" onclick="toggleNocturno('${esc(k)}')" title="Marcar o quitar turno nocturno">&#127769; ${v.turno === 'noche' ? 'Nocturno' : 'Dia'}</button>
+        <button class="cortesia-remove" onclick="quitarEmpleado('${esc(k)}')">Quitar</button>
+      </div>
     </div>`).join('');
   if (filtered.length > 60) list.innerHTML += `<div style="color:var(--muted);font-size:0.8rem;padding:8px;text-align:center;">Mostrando 60 de ${filtered.length}. Usa el buscador.</div>`;
+}
+
+async function toggleNocturno(num) {
+  await loadFromCloud();
+  const e = catalogoData[num];
+  if (!e) { showToast('Empleado no encontrado'); return; }
+  if (e.turno === 'noche') delete e.turno; else e.turno = 'noche';
+  const ok = await saveCatalogo();
+  renderCatalogo(document.getElementById('catBuscar').value.trim());
+  showToast(ok ? (catalogoData[num].turno === 'noche' ? `#${num} marcado como turno nocturno` : `#${num} ahora es turno de dia`) : 'Error al guardar: ' + lastFsError);
 }
 
 function buscarEmpleadoCat() { renderCatalogo(document.getElementById('catBuscar').value.trim()); }
@@ -2453,14 +2536,16 @@ async function agregarEmpleado() {
   if (!/^[a-zA-Z0-9]+$/.test(num)) { showToast('El numero de empleado no es valido'); return; }
   const numNorm = normEmp(num);
   if (catalogoData[numNorm] && !confirm(`El empleado #${numNorm} ya existe. ¿Quieres actualizarlo?`)) return;
+  const noche = document.getElementById('catNoche').checked;
   await loadFromCloud();
-  catalogoData[numNorm] = { nombre };
+  catalogoData[numNorm] = noche ? { nombre, turno: 'noche' } : { nombre };
   if (rfc) catalogoRfcData[numNorm] = rfc;
   const ok = (await saveCatalogo()) && (await saveCatalogoRfc());
   if (!ok) { showToast('Error al guardar (¿PIN super?): ' + lastFsError); return; }
   document.getElementById('catNumEmp').value = '';
   document.getElementById('catNombre').value = '';
   document.getElementById('catRFC').value = '';
+  document.getElementById('catNoche').checked = false;
   renderCatalogo();
   showToast(`Empleado #${numNorm} agregado`);
 }
@@ -2487,6 +2572,7 @@ function parseCatalogoTexto(txt) {
     const num = normEmp(parts[0]);
     if (!/^[A-Z0-9]+$/.test(num)) return;
     out[num] = { nombre: parts[1], rfc: (parts[2] || '').toUpperCase() };
+    if (/^noche|nocturno$/i.test(parts[3] || '')) out[num].turno = 'noche';
   });
   return out;
 }
@@ -2499,7 +2585,7 @@ async function importarCatalogoMasivo() {
   if (!confirm(`Se importaran ${n} empleados (se actualizan los que ya existen). ¿Continuar?`)) return;
   await loadFromCloud();
   for (const [k, v] of Object.entries(parsed)) {
-    catalogoData[k] = { nombre: v.nombre };
+    catalogoData[k] = v.turno === 'noche' ? { nombre: v.nombre, turno: 'noche' } : { nombre: v.nombre };
     if (v.rfc) catalogoRfcData[k] = v.rfc;
   }
   const ok = (await saveCatalogo()) && (await saveCatalogoRfc());
