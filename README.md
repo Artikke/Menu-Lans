@@ -5,8 +5,9 @@ Un solo `index.html` (CSS/JS inline) + Firestore via REST, hospedado en GitHub P
 
 - URL: https://artikke.github.io/Menu-Lans/
 - Firebase project: `menu-lans`
-- Horario de pedidos: **7:00 - 11:30 AM** (L-V)
-- Cancelaciones: **7:00 - 11:30 AM** y **5:00 PM - 12:00 AM**
+- Pedidos y cancelaciones: **L-V 7:00 - 11:30 AM, siempre para el dia siguiente en adelante** (regla "un dia antes", acordada 2026-09-24)
+- **Sabado todo el dia** se pide la semana siguiente; domingo cerrado
+- El comedor publica el menu de la semana siguiente el **jueves**
 - Servicio de comedor: **12:30 - 17:30**
 - Turno nocturno: solicitud por Teams con Axel Avila (contenedor rotulado)
 
@@ -85,7 +86,7 @@ Sube un `logo.png` (cuadrado, fondo blanco o transparente) a la raiz del repo. S
 | Roles | Uno | Dos niveles (admin = comedor, super = RRHH) validados en reglas |
 | Buzon | Nombre + foto, solo admin lo ve | Anonimo, publico, texto de 3 a 400 caracteres, solo admin borra |
 | Dominio | Ninguno | Guard en JS + restriccion de API key por referrer |
-| Horarios | Solo en el navegador | Tambien en reglas (hora de Mexico): pedir 7:00-11:30, cancelar 7:00-11:30 y 17:00-24:00. Turno nocturno (catalogo turno=noche): ademas sab-dom todo el dia y lun-jue 17:00-24:00 |
+| Horarios | Solo en el navegador | Tambien en reglas (hora de Mexico): L-V 7:00-11:30 para el dia siguiente en adelante, sabado todo el dia; el dia de hoy nunca se agrega ni se quita. Nocturnos: ademas sab-dom y lun-jue 17:00-24:00 |
 | Lecturas | Cada empleado descarga todos los pedidos | Cada empleado lee solo su pedido; listar requiere admin |
 | RFC | Visible para cualquier empleado | Documento aparte, solo super |
 
