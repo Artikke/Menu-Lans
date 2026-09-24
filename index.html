@@ -327,18 +327,32 @@ body {
 /* ADMIN */
 .admin-toggle { position: fixed; top: 15px; right: 15px; z-index: 50; }
 .swipe-hint { display: none; text-align: center; color: var(--muted); font-size: 0.75rem; padding: 0 0 4px; letter-spacing: 0.5px; }
-.night-pill {
+.night-btn {
   position: fixed; top: 15px; left: 15px; z-index: 50;
-  background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.35);
-  color: #fff; padding: 7px 12px; border-radius: 20px; font-size: 0.72rem; line-height: 1.3;
-  backdrop-filter: blur(6px); max-width: 60vw; cursor: default;
+  background: #14213d; color: #ffd166; border: 1px solid rgba(255,209,102,0.6);
+  padding: 8px 14px; border-radius: 20px; font-family: 'Montserrat', sans-serif;
+  font-size: 0.78rem; font-weight: 700; cursor: pointer; letter-spacing: 0.5px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25); transition: transform 0.2s;
 }
-.night-pill strong { font-weight: 700; }
-.night-pill .np-short { display: none; }
+.night-btn:hover { transform: scale(1.04); }
+.night-btn .nb-short { display: none; }
+body.modo-noche .night-btn { background: #ffd166; color: #14213d; }
+body.modo-noche .header { background: linear-gradient(135deg, #0b1a3a 0%, #1f3a7a 100%); }
+.night-banner {
+  display: none; max-width: 640px; margin: 16px auto; padding: 18px 20px;
+  background: #14213d; color: #fff; border-radius: 16px; border: 1px solid rgba(255,209,102,0.5);
+  text-align: center; animation: fadeIn 0.3s ease;
+}
+body.modo-noche .night-banner { display: block; }
+body.modo-noche .lock-overlay { display: none !important; }
+.night-banner .nb-title { font-family: 'Montserrat', sans-serif; font-weight: 800; color: #ffd166; font-size: 1.05rem; margin-bottom: 6px; }
+.night-banner .nb-text { font-size: 0.92rem; line-height: 1.5; opacity: 0.95; }
+.night-banner .nb-text strong { color: #ffd166; }
+.night-banner .nb-exit { margin-top: 12px; background: transparent; color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.35); padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; cursor: pointer; font-family: 'Inter', sans-serif; }
 @media (max-width: 600px) {
-  .night-pill { top: 12px; left: 10px; padding: 6px 10px; font-size: 0.62rem; max-width: 62vw; }
-  .night-pill .np-long { display: none; }
-  .night-pill .np-short { display: inline; }
+  .night-btn { top: 12px; left: 10px; padding: 7px 11px; font-size: 0.72rem; }
+  .night-btn .nb-long { display: none; }
+  .night-btn .nb-short { display: inline; }
 }
 .admin-toggle button {
   background: var(--primary); border: 1px solid rgba(255,255,255,0.5);
@@ -652,9 +666,7 @@ body {
 </div>
 
 <!-- TURNO NOCTURNO (arriba izquierda) -->
-<div class="night-pill" title="Turno nocturno: escribe tu numero y pide aqui tu semana. Sabado y domingo todo el dia, y de lunes a jueves de 5 PM a 12 AM para el dia siguiente. Se entrega en contenedor rotulado con tu nombre.">
-  &#127769; <strong>Turno nocturno:</strong> <span class="np-long">pide aqui sab-dom o lun-jue de 5 PM a 12 AM</span><span class="np-short">sab-dom y lun-jue 5 PM a 12 AM</span>
-</div>
+<button class="night-btn" id="nightBtn" onclick="toggleModoNoche()" title="Turno nocturno: pide aqui tu semana">&#127769; <span class="nb-long">Turno nocturno</span><span class="nb-short">Nocturno</span></button>
 
 <!-- ADMIN TOGGLE -->
 <div class="admin-toggle">
@@ -682,7 +694,14 @@ body {
   <p id="lockMsg">El horario de pedidos es de <span class="lock-time">7:00 a 11:30 AM</span><br>
   Cancelaciones: <span class="lock-time">7:00 - 11:30 AM</span> y <span class="lock-time">5:00 PM - 12:00 AM</span><br>
   Servicio de comedor: <span class="lock-time">12:30 - 17:30</span></p>
-  <p id="lockNoche" style="margin-top:12px;font-size:0.85rem;opacity:0.9;">&#127769; <strong>Turno nocturno:</strong> escribe tu numero de empleado abajo para pedir. Tu ventana: <span class="lock-time">sab y dom</span> todo el dia, y <span class="lock-time">lun a jue de 5 PM a 12 AM</span>.</p>
+  <p id="lockNoche" style="margin-top:12px;font-size:0.85rem;opacity:0.9;">&#127769; <strong>Turno nocturno:</strong> toca el boton de la luna, arriba a la izquierda, para pedir tu semana.</p>
+</div>
+
+<!-- MODO NOCTURNO -->
+<div id="nightBanner" class="night-banner">
+  <div class="nb-title">&#127769; Modo turno nocturno</div>
+  <div class="nb-text" id="nightBannerText"></div>
+  <button class="nb-exit" onclick="toggleModoNoche()">Salir del modo nocturno</button>
 </div>
 
 <!-- COUNTDOWN -->
@@ -1198,6 +1217,31 @@ function nocheAbierta() {
   const now = new Date();
   const d = now.getDay(), h = now.getHours();
   return d === 0 || d === 6 || (d >= 1 && d <= 4 && h >= 17);
+}
+
+let modoNoche = false;
+function toggleModoNoche() {
+  modoNoche = !modoNoche;
+  document.body.classList.toggle('modo-noche', modoNoche);
+  document.getElementById('nightBtn').innerHTML = modoNoche
+    ? '&#9728;&#65039; <span class="nb-long">Salir de nocturno</span><span class="nb-short">Salir</span>'
+    : '&#127769; <span class="nb-long">Turno nocturno</span><span class="nb-short">Nocturno</span>';
+  checkOrderLock();
+  if (modoNoche) {
+    const banner = document.getElementById('nightBanner');
+    banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => document.getElementById('numEmpleado').focus(), 350);
+  }
+}
+
+function textoBannerNoche() {
+  const num = document.getElementById('numEmpleado').value.trim();
+  const cat = findCatEntry(num);
+  if (!num) return 'Escribe tu <strong>numero de empleado</strong> abajo. Si estas registrado como turno nocturno, se abre el menu para que pidas tu semana.';
+  if (!cat) return 'Ese numero no esta en el catalogo. Revisalo o contacta a Talento Humano.';
+  if (cat.turno !== 'noche') return `<strong>${esc(cat.nombre)}</strong>, tu numero no esta registrado como turno nocturno. Puedes pedir en el horario normal (lunes a viernes de 7:00 a 11:30 AM). Si crees que es un error, avisa a Talento Humano.`;
+  if (nocheAbierta()) return `Hola <strong>${esc(cat.nombre)}</strong>. Elige tus dias abajo y envia tu pedido. Tu comida se entrega en <strong>contenedor rotulado con tu nombre</strong>.`;
+  return `Hola <strong>${esc(cat.nombre)}</strong>. Tu ventana para pedir es <strong>sabado y domingo</strong> todo el dia, y de <strong>lunes a jueves de 5 PM a 12 AM</strong>. Tambien puedes pedir en el horario normal de 7:00 a 11:30 AM.`;
 }
 
 let numEmpTimer = null;
@@ -2302,6 +2346,7 @@ function updateCountdown() {
   const now = new Date();
   const day = now.getDay();
   if (esNocturnoActual() && nocheAbierta()) {
+    if (modoNoche) { banner.style.display = 'none'; return; }   // en modo nocturno el aviso ya esta en la tarjeta
     banner.style.display = 'block';
     banner.style.background = '#e3e7f7';
     banner.style.color = '#2c3a6b';
@@ -2338,8 +2383,10 @@ function checkOrderLock() {
   }
   const orderOpen = isOrderingOpen();
   const cancelOpen = isCancelOpen();
+  if (modoNoche) document.getElementById('nightBannerText').innerHTML = textoBannerNoche();
   const hayNocturnos = Object.values(catalogoData).some(v => v && v.turno === 'noche');
-  document.getElementById('lockNoche').style.display = hayNocturnos && nocheAbierta() ? '' : 'none';
+  document.getElementById('lockNoche').style.display = hayNocturnos && nocheAbierta() && !modoNoche ? '' : 'none';
+  document.getElementById('nightBtn').style.display = hayNocturnos ? '' : 'none';
   document.getElementById('lockOverlay').classList.toggle('active', !orderOpen);
   document.body.classList.toggle('ordering-locked', !orderOpen);
   document.getElementById('cancelBtnFloat').classList.toggle('hidden', !cancelOpen);
@@ -2350,7 +2397,7 @@ setInterval(checkOrderLock, 60000);
 
 // La etiqueta de turno nocturno vive sobre el header azul; se oculta al bajar
 window.addEventListener('scroll', () => {
-  const p = document.querySelector('.night-pill');
+  const p = document.querySelector('.night-btn');
   if (p) p.style.opacity = window.scrollY > 120 ? '0' : '1';
   if (p) p.style.pointerEvents = window.scrollY > 120 ? 'none' : '';
 }, { passive: true });
@@ -2499,7 +2546,9 @@ function renderCatalogo(filtro) {
   let filtered = entries;
   if (filtro) {
     const f = filtro.toLowerCase();
-    filtered = entries.filter(({ k, v }) => k.toLowerCase().includes(f) || (v.nombre || '').toLowerCase().includes(f) || (catalogoRfcData[k] || '').toLowerCase().includes(f));
+    // Buscar "noche" o "nocturno" lista a los de turno nocturno
+    const buscaNoche = /^noc|^noche|^nocturno/.test(f);
+    filtered = entries.filter(({ k, v }) => (buscaNoche && v.turno === 'noche') || k.toLowerCase().includes(f) || (v.nombre || '').toLowerCase().includes(f) || (catalogoRfcData[k] || '').toLowerCase().includes(f));
   }
   if (filtered.length === 0) { list.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:8px;">No se encontraron empleados</div>'; return; }
   list.innerHTML = filtered.slice(0, 60).map(({ k, v }) => `
