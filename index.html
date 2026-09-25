@@ -1455,7 +1455,7 @@ function renderMenu() {
             </label>
             <label class="alt-option ${selections[i]==='alternativa'?'selected':''}" onclick="selectOption(${i},'alternativa')">
               <input type="radio" name="opt-${i}" ${selections[i]==='alternativa'?'checked':''} />
-              <span class="alt-option-text"><strong>${esc(d.platoAlternativo)}</strong><br><small>Alternativa</small></span>
+              <span class="alt-option-text"><strong>${esc(d.platoAlternativo)}</strong><br><small>Opcion 2</small></span>
             </label>
           </div>
         </div>`;
@@ -1816,11 +1816,11 @@ function addDayForm(data) {
       <div class="form-group"><label>Entrada</label><input type="text" class="df-entrada" placeholder="Ej: Crema de brocoli" value="${esc(d.entrada)}" /></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Plato Fuerte</label><input type="text" class="df-plato" placeholder="Ej: Bistec encebollado" value="${esc(d.platoFuerte)}" /></div>
+      <div class="form-group"><label>Plato Fuerte 1</label><input type="text" class="df-plato" placeholder="Ej: Bistec encebollado" value="${esc(d.platoFuerte)}" /></div>
       <div class="form-group"><label>Complemento (opcional)</label><input type="text" class="df-comp" placeholder="Ej: Papas salteadas" value="${esc(d.complemento || '')}" /></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Plato Alternativo (opcional)</label><input type="text" class="df-alt" placeholder="Ej: Pechuga a la plancha" value="${esc(d.platoAlternativo || '')}" /></div>
+      <div class="form-group"><label>Plato Fuerte 2 (opcional, si hay dos opciones)</label><input type="text" class="df-alt" placeholder="Ej: Pechuga a la plancha (segunda opcion)" value="${esc(d.platoAlternativo || '')}" /></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Postre</label><input type="text" class="df-postre" placeholder="Ej: Gelatina frutal" value="${esc(d.postre)}" /></div>
