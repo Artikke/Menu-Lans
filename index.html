@@ -56,11 +56,11 @@ body {
 }
 
 .header-logo {
-  width: 96px; height: 96px;
-  margin: 0 auto 8px;
+  width: 150px; height: 150px;
+  margin: 0 auto 10px;
   background: #fff;
-  border-radius: 20px;
-  padding: 8px;
+  border-radius: 24px;
+  padding: 6px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   display: flex; align-items: center; justify-content: center;
   overflow: hidden;
@@ -327,33 +327,6 @@ body {
 /* ADMIN */
 .admin-toggle { position: fixed; top: 15px; right: 15px; z-index: 50; }
 .swipe-hint { display: none; text-align: center; color: var(--muted); font-size: 0.75rem; padding: 0 0 4px; letter-spacing: 0.5px; }
-.night-btn {
-  position: fixed; top: 15px; left: 15px; z-index: 50;
-  background: #14213d; color: #ffd166; border: 1px solid rgba(255,209,102,0.6);
-  padding: 8px 14px; border-radius: 20px; font-family: 'Montserrat', sans-serif;
-  font-size: 0.78rem; font-weight: 700; cursor: pointer; letter-spacing: 0.5px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.25); transition: transform 0.2s;
-}
-.night-btn:hover { transform: scale(1.04); }
-.night-btn .nb-short { display: none; }
-body.modo-noche .night-btn { background: #ffd166; color: #14213d; }
-body.modo-noche .header { background: linear-gradient(135deg, #0b1a3a 0%, #1f3a7a 100%); }
-.night-banner {
-  display: none; max-width: 640px; margin: 16px auto; padding: 18px 20px;
-  background: #14213d; color: #fff; border-radius: 16px; border: 1px solid rgba(255,209,102,0.5);
-  text-align: center; animation: fadeIn 0.3s ease;
-}
-body.modo-noche .night-banner { display: block; }
-body.modo-noche .lock-overlay { display: none !important; }
-.night-banner .nb-title { font-family: 'Montserrat', sans-serif; font-weight: 800; color: #ffd166; font-size: 1.05rem; margin-bottom: 6px; }
-.night-banner .nb-text { font-size: 0.92rem; line-height: 1.5; opacity: 0.95; }
-.night-banner .nb-text strong { color: #ffd166; }
-.night-banner .nb-exit { margin-top: 12px; background: transparent; color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.35); padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; cursor: pointer; font-family: 'Inter', sans-serif; }
-@media (max-width: 600px) {
-  .night-btn { top: 12px; left: 10px; padding: 7px 11px; font-size: 0.72rem; }
-  .night-btn .nb-long { display: none; }
-  .night-btn .nb-short { display: inline; }
-}
 .admin-toggle button {
   background: var(--primary); border: 1px solid rgba(255,255,255,0.5);
   color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.2); padding: 8px 16px; border-radius: 8px;
@@ -552,7 +525,7 @@ body.modo-noche .lock-overlay { display: none !important; }
   .alt-option-text { font-size: 0.85rem; line-height: 1.3; }
   .alt-option-text small { font-size: 0.75rem; }
   .swipe-hint { display: block; }
-  .header { padding-top: 62px; }
+  .header-logo { width: 128px; height: 128px; }
 }
 .week-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); }
 .week-title { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; padding: 12px 18px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -665,9 +638,6 @@ body.modo-noche .lock-overlay { display: none !important; }
   </div>
 </div>
 
-<!-- TURNO NOCTURNO (arriba izquierda) -->
-<button class="night-btn" id="nightBtn" onclick="toggleModoNoche()" title="Turno nocturno: pide aqui tu semana">&#127769; <span class="nb-long">Turno nocturno</span><span class="nb-short">Nocturno</span></button>
-
 <!-- ADMIN TOGGLE -->
 <div class="admin-toggle">
   <button onclick="abrirAdmin()" id="adminToggleBtn">Admin</button>
@@ -679,7 +649,6 @@ body.modo-noche .lock-overlay { display: none !important; }
     <img src="logo.png" alt="LANS" onerror="document.getElementById('headerLogo').classList.add('no-logo')" />
     <span class="logo-fallback">LANS</span>
   </div>
-  <div class="header-sub">Laboratorios de Referencia</div>
   <div class="header-title">Menu del Comedor</div>
   <div class="menu-info" id="menuInfo"></div>
   <div class="sync-status" id="syncStatus">
@@ -691,17 +660,8 @@ body.modo-noche .lock-overlay { display: none !important; }
 <div class="lock-overlay" id="lockOverlay">
   <div class="lock-icon">&#128274;</div>
   <h3>Pedidos Cerrados</h3>
-  <p id="lockMsg">Pedidos y cancelaciones: <span class="lock-time">lunes a viernes de 7:00 a 11:30 AM</span>, siempre para el dia siguiente en adelante.<br>
-  <span class="lock-time">Sabado todo el dia</span> puedes pedir la semana siguiente.<br>
+  <p id="lockMsg">Los pedidos se hacen <span class="lock-time">siempre para el dia siguiente en adelante</span>.<br>
   Servicio de comedor: <span class="lock-time">12:30 - 17:30</span></p>
-  <p id="lockNoche" style="margin-top:12px;font-size:0.85rem;opacity:0.9;">&#127769; <strong>Turno nocturno:</strong> toca el boton de la luna, arriba a la izquierda, para pedir tu semana.</p>
-</div>
-
-<!-- MODO NOCTURNO -->
-<div id="nightBanner" class="night-banner">
-  <div class="nb-title">&#127769; Modo turno nocturno</div>
-  <div class="nb-text" id="nightBannerText"></div>
-  <button class="nb-exit" onclick="toggleModoNoche()">Salir del modo nocturno</button>
 </div>
 
 <!-- COUNTDOWN -->
@@ -1212,37 +1172,8 @@ function esNocturno(numEmp) {
 function esNocturnoActual() {
   return esNocturno(document.getElementById('numEmpleado').value.trim());
 }
-// Ventana nocturna: sabado y domingo todo el dia; lunes a jueves de 17:00 a 24:00
-function nocheAbierta() {
-  const now = new Date();
-  const d = now.getDay(), h = now.getHours();
-  return d === 0 || d === 6 || (d >= 1 && d <= 4 && h >= 17);
-}
-
-let modoNoche = false;
-function toggleModoNoche() {
-  modoNoche = !modoNoche;
-  document.body.classList.toggle('modo-noche', modoNoche);
-  document.getElementById('nightBtn').innerHTML = modoNoche
-    ? '&#9728;&#65039; <span class="nb-long">Salir de nocturno</span><span class="nb-short">Salir</span>'
-    : '&#127769; <span class="nb-long">Turno nocturno</span><span class="nb-short">Nocturno</span>';
-  checkOrderLock();
-  if (modoNoche) {
-    const banner = document.getElementById('nightBanner');
-    banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(() => document.getElementById('numEmpleado').focus(), 350);
-  }
-}
-
-function textoBannerNoche() {
-  const num = document.getElementById('numEmpleado').value.trim();
-  const cat = findCatEntry(num);
-  if (!num) return 'Escribe tu <strong>numero de empleado</strong> abajo. Si estas registrado como turno nocturno, se abre el menu para que pidas tu semana.';
-  if (!cat) return 'Ese numero no esta en el catalogo. Revisalo o contacta a Talento Humano.';
-  if (cat.turno !== 'noche') return `<strong>${esc(cat.nombre)}</strong>, tu numero no esta registrado como turno nocturno. Puedes pedir en el horario normal (lunes a viernes de 7:00 a 11:30 AM). Si crees que es un error, avisa a Talento Humano.`;
-  if (nocheAbierta()) return `Hola <strong>${esc(cat.nombre)}</strong>. Elige tus dias abajo y envia tu pedido. Tu comida se entrega en <strong>contenedor rotulado con tu nombre</strong>.`;
-  return `Hola <strong>${esc(cat.nombre)}</strong>. Tu ventana para pedir es <strong>sabado y domingo</strong> todo el dia, y de <strong>lunes a jueves de 5 PM a 12 AM</strong>. Tambien puedes pedir en el horario normal de 7:00 a 11:30 AM.`;
-}
+// Ya no hay ventanas de horario; se conserva la funcion por compatibilidad
+function nocheAbierta() { return true; }
 
 let numEmpTimer = null;
 function onNumEmpInput() {
@@ -1550,7 +1481,7 @@ let ultimosDiasNuevos = null;
 
 async function enviarPedido() {
   if (!menuPublicado && !isAdminLevel()) { showToast('Aun no hay menu publicado'); return; }
-  if (!isOrderingOpen() && !isAdminLevel()) { showToast('Pedidos cerrados. Horario: 7:00 a 11:30 AM'); return; }
+  if (!isOrderingOpen() && !isAdminLevel()) { showToast('Pedidos cerrados'); return; }
   const numEmp = document.getElementById('numEmpleado').value.trim();
   if (!numEmp) { showToast('Escribe tu numero de empleado'); document.getElementById('numEmpleado').focus(); return; }
   if (!/^[a-zA-Z0-9]+$/.test(numEmp)) { showToast('El numero de empleado no es valido'); document.getElementById('numEmpleado').focus(); return; }
@@ -1612,7 +1543,7 @@ async function enviarPedido() {
   }
 
   const saved = await saveOrder(order);
-  if (!saved) { await loadMyOrder(numEmp); showToast(/PERMISSION_DENIED|insufficient/i.test(lastFsError) ? 'El servidor rechazo el pedido: fuera de horario o incluye el dia de hoy. Recarga e intenta de nuevo.' : 'Error al guardar, intenta de nuevo'); return; }
+  if (!saved) { await loadMyOrder(numEmp); showToast(/PERMISSION_DENIED|insufficient/i.test(lastFsError) ? 'El servidor rechazo el pedido: incluye el dia de hoy o el menu cambio. Recarga e intenta de nuevo.' : 'Error al guardar, intenta de nuevo'); return; }
   await loadMyOrder(numEmp);
 
   const firstName = nombre.split(' ').pop() || nombre;
@@ -1776,7 +1707,7 @@ function avisoMenuProximaSemana() {
   const ini = fechaInicioMenu();
   const cubre = ini && ini.getTime() >= lunes.getTime() - 86400000;
   if (cubre) { el.classList.remove('visible'); return; }
-  el.innerHTML = `&#9888;&#65039; <strong>El menu de la proxima semana (lunes ${lunes.getDate()}) aun no esta publicado.</strong> Todo el personal pide la semana siguiente desde el viernes a las 7:00; captura el menu y pulsa "Guardar y Publicar".`;
+  el.innerHTML = `&#9888;&#65039; <strong>El menu de la proxima semana (lunes ${lunes.getDate()}) aun no esta publicado.</strong> Como se pide un dia antes, el lunes se pide desde el fin de semana; captura el menu y pulsa "Guardar y Publicar".`;
   el.classList.add('visible');
 }
 
@@ -2321,62 +2252,28 @@ function isDayPassed(dayName) {
   return false;
 }
 
-// Regla "un dia antes": L-V 7:00-11:30 se pide para el dia siguiente en adelante;
-// sabado todo el dia se pide la semana siguiente. Domingo cerrado (salvo nocturnos).
-function horarioNormalAbierto() {
-  const now = new Date();
-  const day = now.getDay(), hour = now.getHours(), min = now.getMinutes();
-  if (day === 0) return false;
-  if (day === 6) return true;
-  return hour >= 7 && (hour < 11 || (hour === 11 && min <= 30));
-}
+// Regla unica: se puede pedir y cancelar a cualquier hora, cualquier dia,
+// siempre para el dia siguiente en adelante. El dia de hoy nunca se toca.
+function horarioNormalAbierto() { return true; }
 function isOrderingOpen() {
   if (esNocturnoActual() && nocheAbierta()) return true;
   return horarioNormalAbierto();
 }
 
-function isCancelOpen() {
-  if (esNocturnoActual() && nocheAbierta()) return true;
-  return horarioNormalAbierto();
-}
+function isCancelOpen() { return true; }
 
 function updateCountdown() {
   const banner = document.getElementById('orderCountdown');
   if (adminVisible) { banner.style.display = 'none'; return; }
-  const now = new Date();
-  const day = now.getDay();
-  if (esNocturnoActual() && nocheAbierta()) {
-    if (modoNoche) { banner.style.display = 'none'; return; }   // en modo nocturno el aviso ya esta en la tarjeta
-    banner.style.display = 'block';
+  banner.style.display = 'block';
+  if (esNocturnoActual()) {
     banner.style.background = '#e3e7f7';
     banner.style.color = '#2c3a6b';
-    banner.textContent = '\u{1F319} Turno nocturno: puedes pedir tu semana ahora (se entrega en contenedor rotulado)';
-    return;
-  }
-  if (day === 0) { banner.style.display = 'none'; return; }
-  if (day === 6) {
-    banner.style.display = 'block';
+    banner.textContent = '\u{1F319} Turno nocturno: pide para el dia siguiente en adelante. Se entrega en contenedor rotulado.';
+  } else {
     banner.style.background = '#d4edda';
     banner.style.color = '#155724';
-    banner.textContent = 'Pedidos abiertos todo el sabado para la semana siguiente';
-    return;
-  }
-  const hour = now.getHours(), min = now.getMinutes();
-  if (horarioNormalAbierto()) {
-    const minsLeft = (11 * 60 + 30) - (hour * 60 + min);
-    const h = Math.floor(minsLeft / 60), m = minsLeft % 60;
-    const timeStr = h > 0 ? `${h}h ${m}min` : `${m} min`;
-    banner.style.display = 'block';
-    banner.style.background = minsLeft <= 30 ? '#fff3cd' : '#d4edda';
-    banner.style.color = minsLeft <= 30 ? '#856404' : '#155724';
-    banner.textContent = minsLeft <= 30 ? `Pedidos cierran en ${timeStr} (para mañana en adelante)` : `Pedidos abiertos para mañana en adelante — cierran a las 11:30 AM (${timeStr})`;
-  } else if (hour < 7) {
-    banner.style.display = 'block';
-    banner.style.background = '#d1ecf1';
-    banner.style.color = '#0c5460';
-    banner.textContent = 'Pedidos abren a las 7:00 AM';
-  } else {
-    banner.style.display = 'none';
+    banner.textContent = 'Pedidos abiertos: siempre para el dia siguiente en adelante. El dia de hoy ya no se puede pedir ni cancelar.';
   }
 }
 
@@ -2390,10 +2287,6 @@ function checkOrderLock() {
   }
   const orderOpen = isOrderingOpen();
   const cancelOpen = isCancelOpen();
-  if (modoNoche) document.getElementById('nightBannerText').innerHTML = textoBannerNoche();
-  const hayNocturnos = Object.values(catalogoData).some(v => v && v.turno === 'noche');
-  document.getElementById('lockNoche').style.display = hayNocturnos && nocheAbierta() && !modoNoche ? '' : 'none';
-  document.getElementById('nightBtn').style.display = hayNocturnos ? '' : 'none';
   document.getElementById('lockOverlay').classList.toggle('active', !orderOpen);
   document.body.classList.toggle('ordering-locked', !orderOpen);
   document.getElementById('cancelBtnFloat').classList.toggle('hidden', !cancelOpen);
@@ -2402,12 +2295,7 @@ function checkOrderLock() {
 }
 setInterval(checkOrderLock, 60000);
 
-// La etiqueta de turno nocturno vive sobre el header azul; se oculta al bajar
-window.addEventListener('scroll', () => {
-  const p = document.querySelector('.night-btn');
-  if (p) p.style.opacity = window.scrollY > 120 ? '0' : '1';
-  if (p) p.style.pointerEvents = window.scrollY > 120 ? 'none' : '';
-}, { passive: true });
+
 
 function diaYaPaso(diaNombre) {
   const menuDia = menuData.dias?.find(d => d.dia === diaNombre);
@@ -2466,7 +2354,7 @@ async function buscarPedido() {
 }
 
 async function cancelarDia(numEmp, dia) {
-  if (!isAdminLevel() && !isCancelOpen()) { showToast('Horario de cancelacion cerrado'); return; }
+  if (!isAdminLevel() && !isCancelOpen()) { showToast('No se puede cancelar'); return; }
   if (!isAdminLevel() && diaYaPaso(dia)) { showToast('Ese dia ya paso, no se puede cancelar'); return; }
   await loadMyOrder(numEmp);
   const order = ordersData.find(o => normEmp(o.numEmpleado) === normEmp(numEmp));

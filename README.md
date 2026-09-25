@@ -5,8 +5,7 @@ Un solo `index.html` (CSS/JS inline) + Firestore via REST, hospedado en GitHub P
 
 - URL: https://artikke.github.io/Menu-Lans/
 - Firebase project: `menu-lans`
-- Pedidos y cancelaciones: **L-V 7:00 - 11:30 AM, siempre para el dia siguiente en adelante** (regla "un dia antes", acordada 2026-09-24)
-- **Sabado todo el dia** se pide la semana siguiente; domingo cerrado
+- Pedidos y cancelaciones: **a cualquier hora, cualquier dia, siempre para el dia siguiente en adelante**. El dia de hoy nunca se toca (acordado con Talento Humano 2026-09-25).
 - El comedor publica el menu de la semana siguiente el **jueves**
 - Servicio de comedor: **12:30 - 17:30**
 - Turno nocturno: solicitud por Teams con Axel Avila (contenedor rotulado)
@@ -48,12 +47,11 @@ El script inicia sesion anonima, valida el super PIN contra las reglas y escribe
 Alternativa sin Node: entrar como super en la app > **Catalogo de Empleados** > **Carga masiva** > pegar `setup/catalogo_lans.txt`.
 
 ### 1.5b Turno nocturno
-Los empleados con `turno: "noche"` en el catalogo pueden pedir sabado y domingo todo el dia y de lunes a jueves de 17:00 a 24:00.
+Los empleados con `turno: "noche"` en el catalogo piden igual que todos; solo se distinguen en la tabla de pedidos con etiqueta "Nocturno" y una fila de contenedores por dia (se les entrega en contenedor rotulado). No hay modo ni boton especial en la pantalla.
 Se marcan desde el panel super (boton "Nocturno/Dia" en el catalogo) o con la lista `setup/nocturnos.txt`:
 ```bash
 node setup/marcar_nocturnos.mjs
 ```
-En la tabla de pedidos salen con etiqueta "Nocturno" y una fila de contenedores por dia.
 
 ### 1.6 Restringir la API key por dominio (Google Cloud)
 1. https://console.cloud.google.com/apis/credentials?project=menu-lans
@@ -69,8 +67,8 @@ En la tabla de pedidos salen con etiqueta "Nocturno" y una fila de contenedores 
 2. **Source**: Deploy from a branch > `main` / `/ (root)` > Save.
 3. En 1-2 min queda en https://artikke.github.io/Menu-Lans/
 
-### 1.8 Logo (opcional)
-Sube un `logo.png` (cuadrado, fondo blanco o transparente) a la raiz del repo. Si no existe, se muestra "LANS" como texto.
+### 1.8 Logo
+`logo.png` (512x512) esta en la raiz del repo. Si faltara, se muestra "LANS" como texto.
 
 ---
 
@@ -86,7 +84,7 @@ Sube un `logo.png` (cuadrado, fondo blanco o transparente) a la raiz del repo. S
 | Roles | Uno | Dos niveles (admin = comedor, super = RRHH) validados en reglas |
 | Buzon | Nombre + foto, solo admin lo ve | Anonimo, publico, texto de 3 a 400 caracteres, solo admin borra |
 | Dominio | Ninguno | Guard en JS + restriccion de API key por referrer |
-| Horarios | Solo en el navegador | Tambien en reglas (hora de Mexico): L-V 7:00-11:30 para el dia siguiente en adelante, sabado todo el dia; el dia de hoy nunca se agrega ni se quita. Nocturnos: ademas sab-dom y lun-jue 17:00-24:00 |
+| Horarios | Solo en el navegador | Sin ventanas. Regla unica en reglas (hora de Mexico): el dia de hoy nunca se agrega ni se quita de un pedido; si el menu publicado es de una semana futura, todos sus dias estan disponibles |
 | Lecturas | Cada empleado descarga todos los pedidos | Cada empleado lee solo su pedido; listar requiere admin |
 | RFC | Visible para cualquier empleado | Documento aparte, solo super |
 

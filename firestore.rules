@@ -7,13 +7,10 @@ rules_version = '2';
 //      superPin -> nivel "super": RRHH, todo (cortesias, reportes, limpiar, catalogo, RFC)
 //  - El admin "inicia sesion" creando admin_sessions/{uid} con el PIN;
 //    las reglas comparan el PIN contra config/secrets y guardan el nivel. Expira a las 12 h.
-//  - Horarios (hora de Mexico, UTC-6) se hacen cumplir aqui, no solo en el navegador.
-//    Regla "un dia antes":
-//      pedir y cancelar: L-V 7:00 - 11:30, siempre para el dia siguiente en adelante
-//                        sabado todo el dia (semana siguiente); domingo cerrado
-//      turno nocturno (catalogo turno = 'noche'): ademas sab y dom todo el dia
-//                        y lun a jue 17:00 - 24:00
-//      el dia de hoy nunca se agrega ni se quita de un pedido (salvo super)
+//  - Regla unica de pedidos (acordada con Talento Humano 2026-09-25):
+//      se puede pedir y cancelar a cualquier hora y cualquier dia,
+//      SIEMPRE para el dia siguiente en adelante. El dia de hoy nunca se agrega
+//      ni se quita de un pedido (salvo super). Hora de Mexico (UTC-6).
 //  - Empleados solo pueden leer SU pedido (get); listar todos requiere admin.
 //  - RFCs viven en config/catalogo_rfc, solo super.
 //  - comentarios/{id}: buzon anonimo. Cualquiera crea; admin/super leen; solo super borra.
@@ -51,51 +48,29 @@ service cloud.firestore {
       return hasSession() && level() == 'super';
     }
 
-    // --- Hora local de Mexico (UTC-6, sin horario de verano) ---
-    function mxMin() {
-      return ((request.time.hours() + 18) % 24) * 60 + request.time.minutes();
-    }
-    // 1 = lunes ... 7 = domingo, en hora local
+    // --- Dia de la semana en hora local de Mexico (UTC-6, sin horario de verano) ---
+    // 1 = lunes ... 7 = domingo
     function mxDow() {
       return request.time.hours() < 6
         ? (request.time.dayOfWeek() == 1 ? 7 : request.time.dayOfWeek() - 1)
         : request.time.dayOfWeek();
     }
-    function ventanaManana() {
-      return mxDow() <= 5 && mxMin() >= 420 && mxMin() <= 690;      // L-V 7:00 - 11:30
-    }
-    // Todos: L-V 7:00-11:30 y sabado todo el dia
-    function pedidosAbiertos() {
-      return ventanaManana() || mxDow() == 6;
-    }
-    // Ventana del turno nocturno: sab y dom todo el dia; lun a jue 17:00 - 24:00
-    function nocheAbierta() {
-      return mxDow() >= 6 || (mxDow() <= 4 && mxMin() >= 1020);
+    function hoyNombre() {
+      return ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'][mxDow() - 1];
     }
 
     function catalogo() {
       return get(/databases/$(db)/documents/config/catalogo).data;
     }
 
-    function esNocturno(id) {
-      let c = catalogo();
-      return id in c && 'turno' in c[id] && c[id].turno == 'noche';
-    }
-
-    function puedeOperar(id) {
-      return pedidosAbiertos() || (esNocturno(id) && nocheAbierta());
-    }
-
-    // --- "Un dia antes": el dia de hoy no se agrega ni se quita ---
-    function hoyNombre() {
-      return ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'][mxDow() - 1];
-    }
-    // El menu publicado es de una semana futura (se esta pidiendo la semana siguiente)
+    // El menu publicado es de una semana futura (se esta pidiendo la semana siguiente):
+    // entonces ningun dia del menu es "hoy".
     function menuEsFuturo() {
       let m = get(/databases/$(db)/documents/config/menu).data;
       return 'mesNum' in m && m.dias.size() > 0
         && timestamp.date(m.anio, m.mesNum, m.dias[0].fecha) > request.time;
     }
+    // "Un dia antes": el dia de hoy no se agrega ni se cambia
     function noTocaHoy() {
       let h = hoyNombre();
       let nuevo = request.resource.data.detalle;
@@ -103,6 +78,7 @@ service cloud.firestore {
         || !(h in nuevo)
         || (resource != null && h in resource.data.detalle && nuevo[h] == resource.data.detalle[h]);
     }
+    // Al borrar el pedido completo, no puede incluir el dia de hoy
     function noQuitaHoy() {
       return menuEsFuturo() || !(hoyNombre() in resource.data.detalle);
     }
@@ -164,9 +140,9 @@ service cloud.firestore {
     match /orders/{id} {
       allow get: if signedIn();
       allow list: if isAdmin();
-      allow create: if isSuper() || (signedIn() && validOrder(id) && puedeOperar(id) && noTocaHoy());
-      allow update: if isSuper() || (signedIn() && validOrder(id) && puedeOperar(id) && noTocaHoy());
-      allow delete: if isSuper() || (signedIn() && puedeOperar(id) && noQuitaHoy());
+      allow create: if isSuper() || (signedIn() && validOrder(id) && noTocaHoy());
+      allow update: if isSuper() || (signedIn() && validOrder(id) && noTocaHoy());
+      allow delete: if isSuper() || (signedIn() && noQuitaHoy());
     }
 
     // --- Buzon anonimo ---
