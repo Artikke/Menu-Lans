@@ -1389,34 +1389,43 @@ function renderMenu() {
     let altHTML = '';
     if (elegible) {
       const sel = selections[i];
-      const opt = (key, titulo, sub, extra) => `
-            <label class="alt-option ${sel===key?'selected':''}" onclick="selectOption(${i},'${key}')">
-              <input type="radio" name="opt-${i}" ${sel===key?'checked':''} />
-              <span class="alt-option-text"><strong>${extra || ''}${esc(titulo)}</strong>${sub ? `<br><small>${esc(sub)}</small>` : ''}</span>
+      const conEnsalada = sel === 'ensalada' && hasEns(d);
+      const apagado = conEnsalada ? 'opacity:0.4;pointer-events:none;' : '';
+      const opt = (grupo, key, titulo, sub, marcado, onclick) => `
+            <label class="alt-option ${marcado?'selected':''}" onclick="${onclick}">
+              <input type="radio" name="${grupo}-${i}" ${marcado?'checked':''} />
+              <span class="alt-option-text"><strong>${esc(titulo)}</strong>${sub ? `<br><small>${esc(sub)}</small>` : ''}</span>
             </label>`;
-      altHTML = `
-        <div class="alt-section">
-          <div class="alt-label">Elige tu plato</div>
+      // 1. Guisado (se apaga si eligio ensalada)
+      altHTML += `
+        <div class="alt-section" style="${apagado}">
+          <div class="alt-label">Elige tu guisado${conEnsalada ? ' (no aplica con ensalada)' : ''}</div>
           <div class="alt-options">
-            ${opt('principal', d.platoFuerte, hasG2(d) ? '' : (d.complemento || ''))}
-            ${hasAlt(d) ? opt('alternativa', d.platoAlternativo, hasG2(d) ? '' : (d.complemento || '')) : ''}
-            ${hasEns(d) ? opt('ensalada', d.ensalada, 'Plato completo, sin guarnicion', '&#129367; ') : ''}
+            ${opt('opt', 'principal', d.platoFuerte, hasG2(d) ? '' : (d.complemento || ''), sel==='principal', `selectOption(${i},'principal')`)}
+            ${hasAlt(d) ? opt('opt', 'alternativa', d.platoAlternativo, hasG2(d) ? '' : (d.complemento || ''), sel==='alternativa', `selectOption(${i},'alternativa')`) : ''}
           </div>
         </div>`;
+      // 2. Guarnicion (se apaga si eligio ensalada)
       if (hasG2(d)) {
         const sd = sideSel[i] || 'g1';
-        const bloqueada = sel === 'ensalada';
         altHTML += `
-        <div class="alt-section" style="${bloqueada ? 'opacity:0.45;pointer-events:none;' : ''}">
-          <div class="alt-label">Elige tu guarnicion${bloqueada ? ' (no aplica con ensalada)' : ''}</div>
+        <div class="alt-section" style="${apagado}">
+          <div class="alt-label">Elige tu guarnicion${conEnsalada ? ' (no aplica con ensalada)' : ''}</div>
           <div class="alt-options">
-            <label class="alt-option ${sd==='g1'&&!bloqueada?'selected':''}" onclick="selectSide(${i},'g1')">
-              <input type="radio" name="side-${i}" ${sd==='g1'&&!bloqueada?'checked':''} />
-              <span class="alt-option-text"><strong>${esc(d.complemento)}</strong></span>
-            </label>
-            <label class="alt-option ${sd==='g2'&&!bloqueada?'selected':''}" onclick="selectSide(${i},'g2')">
-              <input type="radio" name="side-${i}" ${sd==='g2'&&!bloqueada?'checked':''} />
-              <span class="alt-option-text"><strong>${esc(d.guarnicion2)}</strong></span>
+            ${opt('side', 'g1', d.complemento, '', sd==='g1' && !conEnsalada, `selectSide(${i},'g1')`)}
+            ${opt('side', 'g2', d.guarnicion2, '', sd==='g2' && !conEnsalada, `selectSide(${i},'g2')`)}
+          </div>
+        </div>`;
+      }
+      // 3. Ensalada: sustituye guisado y guarnicion
+      if (hasEns(d)) {
+        altHTML += `
+        <div class="alt-section" style="background:rgba(22,160,133,0.06);">
+          <div class="alt-label" style="color:#16a085">O en su lugar, plato completo</div>
+          <div class="alt-options">
+            <label class="alt-option ${conEnsalada?'selected':''}" style="${conEnsalada?'border-color:#16a085;background:rgba(22,160,133,0.08);':''}" onclick="selectOption(${i}, ${conEnsalada ? "'principal'" : "'ensalada'"})">
+              <input type="checkbox" ${conEnsalada?'checked':''} style="accent-color:#16a085" />
+              <span class="alt-option-text"><strong>&#129367; ${esc(d.ensalada)}</strong><br><small>Sin guisado ni guarnicion</small></span>
             </label>
           </div>
         </div>`;
