@@ -1143,7 +1143,8 @@ let comentariosData = [];
 let catalogoRfcData = {};   // solo super: { num: rfc }
 let lastLoadAt = 0;
 let quantities = {};
-let selections = {};
+let selections = {};   // por dia: 'principal' | 'alternativa' | 'ensalada'
+let sideSel = {};      // por dia: 'g1' | 'g2' (guarnicion elegida)
 let adminAuth = false;
 let adminLevel = null;   // 'admin' | 'super'
 let adminVisible = false;
@@ -1152,6 +1153,16 @@ let menuCarouselReady = false;
 
 const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DAY_NAMES = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
+
+// --- Estructura de un dia del menu ---
+//   platoFuerte = Guiso 1, platoAlternativo = Guiso 2, ensalada = tercera opcion (plato completo)
+//   complemento = Guarnicion 1, guarnicion2 = Guarnicion 2 (se elige una; no aplica con ensalada)
+function hasAlt(d) { return !!(d && d.platoAlternativo && d.platoAlternativo.trim().replace(/-/g, '').length); }
+function hasEns(d) { return !!(d && d.ensalada && d.ensalada.trim().length); }
+function hasG2(d) { return !!(d && d.complemento && d.complemento.trim().length && d.guarnicion2 && d.guarnicion2.trim().length); }
+function tieneOpciones(d) { return hasAlt(d) || hasEns(d) || hasG2(d); }
+function platoElegido(d, sel) { return sel === 'ensalada' && hasEns(d) ? d.ensalada : (sel === 'alternativa' && hasAlt(d) ? d.platoAlternativo : d.platoFuerte); }
+function guarnicionElegida(d, sel, side) { if (sel === 'ensalada' || !d.complemento) return ''; return (side === 'g2' && hasG2(d)) ? d.guarnicion2 : d.complemento; }
 
 function normEmp(num) { return (num || '').toString().trim().toUpperCase().replace(/^0+(?=.)/, ''); }
 function orderDocId(numEmp) { return normEmp(numEmp) || '0'; }
@@ -1294,7 +1305,7 @@ async function loadMyOrder(numEmp) {
 }
 
 async function saveOrder(order) {
-  const clean = { nombre: order.nombre, numEmpleado: order.numEmpleado, fecha: order.fecha, total: order.total, detalle: order.detalle || {}, opciones: order.opciones || {} };
+  const clean = { nombre: order.nombre, numEmpleado: order.numEmpleado, fecha: order.fecha, total: order.total, detalle: order.detalle || {}, opciones: order.opciones || {}, guarniciones: order.guarniciones || {} };
   return fsWrite(`orders/${orderDocId(order.numEmpleado)}`, clean);
 }
 async function deleteOrder(numEmp) { return fsDelete(`orders/${orderDocId(numEmp)}`); }
@@ -1364,7 +1375,7 @@ function renderMenu() {
   dias.forEach((d, i) => {
     quantities[i] = quantities[i] || 0;
     if (!selections[i]) selections[i] = 'principal';
-    const hasAlt = d.platoAlternativo && d.platoAlternativo.trim().replace(/-/g, '').length > 0;
+    if (!sideSel[i]) sideSel[i] = 'g1';
     const passed = !adminVisible && isDayPassed(d.dia);
     const yaPedido = quantities[i] > 0 && pedidoPrevioActivo;
     if (passed && !yaPedido) quantities[i] = 0;
@@ -1374,22 +1385,42 @@ function renderMenu() {
     const card = document.createElement('div');
     card.className = 'day-card' + (passed && !yaPedido ? ' day-passed' : '');
 
+    const elegible = tieneOpciones(d);
     let altHTML = '';
-    if (hasAlt) {
+    if (elegible) {
+      const sel = selections[i];
+      const opt = (key, titulo, sub, extra) => `
+            <label class="alt-option ${sel===key?'selected':''}" onclick="selectOption(${i},'${key}')">
+              <input type="radio" name="opt-${i}" ${sel===key?'checked':''} />
+              <span class="alt-option-text"><strong>${extra || ''}${esc(titulo)}</strong>${sub ? `<br><small>${esc(sub)}</small>` : ''}</span>
+            </label>`;
       altHTML = `
         <div class="alt-section">
           <div class="alt-label">Elige tu plato</div>
           <div class="alt-options">
-            <label class="alt-option ${selections[i]==='principal'?'selected':''}" onclick="selectOption(${i},'principal')">
-              <input type="radio" name="opt-${i}" ${selections[i]==='principal'?'checked':''} />
-              <span class="alt-option-text"><strong>${esc(d.platoFuerte)}</strong>${d.complemento ? `<br><small>${esc(d.complemento)}</small>` : ''}</span>
+            ${opt('principal', d.platoFuerte, hasG2(d) ? '' : (d.complemento || ''))}
+            ${hasAlt(d) ? opt('alternativa', d.platoAlternativo, hasG2(d) ? '' : (d.complemento || '')) : ''}
+            ${hasEns(d) ? opt('ensalada', d.ensalada, 'Plato completo, sin guarnicion', '&#129367; ') : ''}
+          </div>
+        </div>`;
+      if (hasG2(d)) {
+        const sd = sideSel[i] || 'g1';
+        const bloqueada = sel === 'ensalada';
+        altHTML += `
+        <div class="alt-section" style="${bloqueada ? 'opacity:0.45;pointer-events:none;' : ''}">
+          <div class="alt-label">Elige tu guarnicion${bloqueada ? ' (no aplica con ensalada)' : ''}</div>
+          <div class="alt-options">
+            <label class="alt-option ${sd==='g1'&&!bloqueada?'selected':''}" onclick="selectSide(${i},'g1')">
+              <input type="radio" name="side-${i}" ${sd==='g1'&&!bloqueada?'checked':''} />
+              <span class="alt-option-text"><strong>${esc(d.complemento)}</strong></span>
             </label>
-            <label class="alt-option ${selections[i]==='alternativa'?'selected':''}" onclick="selectOption(${i},'alternativa')">
-              <input type="radio" name="opt-${i}" ${selections[i]==='alternativa'?'checked':''} />
-              <span class="alt-option-text"><strong>${esc(d.platoAlternativo)}</strong><br><small>Opcion 2</small></span>
+            <label class="alt-option ${sd==='g2'&&!bloqueada?'selected':''}" onclick="selectSide(${i},'g2')">
+              <input type="radio" name="side-${i}" ${sd==='g2'&&!bloqueada?'checked':''} />
+              <span class="alt-option-text"><strong>${esc(d.guarnicion2)}</strong></span>
             </label>
           </div>
         </div>`;
+      }
     }
 
     card.innerHTML = `
@@ -1401,7 +1432,7 @@ function renderMenu() {
         <div class="meal-type">Entrada</div>
         <div class="meal-name">${esc(d.entrada)}</div>
       </div>
-      ${hasAlt ? '' : `
+      ${elegible ? '' : `
       <div class="meal-section">
         <div class="meal-type">Plato Fuerte</div>
         <div class="meal-name">${esc(d.platoFuerte)}</div>
@@ -1437,6 +1468,7 @@ function preMarcarDias() {
   const num = document.getElementById('numEmpleado').value.trim();
   quantities = {};
   selections = {};
+  sideSel = {};
   if (num) {
     const numNorm = normEmp(num);
     const pedido = ordersData.find(o => normEmp(o.numEmpleado) === numNorm);
@@ -1444,9 +1476,10 @@ function preMarcarDias() {
       menuData.dias.forEach((d, i) => {
         if (pedido.detalle[d.dia]) {
           quantities[i] = 1;
-          if (pedido.opciones && pedido.opciones[d.dia]) {
-            selections[i] = pedido.opciones[d.dia] === d.platoAlternativo ? 'alternativa' : 'principal';
-          }
+          const op = pedido.opciones && pedido.opciones[d.dia];
+          if (op) selections[i] = (hasEns(d) && op === d.ensalada) ? 'ensalada' : (hasAlt(d) && op === d.platoAlternativo) ? 'alternativa' : 'principal';
+          const g = pedido.guarniciones && pedido.guarniciones[d.dia];
+          if (g) sideSel[i] = (hasG2(d) && g === d.guarnicion2) ? 'g2' : 'g1';
         }
       });
     }
@@ -1455,6 +1488,7 @@ function preMarcarDias() {
 }
 
 function selectOption(i, opt) { selections[i] = opt; renderMenu(); }
+function selectSide(i, side) { sideSel[i] = side; renderMenu(); }
 
 function toggleDay(i) {
   if (!adminVisible && menuData.dias[i] && isDayPassed(menuData.dias[i].dia)) return;
@@ -1515,11 +1549,15 @@ async function enviarPedido() {
 
   const nuevosDias = {};
   const nuevasOpciones = {};
+  const nuevasGuarn = {};
   menuData.dias.forEach((d, i) => {
     if (quantities[i] > 0 && (adminVisible || !isDayPassed(d.dia))) {
       nuevosDias[d.dia] = quantities[i];
-      const hasAlt = d.platoAlternativo && d.platoAlternativo.trim().replace(/-/g, '').length > 0;
-      if (hasAlt) nuevasOpciones[d.dia] = selections[i]==='alternativa' ? d.platoAlternativo : d.platoFuerte;
+      if (tieneOpciones(d)) {
+        nuevasOpciones[d.dia] = platoElegido(d, selections[i]);
+        const g = hasG2(d) ? guarnicionElegida(d, selections[i], sideSel[i]) : '';
+        if (g) nuevasGuarn[d.dia] = g;
+      }
     }
   });
   if (Object.keys(nuevosDias).length === 0) { showToast('No hay dias disponibles para pedir'); return; }
@@ -1533,13 +1571,14 @@ async function enviarPedido() {
     ultimosDiasNuevos = diasNuevosReales;
     yaExiste.detalle = Object.assign({}, yaExiste.detalle || {}, nuevosDias);
     yaExiste.opciones = Object.assign({}, yaExiste.opciones || {}, nuevasOpciones);
+    yaExiste.guarniciones = Object.assign({}, yaExiste.guarniciones || {}, nuevasGuarn);
     yaExiste.total = Object.values(yaExiste.detalle).reduce((a,b) => a+b, 0);
     yaExiste.fecha = new Date().toISOString();
     order = yaExiste;
     esActualizacion = true;
   } else {
     ultimosDiasNuevos = null;
-    order = { nombre, numEmpleado: numNorm, fecha: new Date().toISOString(), total, detalle: nuevosDias, opciones: nuevasOpciones };
+    order = { nombre, numEmpleado: numNorm, fecha: new Date().toISOString(), total, detalle: nuevosDias, opciones: nuevasOpciones, guarniciones: nuevasGuarn };
   }
 
   const saved = await saveOrder(order);
@@ -1563,6 +1602,7 @@ function cerrarModal() {
   document.getElementById('modalBg').classList.remove('open');
   Object.keys(quantities).forEach(k => quantities[k] = 0);
   selections = {};
+  sideSel = {};
   ultimosDiasNuevos = null;
   document.getElementById('nombreInput').value = '';
   document.getElementById('numEmpleado').value = '';
@@ -1723,7 +1763,7 @@ function populateAdminForm() {
 
 function addDayForm(data) {
   const c = document.getElementById('daysFormContainer');
-  const d = data || { dia:'Lunes', fecha:1, entrada:'', platoFuerte:'', complemento:'', postre:'', platoAlternativo:'' };
+  const d = data || { dia:'Lunes', fecha:1, entrada:'', platoFuerte:'', complemento:'', postre:'', platoAlternativo:'', ensalada:'', guarnicion2:'' };
   const card = document.createElement('div');
   card.className = 'day-form-card';
   card.innerHTML = `
@@ -1747,11 +1787,15 @@ function addDayForm(data) {
       <div class="form-group"><label>Entrada</label><input type="text" class="df-entrada" placeholder="Ej: Crema de brocoli" value="${esc(d.entrada)}" /></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Plato Fuerte 1</label><input type="text" class="df-plato" placeholder="Ej: Bistec encebollado" value="${esc(d.platoFuerte)}" /></div>
-      <div class="form-group"><label>Complemento (opcional)</label><input type="text" class="df-comp" placeholder="Ej: Papas salteadas" value="${esc(d.complemento || '')}" /></div>
+      <div class="form-group"><label>Guiso 1</label><input type="text" class="df-plato" placeholder="Ej: Bistec encebollado" value="${esc(d.platoFuerte)}" /></div>
+      <div class="form-group"><label>Guiso 2 (opcional)</label><input type="text" class="df-alt" placeholder="Ej: Pechuga a la plancha" value="${esc(d.platoAlternativo || '')}" /></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Plato Fuerte 2 (opcional, si hay dos opciones)</label><input type="text" class="df-alt" placeholder="Ej: Pechuga a la plancha (segunda opcion)" value="${esc(d.platoAlternativo || '')}" /></div>
+      <div class="form-group"><label>Ensalada (opcional, plato completo sin guarnicion)</label><input type="text" class="df-ens" placeholder="Ej: Ensalada de pollo" value="${esc(d.ensalada || '')}" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Guarnicion 1 (opcional)</label><input type="text" class="df-comp" placeholder="Ej: Arroz" value="${esc(d.complemento || '')}" /></div>
+      <div class="form-group"><label>Guarnicion 2 (opcional, se elige una)</label><input type="text" class="df-g2" placeholder="Ej: Frijoles" value="${esc(d.guarnicion2 || '')}" /></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Postre</label><input type="text" class="df-postre" placeholder="Ej: Gelatina frutal" value="${esc(d.postre)}" /></div>
@@ -1775,9 +1819,11 @@ async function guardarMenu() {
     const platoFuerte = card.querySelector('.df-plato').value.trim();
     const complemento = card.querySelector('.df-comp').value.trim();
     const platoAlternativo = card.querySelector('.df-alt').value.trim();
+    const ensalada = card.querySelector('.df-ens').value.trim();
+    const guarnicion2 = card.querySelector('.df-g2').value.trim();
     const postre = card.querySelector('.df-postre').value.trim();
     if (!entrada || !platoFuerte || !postre) valid = false;
-    dias.push({ dia, fecha, entrada, platoFuerte, complemento, platoAlternativo, postre });
+    dias.push({ dia, fecha, entrada, platoFuerte, complemento, platoAlternativo, ensalada, guarnicion2, postre });
   });
   if (!valid) { showToast('Llena los campos obligatorios'); return; }
 
@@ -1830,7 +1876,7 @@ function renderOrders() {
   html += '<th>No.</th><th>Nombre</th><th>Tipo</th>';
   menuData.dias.forEach(d => {
     const label = d.dia.substring(0,3);
-    html += d.platoAlternativo ? `<th>${label} *</th>` : `<th>${label}</th>`;
+    html += tieneOpciones(d) ? `<th>${label} *</th>` : `<th>${label}</th>`;
   });
   html += '<th>Total</th><th></th></tr></thead><tbody>';
 
@@ -1845,11 +1891,14 @@ function renderOrders() {
       dayTotals[d.dia] += qty;
       if (qty === 0) {
         html += '<td style="color:#ccc">-</td>';
-      } else if (d.platoAlternativo && o.opciones && o.opciones[d.dia]) {
-        const isAlt = o.opciones[d.dia] !== d.platoFuerte;
-        const color = isAlt ? '#e67e22' : '#27ae60';
-        const icon = isAlt ? '&#9670;' : '&#9671;';
-        html += `<td>${icon} ${qty}<br><small style="color:${color};font-size:10px">${esc(o.opciones[d.dia].substring(0,18))}</small></td>`;
+      } else if (tieneOpciones(d) && o.opciones && o.opciones[d.dia]) {
+        const op = o.opciones[d.dia];
+        const esEns = hasEns(d) && op === d.ensalada;
+        const isAlt = !esEns && op !== d.platoFuerte;
+        const color = esEns ? '#16a085' : isAlt ? '#e67e22' : '#27ae60';
+        const icon = esEns ? '&#129367;' : isAlt ? '&#9670;' : '&#9671;';
+        const g = (o.guarniciones && o.guarniciones[d.dia]) || '';
+        html += `<td>${icon} ${qty}<br><small style="color:${color};font-size:10px">${esc(op.substring(0,22))}${g ? ' + ' + esc(g.substring(0,14)) : ''}</small></td>`;
       } else {
         html += `<td>${qty}</td>`;
       }
@@ -1886,16 +1935,21 @@ function renderOrders() {
     html += `<td><strong>${nocGt}</strong></td><td></td></tr>`;
   }
 
-  const daysWithAlt = menuData.dias.filter(d => d.platoAlternativo);
+  const daysWithAlt = menuData.dias.filter(d => tieneOpciones(d));
   if (daysWithAlt.length > 0) {
-    html += '<tr><td colspan="100%" style="padding:12px 0 4px;font-weight:700;border:none;background:transparent">Desglose por opcion:</td></tr>';
+    html += '<tr><td colspan="100%" style="padding:12px 0 4px;font-weight:700;border:none;background:transparent">Desglose por platillo y guarnicion (para produccion):</td></tr>';
     daysWithAlt.forEach(d => {
-      const opcCounts = {};
+      const opcCounts = {}, gCounts = {};
       ordersData.forEach(o => {
         const qty = (o.detalle && o.detalle[d.dia]) || 0;
         if (qty > 0) {
           const opcion = (o.opciones && o.opciones[d.dia]) || d.platoFuerte;
           opcCounts[opcion] = (opcCounts[opcion] || 0) + qty;
+          const esEns = hasEns(d) && opcion === d.ensalada;
+          if (!esEns && d.complemento) {
+            const g = (o.guarniciones && o.guarniciones[d.dia]) || d.complemento;
+            gCounts[g] = (gCounts[g] || 0) + qty;
+          }
         }
       });
       if (Object.keys(opcCounts).length > 0) {
@@ -1903,6 +1957,12 @@ function renderOrders() {
         Object.entries(opcCounts).forEach(([opcion, count]) => {
           html += `<span style="display:inline-block;margin-right:16px">${esc(opcion)}: <strong>${count}</strong></span>`;
         });
+        if (Object.keys(gCounts).length > 0) {
+          html += '<span style="display:inline-block;margin-right:8px;color:var(--muted)">| Guarnicion:</span>';
+          Object.entries(gCounts).forEach(([g, count]) => {
+            html += `<span style="display:inline-block;margin-right:16px">${esc(g)}: <strong>${count}</strong></span>`;
+          });
+        }
         html += '</td></tr>';
       }
     });
@@ -1929,7 +1989,7 @@ function exportarCSV() {
   const sorted = sortByEmp(ordersData, 'numEmpleado');
 
   let colCount = 6;
-  menuData.dias.forEach(d => { colCount += d.platoAlternativo ? 2 : 1; });
+  menuData.dias.forEach(d => { colCount += tieneOpciones(d) ? 2 : 1; });
 
   let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"/></head><body>';
   html += '<table style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;font-size:11pt;">';
@@ -1940,7 +2000,7 @@ function exportarCSV() {
   const th = (t, bg) => `<th style="${bdr}background:${bg};color:#fff;font-weight:bold;text-align:center;">${t}</th>`;
   html += '<tr>' + th('No. Emp', hd) + th('Nombre', hd) + th('Tipo', hd) + th('Fecha', hd) + th('Hora', hd);
   menuData.dias.forEach(d => {
-    if (d.platoAlternativo) html += th(d.dia, hd2) + th('Platillo', hd2);
+    if (tieneOpciones(d)) html += th(d.dia, hd2) + th('Platillo', hd2);
     else html += th(d.dia, hd);
   });
   html += th('Total', hd) + '</tr>';
@@ -1959,9 +2019,11 @@ function exportarCSV() {
     html += `<td style="${bdr}background:${bg};text-align:center;">${hora}</td>`;
     menuData.dias.forEach(d => {
       const qty = (o.detalle && o.detalle[d.dia]) || 0;
-      if (d.platoAlternativo) {
-        const opcion = (qty > 0 && o.opciones && o.opciones[d.dia]) ? o.opciones[d.dia] : '';
-        const opColor = (opcion && opcion !== d.platoFuerte) ? 'color:#e67e22;' : 'color:#27ae60;';
+      if (tieneOpciones(d)) {
+        let opcion = (qty > 0 && o.opciones && o.opciones[d.dia]) ? o.opciones[d.dia] : '';
+        const gsel = (qty > 0 && o.guarniciones && o.guarniciones[d.dia]) ? o.guarniciones[d.dia] : '';
+        if (opcion && gsel) opcion += ' + ' + gsel;
+        const opColor = (opcion && !opcion.startsWith(d.platoFuerte)) ? 'color:#e67e22;' : 'color:#27ae60;';
         html += `<td style="${bdr}background:${bg};text-align:center;font-weight:600;">${qty}</td>`;
         html += `<td style="${bdr}background:${bg};${qty > 0 ? opColor : ''}font-size:10pt;">${esc(opcion)}</td>`;
       } else {
@@ -1984,7 +2046,7 @@ function exportarCSV() {
       const tiene = (c.dias && c.dias[d.dia]) ? 1 : 0;
       cTotal += tiene;
       html += `<td style="${bdr}background:${cortBg};text-align:center;font-weight:${tiene?'600':'400'};${tiene===0?'color:#ccc;':''}">${tiene}</td>`;
-      if (d.platoAlternativo) html += `<td style="${bdr}background:${cortBg};"></td>`;
+      if (tieneOpciones(d)) html += `<td style="${bdr}background:${cortBg};"></td>`;
     });
     html += `<td style="${bdr}background:${cortBg};text-align:center;font-weight:bold;font-size:12pt;">${cTotal}</td></tr>`;
   });
@@ -1998,11 +2060,11 @@ function exportarCSV() {
   html += `<tr><td style="${bdr}background:${hd};color:#fff;font-weight:bold;text-align:center;" colspan="5">TOTAL</td>`;
   menuData.dias.forEach(d => {
     html += `<td style="${bdr}background:${hd};color:#fff;font-weight:bold;text-align:center;font-size:13pt;">${dayTotals[d.dia]}</td>`;
-    if (d.platoAlternativo) html += `<td style="${bdr}background:${hd};"></td>`;
+    if (tieneOpciones(d)) html += `<td style="${bdr}background:${hd};"></td>`;
   });
   html += `<td style="${bdr}background:${hd2};color:#fff;font-weight:bold;text-align:center;font-size:14pt;">${gt}</td></tr>`;
 
-  const daysWithAlt = menuData.dias.filter(d => d.platoAlternativo);
+  const daysWithAlt = menuData.dias.filter(d => tieneOpciones(d));
   if (daysWithAlt.length > 0) {
     html += `<tr><td colspan="${colCount}" style="height:10px;"></td></tr>`;
     html += `<tr><td colspan="${colCount}" style="${bdr}background:${hd2};color:#fff;font-weight:bold;font-size:12pt;text-align:center;">DESGLOSE POR OPCION</td></tr>`;
@@ -2340,7 +2402,8 @@ async function buscarPedido() {
   const dias = Object.keys(order.detalle || {});
   if (dias.length === 0) { container.innerHTML = '<div class="cancel-empty">No hay dias en este pedido</div>'; return; }
   dias.forEach(dia => {
-    const opcion = order.opciones && order.opciones[dia] ? order.opciones[dia] : '';
+    let opcion = order.opciones && order.opciones[dia] ? order.opciones[dia] : '';
+    if (opcion && order.guarniciones && order.guarniciones[dia]) opcion += ' + ' + order.guarniciones[dia];
     const pasado = !adminVisible && diaYaPaso(dia);
     html += `
       <div class="cancel-day-item">
@@ -2361,6 +2424,7 @@ async function cancelarDia(numEmp, dia) {
   if (!order) { showToast('Pedido no encontrado'); return; }
   delete order.detalle[dia];
   if (order.opciones) delete order.opciones[dia];
+  if (order.guarniciones) delete order.guarniciones[dia];
   order.total = Object.values(order.detalle).reduce((a,b) => a+b, 0);
   const ok = Object.keys(order.detalle).length === 0 ? await deleteOrder(order.numEmpleado) : await saveOrder(order);
   await loadMyOrder(numEmp);
@@ -2389,7 +2453,7 @@ function mostrarMisPedidos() {
   misPedidos.forEach(o => {
     semanaComidas += o.total || 0;
     Object.entries(o.detalle || {}).forEach(([dia, qty]) => {
-      if (qty > 0) dias.push(`${dia}: ${o.opciones?.[dia] || 'Plato del dia'}`);
+      if (qty > 0) dias.push(`${dia}: ${o.opciones?.[dia] || 'Plato del dia'}${o.guarniciones?.[dia] ? ' + ' + o.guarniciones[dia] : ''}`);
     });
   });
 

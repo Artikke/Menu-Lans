@@ -70,6 +70,10 @@ node setup/marcar_nocturnos.mjs
 ### 1.8 Logo
 `logo.png` (512x512) esta en la raiz del repo. Si faltara, se muestra "LANS" como texto.
 
+### 1.9 Estructura de cada dia del menu
+Cada dia tiene: Entrada, Guiso 1, Guiso 2 (opcional), Ensalada (opcional, plato completo sin guarnicion), Guarnicion 1 y Guarnicion 2 (opcionales; si hay dos, el empleado elige una), Postre.
+Si elige Ensalada no elige guarnicion. En la tabla de pedidos cada celda muestra guiso + guarnicion, y el desglose de produccion cuenta por guiso y por guarnicion.
+
 ---
 
 ## 2. Seguridad (diferencias vs PROESA)
@@ -102,12 +106,12 @@ Limitaciones conocidas (mismas que PROESA por diseño sin login de empleado):
 ## 3. Estructura en Firestore
 
 ```
-config/menu        { mes, semana, anio, dias:[{dia, fecha, entrada, platoFuerte, complemento, platoAlternativo, postre}] }
+config/menu        { mes, mesNum, semana, anio, dias:[{dia, fecha, entrada, platoFuerte (guiso 1), platoAlternativo (guiso 2), ensalada, complemento (guarnicion 1), guarnicion2, postre}] }
 config/catalogo    { "952": { nombre }, "981": { nombre, turno:"noche" }, ... }   <- legible por empleados
 config/catalogo_rfc { "952": "AAMJ0006075S6", ... }              <- solo super (reporte BUK)
 config/cortesias   { items: [{ nombre, dias: { Lunes:1, ... } }] }
 config/secrets     { adminPin, superPin }          <- solo lectura por reglas
-orders/{numEmp}    { nombre, numEmpleado, fecha, total, detalle:{Lunes:1}, opciones:{Lunes:"Plato"} }
+orders/{numEmp}    { nombre, numEmpleado, fecha, total, detalle:{Lunes:1}, opciones:{Lunes:"Guiso"}, guarniciones:{Lunes:"Arroz"} }
 historial/{AAAA-M-Qn}  { "952": { nombre, comidas, pedidos:[...] }, _cortesias:[...] }
 admin_sessions/{uid}   { pin, level:'admin'|'super', createdAt }
 comentarios/{autoId}   { texto, fecha }   <- buzon anonimo
