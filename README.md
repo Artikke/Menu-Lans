@@ -8,6 +8,8 @@ Un solo `index.html` (CSS/JS inline) + Firestore via REST, hospedado en GitHub P
 - Pedidos y cancelaciones: **a cualquier hora, cualquier dia, siempre para el dia siguiente en adelante**. El dia de hoy nunca se toca (acordado con Talento Humano 2026-09-25).
 - El comedor publica el menu de la semana siguiente el **jueves**
 - Servicio de comedor: **12:30 - 17:30**
+- Al pedir, cada dia lleva la **hora en que pasa por su comida** (13:00 a 22:00, cada hora; `HORARIOS_RECOGER` en `index.html`). Pedido de Axel Avila, 2026-10-07.
+- Los pedidos se guardan **por semana** y no se borran: en el panel se elige la semana con las flechas o con una fecha, y el Excel sale solo de esa semana. Ya no hay que "Limpiar / Archivar".
 - Turno nocturno: solicitud por Teams con Axel Avila (contenedor rotulado)
 
 ---
@@ -109,13 +111,17 @@ Limitaciones conocidas (mismas que PROESA por diseño sin login de empleado):
 config/menu        { mes, mesNum, semana, anio, dias:[{dia, fecha, entrada, platoFuerte (guiso 1), platoAlternativo (guiso 2), ensalada, complemento (guarnicion 1), guarnicion2, postre}] }
 config/catalogo    { "952": { nombre }, "981": { nombre, turno:"noche" }, ... }   <- legible por empleados
 config/catalogo_rfc { "952": "AAMJ0006075S6", ... }              <- solo super (reporte BUK)
-config/cortesias   { items: [{ nombre, dias: { Lunes:1, ... } }] }
 config/secrets     { adminPin, superPin }          <- solo lectura por reglas
-orders/{numEmp}    { nombre, numEmpleado, fecha, total, detalle:{Lunes:1}, opciones:{Lunes:"Guiso"}, guarniciones:{Lunes:"Arroz"} }
-historial/{AAAA-M-Qn}  { "952": { nombre, comidas, pedidos:[...] }, _cortesias:[...] }
+config/cortesias   { items: [{ nombre, dias: { Lunes:1, ... } }], semana }   <- semana del menu; al agregar en otra semana las anteriores se archivan en historial
+pedidos/{semana}_{numEmp}  { nombre, numEmpleado, semana:"2026-10-12", fecha, total, detalle:{Lunes:1}, opciones:{Lunes:"Guiso"}, guarniciones:{Lunes:"Arroz"}, horarios:{Lunes:"14:00"} }
+orders/{numEmp}    formato anterior (semana del 5 de octubre 2026, SEMANA_LEGADO). Solo lectura; cuenta en esa semana mientras el empleado no tenga pedido semanal.
+historial/{AAAA-M-Qn}  { "952": { nombre, comidas, pedidos:[...] }, _cortesias:[...] }   <- quincenas archivadas antes de los pedidos semanales
 admin_sessions/{uid}   { pin, level:'admin'|'super', createdAt }
 comentarios/{autoId}   { texto, fecha }   <- buzon anonimo
 ```
+
+`semana` es la fecha del primer dia del menu publicado (`AAAA-MM-DD`). Las reglas solo dejan escribir la semana
+del menu publicado; las semanas pasadas quedan guardadas y BUK / conciliacion las leen por fecha real de cada dia.
 
 ## 4. Precios de reportes
 En `index.html` (ajustar con el proveedor de LANS):

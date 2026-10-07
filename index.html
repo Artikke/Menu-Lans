@@ -372,7 +372,15 @@ body {
 .orders-table .total-row { background: rgba(11,61,145,0.06); font-weight: 700; }
 .no-orders { text-align: center; color: var(--muted); padding: 30px; font-size: 0.9rem; }
 .btn-export { background: var(--green-dark); color: #fff; border: none; padding: 10px 24px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
-.btn-clear-orders { background: #c0392b; color: #fff; border: none; padding: 10px 24px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+.semana-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 15px; }
+.semana-nav button { border: 1px solid var(--border); background: #fff; color: var(--primary); border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+.semana-nav button[aria-label] { font-size: 1.1rem; padding: 4px 14px; }
+.semana-nav input[type=date] { border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; font-family: 'Inter', sans-serif; font-size: 0.85rem; }
+.semana-label { flex-basis: 100%; font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+.hora-recoger { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 0.78rem; color: var(--muted); }
+.hora-recoger select { border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-family: 'Inter', sans-serif; font-size: 0.85rem; background: #fff; }
+.hora-recoger select.falta { border-color: #e67e22; background: #fff7ec; }
+.hora-celda { color: var(--primary); font-size: 10px; }
 .buk-q-btn { flex: 1; padding: 12px; border-radius: 10px; border: 2px solid #ddd; background: #fff; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; }
 .buk-q-active { border-color: var(--primary); background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; }
 
@@ -826,11 +834,17 @@ body {
   <!-- ORDERS -->
   <div class="orders-log">
     <h3>Pedidos Recibidos</h3>
+    <div class="semana-nav">
+      <button type="button" onclick="cambiarSemana(-1)" aria-label="Semana anterior">&#8249;</button>
+      <input type="date" id="semanaFecha" onchange="irASemana(this.value)" aria-label="Elegir fecha" />
+      <button type="button" onclick="cambiarSemana(1)" aria-label="Semana siguiente">&#8250;</button>
+      <button type="button" id="semanaMenuBtn" onclick="irASemana('')">Ir a la semana del menu</button>
+      <div id="semanaLabel" class="semana-label"></div>
+    </div>
     <div class="admin-btn-row" style="margin-bottom:15px;" data-min-role="super">
-      <button class="btn-export" onclick="exportarCSV()">Exportar Excel</button>
+      <button class="btn-export" onclick="exportarCSV()">Exportar Excel (esta semana)</button>
       <button class="btn-export" onclick="mostrarExportBUK()" style="background:linear-gradient(135deg,#8e44ad,#3498db);">Exportar BUK</button>
       <button class="btn-export" onclick="mostrarExportFactura()" style="background:linear-gradient(135deg,#27ae60,#2ecc71);">Conciliar Factura</button>
-      <button class="btn-clear-orders" onclick="limpiarPedidos()">Limpiar / Archivar</button>
     </div>
     <div id="ordersContainer"></div>
   </div>
@@ -909,6 +923,11 @@ const ALLOWED_HOSTS = ["artikke.github.io", "localhost", "127.0.0.1"];
 const PRECIO_DESCUENTO_COLABORADOR = 56.71;   // lo que se descuenta al empleado por comida
 const PRECIO_BASE_PROVEEDOR = 103.45;         // precio proveedor sin IVA
 const IVA_RATE = 0.16;
+
+// Hora en que el empleado pasa por su comida (pedido de Axel Avila, 2026-10-07): de 13:00 a 22:00
+const HORARIOS_RECOGER = ['13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'];
+// Los pedidos de antes de guardarlos por semana (coleccion orders/{numEmp}) eran del menu del lunes 5 de octubre
+const SEMANA_LEGADO = '2026-10-05';
 
 const EMPRESA = "LANS Laboratorios de Referencia";
 const EMPRESA_CORTA = "LANS";
@@ -1086,6 +1105,18 @@ async function fsDelete(path) {
   return r.ok;
 }
 
+// Pedidos (coleccion pedidos/{semana}_{numEmp}) cuya semana cae entre desde y hasta ('AAAA-MM-DD')
+async function loadPedidosRango(desde, hasta) {
+  const filtro = (op, v) => ({ fieldFilter: { field: { fieldPath: 'semana' }, op, value: { stringValue: v } } });
+  const r = await fsFetch(`${FS_BASE}:runQuery`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ structuredQuery: { from: [{ collectionId: 'pedidos' }], where: { compositeFilter: { op: 'AND', filters: [filtro('GREATER_THAN_OR_EQUAL', desde), filtro('LESS_THAN_OR_EQUAL', hasta)] } } } })
+  });
+  if (!r.ok) throw new Error('runQuery ' + r.status);
+  const rows = await r.json();
+  return rows.filter(x => x.document).map(x => Object.assign(docToObj(x.document), { _path: 'pedidos/' + x.document.name.split('/').pop() }));
+}
+
 async function loadFsCollection(path, pageSize = 300) {
   const r = await fsFetch(`${FS_BASE}/${path}?pageSize=${pageSize}`);
   if (!r.ok) return [];
@@ -1135,8 +1166,10 @@ const DEFAULT_MENU = {
 };
 
 let menuData = JSON.parse(JSON.stringify(DEFAULT_MENU));
-let ordersData = [];
+let ordersData = [];   // admin: pedidos de la semana que se esta viendo (semanaVista)
+let miPedido = null;   // empleado: su pedido de la semana del menu publicado
 let cortesiasData = [];
+let cortesiasSemana = SEMANA_LEGADO;   // semana del menu a la que pertenecen las cortesias
 let catalogoData = {};
 let historialData = {};
 let comentariosData = [];
@@ -1145,6 +1178,8 @@ let lastLoadAt = 0;
 let quantities = {};
 let selections = {};   // por dia: 'principal' | 'alternativa' | 'ensalada'
 let sideSel = {};      // por dia: 'g1' | 'g2' (guarnicion elegida)
+let horaSel = {};      // por dia: hora en que pasara por su comida ('14:00')
+let semanaVista = null;   // admin: 'AAAA-MM-DD' de cualquier dia de la semana que se esta viendo
 let adminAuth = false;
 let adminLevel = null;   // 'admin' | 'super'
 let adminVisible = false;
@@ -1163,6 +1198,26 @@ function hasG2(d) { return !!(d && d.complemento && d.complemento.trim().length 
 function tieneOpciones(d) { return hasAlt(d) || hasEns(d) || hasG2(d); }
 function platoElegido(d, sel) { return sel === 'ensalada' && hasEns(d) ? d.ensalada : (sel === 'alternativa' && hasAlt(d) ? d.platoAlternativo : d.platoFuerte); }
 function guarnicionElegida(d, sel, side) { if (sel === 'ensalada' || !d.complemento) return ''; return (side === 'g2' && hasG2(d)) ? d.guarnicion2 : d.complemento; }
+
+// ---- Semanas: cada pedido pertenece a la semana del menu, identificada por la fecha de su primer dia ----
+function isoFecha(dt) { return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`; }
+function fechaDeIso(s) { const [a, m, d] = s.split('-').map(Number); return new Date(a, m - 1, d); }
+function lunesDe(dt) { const x = new Date(dt); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; }
+function semanaDeMenu(m) {
+  if (!m || !Array.isArray(m.dias) || !m.dias.length || !m.anio) return null;
+  const mesNum = m.mesNum || (MONTH_NAMES.indexOf(m.mes) + 1);
+  return mesNum ? isoFecha(new Date(m.anio, mesNum - 1, m.dias[0].fecha)) : null;
+}
+function semanaActual() { return semanaDeMenu(menuData); }
+// Fecha real de un dia ('Martes') en la semana que empieza en 'semana'
+function fechaDiaSemana(semana, dia) {
+  const ini = fechaDeIso(semana);
+  const dow = DAY_NAMES.indexOf(dia);
+  if (dow < 0) return null;
+  const x = new Date(ini); x.setDate(ini.getDate() + (dow - ini.getDay() + 7) % 7);
+  return x;
+}
+function pedidoPath(semana, numEmp) { return `pedidos/${semana}_${orderDocId(numEmp)}`; }
 
 function normEmp(num) { return (num || '').toString().trim().toUpperCase().replace(/^0+(?=.)/, ''); }
 function orderDocId(numEmp) { return normEmp(numEmp) || '0'; }
@@ -1195,7 +1250,7 @@ function onNumEmpInput() {
   clearTimeout(numEmpTimer);
   numEmpTimer = setTimeout(async () => {
     const n = document.getElementById('numEmpleado').value.trim();
-    if (!adminAuth) await loadMyOrder(n);
+    await loadMyOrder(n);
     mostrarMisPedidos();
     preMarcarDias();
   }, 450);
@@ -1255,19 +1310,19 @@ async function loadFromCloud() {
   try {
     await ensureAuth();
     if (adminAuth) {
-      const [menuDoc, cortDoc, catDoc, rfcDoc, ordersList, histList, comList] = await Promise.all([
+      const [menuDoc, cortDoc, catDoc, rfcDoc, histList, comList] = await Promise.all([
         fsRead('config/menu'),
         fsRead('config/cortesias'),
         fsRead('config/catalogo'),
         fsRead('config/catalogo_rfc'),
-        loadFsCollection('orders'),
         loadFsCollection('historial', 100),
         loadFsCollection('comentarios', 100)
       ]);
       menuPublicado = !!(menuDoc && menuDoc.dias);
       if (menuDoc?.dias) menuData = menuDoc;
-      ordersData = ordersList;
+      ordersData = await loadPedidosVista();
       cortesiasData = Array.isArray(cortDoc?.items) ? cortDoc.items : [];
+      cortesiasSemana = cortDoc?.semana || SEMANA_LEGADO;
       if (catDoc && typeof catDoc === 'object') catalogoData = catDoc;
       if (rfcDoc && typeof rfcDoc === 'object') catalogoRfcData = rfcDoc;
       historialData = {};
@@ -1275,15 +1330,14 @@ async function loadFromCloud() {
       comentariosData = comList.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
     } else {
       const numEmp = document.getElementById('numEmpleado').value.trim();
-      const [menuDoc, catDoc, myOrder] = await Promise.all([
+      const [menuDoc, catDoc] = await Promise.all([
         fsRead('config/menu'),
-        fsRead('config/catalogo'),
-        numEmp ? fsRead('orders/' + orderDocId(numEmp)) : Promise.resolve(null)
+        fsRead('config/catalogo')
       ]);
       menuPublicado = !!(menuDoc && menuDoc.dias);
       if (menuDoc?.dias) menuData = menuDoc;
       if (catDoc && typeof catDoc === 'object') catalogoData = catDoc;
-      ordersData = myOrder ? [myOrder] : [];
+      miPedido = numEmp ? await fetchPedidoSemana(numEmp) : null;
     }
     lastLoadAt = Date.now();
     setSyncStatus('ok', 'Sincronizado');
@@ -1291,27 +1345,54 @@ async function loadFromCloud() {
   } catch (e) { console.error('Load error:', e); setSyncStatus('error', 'Sin conexion'); return false; }
 }
 
-// Lee solo el pedido de un empleado (1 lectura). En modo admin recarga todo.
+// Pedido de un empleado para la semana del menu publicado (1 lectura).
+// Si aun no tiene pedido semanal y el menu es de SEMANA_LEGADO, usa el del formato anterior (orders/{numEmp}).
+async function fetchPedidoSemana(numEmp) {
+  const n = normEmp(numEmp), sem = semanaActual();
+  if (!n || !sem) return null;
+  const o = await fsRead(pedidoPath(sem, n));
+  if (o) return Object.assign(o, { _path: pedidoPath(sem, n) });
+  if (sem !== SEMANA_LEGADO) return null;
+  const viejo = await fsRead('orders/' + orderDocId(n));
+  return viejo ? Object.assign(viejo, { semana: sem, _path: 'orders/' + orderDocId(n), _legado: true }) : null;
+}
+
+// Admin: pedidos de la semana (lunes a domingo) que contiene semanaVista; por defecto la del menu publicado
+function rangoSemanaVista() {
+  const ini = lunesDe(fechaDeIso(semanaVista || semanaActual() || isoFecha(new Date())));
+  const fin = new Date(ini); fin.setDate(ini.getDate() + 6);
+  return { ini, fin, desde: isoFecha(ini), hasta: isoFecha(fin) };
+}
+async function loadPedidosVista() {
+  const { desde, hasta } = rangoSemanaVista();
+  const lista = await loadPedidosRango(desde, hasta);
+  if (SEMANA_LEGADO >= desde && SEMANA_LEGADO <= hasta) {
+    const yaSemanal = new Set(lista.map(o => orderDocId(o.numEmpleado)));
+    (await loadFsCollection('orders')).forEach(o => {
+      if (!yaSemanal.has(orderDocId(o.numEmpleado))) lista.push(Object.assign(o, { semana: SEMANA_LEGADO, _path: 'orders/' + o._id, _legado: true }));
+    });
+  }
+  return lista.filter(o => (o.total || 0) > 0);
+}
+
 async function loadMyOrder(numEmp) {
-  if (adminAuth) return loadFromCloud();
   try {
     await ensureAuth();
-    const n = normEmp(numEmp);
-    if (!n) { ordersData = []; return true; }
-    const o = await fsRead('orders/' + orderDocId(n));
-    ordersData = o ? [o] : [];
+    miPedido = await fetchPedidoSemana(numEmp);
     return true;
   } catch (e) { console.error('loadMyOrder', e); return false; }
 }
 
+// Siempre se guarda como pedidos/{semana}_{numEmp}; un pedido del formato anterior se copia ahi y el viejo queda sin usar
 async function saveOrder(order) {
-  const clean = { nombre: order.nombre, numEmpleado: order.numEmpleado, fecha: order.fecha, total: order.total, detalle: order.detalle || {}, opciones: order.opciones || {}, guarniciones: order.guarniciones || {} };
-  return fsWrite(`orders/${orderDocId(order.numEmpleado)}`, clean);
+  const semana = semanaActual();
+  const clean = { nombre: order.nombre, numEmpleado: order.numEmpleado, semana, fecha: order.fecha, total: order.total, detalle: order.detalle || {}, opciones: order.opciones || {}, guarniciones: order.guarniciones || {}, horarios: order.horarios || {} };
+  return fsWrite(pedidoPath(semana, order.numEmpleado), clean);
 }
-async function deleteOrder(numEmp) { return fsDelete(`orders/${orderDocId(numEmp)}`); }
-async function deleteAllOrders() {
-  const list = await loadFsCollection('orders');
-  await Promise.all(list.map(o => fsDelete(`orders/${o._id}`)));
+// Cancelar todo: si venia del formato anterior se guarda vacio para que el viejo ya no cuente
+async function deleteOrder(order) {
+  if (order._legado) return saveOrder(Object.assign({}, order, { total: 0, detalle: {}, opciones: {}, guarniciones: {}, horarios: {} }));
+  return fsDelete(pedidoPath(semanaActual(), order.numEmpleado));
 }
 async function saveHistorial(key) {
   try { return await fsWrite(`historial/${key}`, historialData[key]); }
@@ -1330,7 +1411,7 @@ async function saveCatalogo() {
   return fsWrite('config/catalogo', clean);
 }
 async function saveCatalogoRfc() { return fsWrite('config/catalogo_rfc', catalogoRfcData); }
-async function saveCortesias() { return fsWrite('config/cortesias', { items: cortesiasData }); }
+async function saveCortesias() { return fsWrite('config/cortesias', { items: cortesiasData, semana: cortesiasSemana }); }
 
 // ============================================================
 //  RENDER MENU
@@ -1369,7 +1450,7 @@ function renderMenu() {
   grid.innerHTML = '';
   grid.style.gridTemplateColumns = `repeat(${Math.max(dias.length, 1)}, 1fr)`;
   const numEmpNorm = normEmp(document.getElementById('numEmpleado').value.trim());
-  const pedidoPrevioActivo = numEmpNorm && ordersData.some(o => normEmp(o.numEmpleado) === numEmpNorm);
+  const pedidoPrevioActivo = !!(numEmpNorm && miPedido && normEmp(miPedido.numEmpleado) === numEmpNorm);
   const MES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
   dias.forEach((d, i) => {
@@ -1456,6 +1537,14 @@ function renderMenu() {
         <button class="order-toggle ${quantities[i]>0?'active':''} ${passed && yaPedido ? 'locked' : ''}" id="qty-${i}" onclick="toggleDay(${i})">
           ${passed && yaPedido ? '&#10003; Ya pedido' : quantities[i]>0 ? '&#10003; Pedido' : 'Pedir'}
         </button>
+        ${quantities[i] > 0 ? (passed && yaPedido
+          ? (horaSel[i] ? `<div class="hora-recoger">Pasas a las <strong>${esc(horaSel[i])}</strong></div>` : '')
+          : `<label class="hora-recoger">Hora en que pasas
+              <select onchange="selectHora(${i}, this.value)" class="${horaSel[i] ? '' : 'falta'}">
+                <option value="">Elige</option>
+                ${HORARIOS_RECOGER.map(h => `<option ${horaSel[i] === h ? 'selected' : ''}>${h}</option>`).join('')}
+              </select>
+            </label>`) : ''}
       </div>`;
     grid.appendChild(card);
   });
@@ -1478,9 +1567,10 @@ function preMarcarDias() {
   quantities = {};
   selections = {};
   sideSel = {};
+  horaSel = {};
   if (num) {
     const numNorm = normEmp(num);
-    const pedido = ordersData.find(o => normEmp(o.numEmpleado) === numNorm);
+    const pedido = miPedido && normEmp(miPedido.numEmpleado) === numNorm ? miPedido : null;
     if (pedido && pedido.detalle) {
       menuData.dias.forEach((d, i) => {
         if (pedido.detalle[d.dia]) {
@@ -1489,6 +1579,8 @@ function preMarcarDias() {
           if (op) selections[i] = (hasEns(d) && op === d.ensalada) ? 'ensalada' : (hasAlt(d) && op === d.platoAlternativo) ? 'alternativa' : 'principal';
           const g = pedido.guarniciones && pedido.guarniciones[d.dia];
           if (g) sideSel[i] = (hasG2(d) && g === d.guarnicion2) ? 'g2' : 'g1';
+          const h = pedido.horarios && pedido.horarios[d.dia];
+          if (h) horaSel[i] = h;
         }
       });
     }
@@ -1498,6 +1590,7 @@ function preMarcarDias() {
 
 function selectOption(i, opt) { selections[i] = opt; renderMenu(); }
 function selectSide(i, side) { sideSel[i] = side; renderMenu(); }
+function selectHora(i, h) { horaSel[i] = h; renderMenu(); }
 
 function toggleDay(i) {
   if (!adminVisible && menuData.dias[i] && isDayPassed(menuData.dias[i].dia)) return;
@@ -1552,16 +1645,21 @@ async function enviarPedido() {
   const total = Object.values(quantities).reduce((a,b)=>a+b, 0);
   if (total === 0) return;
 
+  const sinHora = menuData.dias.filter((d, i) => quantities[i] > 0 && (adminVisible || !isDayPassed(d.dia)) && !horaSel[i]).map(d => d.dia);
+  if (sinHora.length) { showToast('Elige la hora en que pasas: ' + sinHora.join(', ')); return; }
+
   await loadMyOrder(numEmp);
   const numNorm = normEmp(numEmp);
-  const yaExiste = ordersData.find(o => normEmp(o.numEmpleado) === numNorm);
+  const yaExiste = miPedido && (miPedido.total || 0) > 0 ? miPedido : null;
 
   const nuevosDias = {};
   const nuevasOpciones = {};
   const nuevasGuarn = {};
+  const nuevasHoras = {};
   menuData.dias.forEach((d, i) => {
     if (quantities[i] > 0 && (adminVisible || !isDayPassed(d.dia))) {
       nuevosDias[d.dia] = quantities[i];
+      nuevasHoras[d.dia] = horaSel[i];
       if (tieneOpciones(d)) {
         nuevasOpciones[d.dia] = platoElegido(d, selections[i]);
         const g = hasG2(d) ? guarnicionElegida(d, selections[i], sideSel[i]) : '';
@@ -1576,18 +1674,21 @@ async function enviarPedido() {
   if (yaExiste) {
     const diasExistentes = Object.keys(yaExiste.detalle || {});
     const diasNuevosReales = Object.keys(nuevosDias).filter(d => !diasExistentes.includes(d));
-    if (diasNuevosReales.length === 0) { showToast('Ya tienes pedido para esos dias'); return; }
-    ultimosDiasNuevos = diasNuevosReales;
+    // Cambiar solo la hora de un dia ya pedido (que no sea hoy) tambien cuenta como cambio
+    const horasCambiadas = Object.keys(nuevosDias).filter(d => diasExistentes.includes(d) && (yaExiste.horarios || {})[d] !== nuevasHoras[d]);
+    if (diasNuevosReales.length === 0 && horasCambiadas.length === 0) { showToast('Ya tienes pedido para esos dias'); return; }
+    ultimosDiasNuevos = diasNuevosReales.length ? diasNuevosReales : null;
     yaExiste.detalle = Object.assign({}, yaExiste.detalle || {}, nuevosDias);
     yaExiste.opciones = Object.assign({}, yaExiste.opciones || {}, nuevasOpciones);
     yaExiste.guarniciones = Object.assign({}, yaExiste.guarniciones || {}, nuevasGuarn);
+    yaExiste.horarios = Object.assign({}, yaExiste.horarios || {}, nuevasHoras);
     yaExiste.total = Object.values(yaExiste.detalle).reduce((a,b) => a+b, 0);
     yaExiste.fecha = new Date().toISOString();
     order = yaExiste;
     esActualizacion = true;
   } else {
     ultimosDiasNuevos = null;
-    order = { nombre, numEmpleado: numNorm, fecha: new Date().toISOString(), total, detalle: nuevosDias, opciones: nuevasOpciones, guarniciones: nuevasGuarn };
+    order = { nombre, numEmpleado: numNorm, fecha: new Date().toISOString(), total: Object.keys(nuevosDias).length, detalle: nuevosDias, opciones: nuevasOpciones, guarniciones: nuevasGuarn, horarios: nuevasHoras };
   }
 
   const saved = await saveOrder(order);
@@ -1596,15 +1697,16 @@ async function enviarPedido() {
 
   const firstName = nombre.split(' ').pop() || nombre;
   document.getElementById('modalNombre').textContent = firstName;
+  const conHora = d => order.horarios && order.horarios[d] ? `${d} ${order.horarios[d]}` : d;
   if (esActualizacion && ultimosDiasNuevos) {
     document.getElementById('modalSubtitle').textContent = 'Se agrego a tu pedido:';
-    document.getElementById('modalDias').textContent = ultimosDiasNuevos.join(' · ');
+    document.getElementById('modalDias').textContent = ultimosDiasNuevos.map(conHora).join(' · ');
   } else {
     document.getElementById('modalSubtitle').textContent = 'Tu pedido quedo registrado.';
-    document.getElementById('modalDias').textContent = Object.keys(order.detalle).join(' · ');
+    document.getElementById('modalDias').textContent = Object.keys(order.detalle).map(conHora).join(' · ');
   }
   document.getElementById('modalBg').classList.add('open');
-  if (adminVisible) renderOrders();
+  if (adminVisible) { ordersData = await loadPedidosVista(); renderOrders(); }
 }
 
 function cerrarModal() {
@@ -1612,6 +1714,7 @@ function cerrarModal() {
   Object.keys(quantities).forEach(k => quantities[k] = 0);
   selections = {};
   sideSel = {};
+  horaSel = {};
   ultimosDiasNuevos = null;
   document.getElementById('nombreInput').value = '';
   document.getElementById('numEmpleado').value = '';
@@ -1837,20 +1940,14 @@ async function guardarMenu() {
   if (!valid) { showToast('Llena los campos obligatorios'); return; }
 
   menuData = { mes, mesNum: MONTH_NAMES.indexOf(mes) + 1, semana, anio, dias };
-  const borrarPedidos = isAdminLevel() && ordersData.length > 0 && confirm(`Hay ${ordersData.length} pedido(s). ¿Es semana nueva y quieres archivar y borrar los pedidos?\n\nSi solo estas corrigiendo el menu, dale Cancelar.`);
 
-  quantities = {}; selections = {};
+  // Los pedidos se guardan por semana: al publicar una semana nueva no se borra nada
+  quantities = {}; selections = {}; sideSel = {}; horaSel = {};
   const saved = await saveMenuToCloud();
   if (!saved) { showToast('Error al guardar: ' + lastFsError); return; }
-  if (borrarPedidos) {
-    archivarPedidos();
-    await Promise.all(Object.keys(historialData).map(k => saveHistorial(k)));
-    await deleteAllOrders();
-    ordersData = [];
-    cortesiasData = [];
-    await saveCortesias();
-  }
-  showToast(borrarPedidos ? 'Menu publicado, pedidos archivados' : 'Menu actualizado');
+  showToast('Menu publicado');
+  semanaVista = null;
+  ordersData = await loadPedidosVista();
   renderMenu();
   renderOrders();
 }
@@ -1874,18 +1971,21 @@ function sortByEmp(list, key) {
 }
 
 function renderOrders() {
+  pintarSemanaNav();
   const c = document.getElementById('ordersContainer');
-  if (!ordersData.length && !cortesiasData.length) { c.innerHTML = '<div class="no-orders">Aun no hay pedidos</div>'; return; }
+  const dias = diasVista();
+  const cortes = cortesiasVista();
+  if (!ordersData.length && !cortes.length) { c.innerHTML = '<div class="no-orders">No hay pedidos en esta semana</div>'; return; }
 
   const dayTotals = {};
-  menuData.dias.forEach(d => { dayTotals[d.dia] = 0; });
+  dias.forEach(d => { dayTotals[d.dia] = 0; });
   const sorted = sortByEmp(ordersData, 'numEmpleado');
 
   let html = '<div class="orders-table-wrap"><table class="orders-table"><thead><tr>';
   html += '<th>No.</th><th>Nombre</th><th>Tipo</th>';
-  menuData.dias.forEach(d => {
-    const label = d.dia.substring(0,3);
-    html += tieneOpciones(d) ? `<th>${label} *</th>` : `<th>${label}</th>`;
+  dias.forEach(d => {
+    const label = `${d.dia.substring(0,3)} ${d.fecha}`;
+    html += tieneOpciones(d) ? `<th>${esc(label)} *</th>` : `<th>${esc(label)}</th>`;
   });
   html += '<th>Total</th><th></th></tr></thead><tbody>';
 
@@ -1895,33 +1995,35 @@ function renderOrders() {
     html += `<td>${esc(o.nombre)}</td>`;
     const noct = esNocturno(o.numEmpleado);
     html += noct ? '<td><span class="badge-noche" style="margin:0">&#127769; Nocturno</span></td>' : '<td>Empleado</td>';
-    menuData.dias.forEach(d => {
+    dias.forEach(d => {
       const qty = (o.detalle && o.detalle[d.dia]) || 0;
       dayTotals[d.dia] += qty;
-      if (qty === 0) {
-        html += '<td style="color:#ccc">-</td>';
-      } else if (tieneOpciones(d) && o.opciones && o.opciones[d.dia]) {
-        const op = o.opciones[d.dia];
+      if (qty === 0) { html += '<td style="color:#ccc">-</td>'; return; }
+      const op = (o.opciones && o.opciones[d.dia]) || '';
+      const g = (o.guarniciones && o.guarniciones[d.dia]) || '';
+      const hora = (o.horarios && o.horarios[d.dia]) || '';
+      let sub = '';
+      let icon = '';
+      if (op) {
         const esEns = hasEns(d) && op === d.ensalada;
-        const isAlt = !esEns && op !== d.platoFuerte;
+        const isAlt = !esEns && d.platoFuerte && op !== d.platoFuerte;
         const color = esEns ? '#16a085' : isAlt ? '#e67e22' : '#27ae60';
-        const icon = esEns ? '&#129367;' : isAlt ? '&#9670;' : '&#9671;';
-        const g = (o.guarniciones && o.guarniciones[d.dia]) || '';
-        html += `<td>${icon} ${qty}<br><small style="color:${color};font-size:10px">${esc(op.substring(0,22))}${g ? ' + ' + esc(g.substring(0,14)) : ''}</small></td>`;
-      } else {
-        html += `<td>${qty}</td>`;
+        icon = esEns ? '&#129367; ' : isAlt ? '&#9670; ' : '&#9671; ';
+        sub += `<br><small style="color:${color};font-size:10px">${esc(op.substring(0,22))}${g ? ' + ' + esc(g.substring(0,14)) : ''}</small>`;
       }
+      if (hora) sub += `<br><small class="hora-celda">&#128337; ${esc(hora)}</small>`;
+      html += `<td>${icon}${qty}${sub}</td>`;
     });
     html += `<td><strong>${o.total}</strong></td>`;
-    html += isAdminLevel() ? `<td><button class="cortesia-remove" onclick="adminBorrarPedido('${esc(o.numEmpleado)}')">Borrar</button></td></tr>` : '<td></td></tr>';
+    html += isAdminLevel() ? `<td><button class="cortesia-remove" onclick="adminBorrarPedido('${esc(o._path)}', '${esc(o.numEmpleado)}')">Borrar</button></td></tr>` : '<td></td></tr>';
   });
 
-  cortesiasData.forEach(c => {
+  cortes.forEach(c => {
     html += '<tr><td style="color:#ccc">-</td>';
     html += `<td>${esc(c.nombre)}</td>`;
     html += '<td><span class="cortesia-badge">Cortesia</span></td>';
     let cTotal = 0;
-    menuData.dias.forEach(d => {
+    dias.forEach(d => {
       const tiene = (c.dias && c.dias[d.dia]) ? 1 : 0;
       cTotal += tiene;
       dayTotals[d.dia] += tiene;
@@ -1932,222 +2034,274 @@ function renderOrders() {
 
   const gt = Object.values(dayTotals).reduce((a,b)=>a+b,0);
   html += '<tr class="total-row"><td colspan="3">TOTAL</td>';
-  menuData.dias.forEach(d => { html += `<td><strong>${dayTotals[d.dia]}</strong></td>`; });
+  dias.forEach(d => { html += `<td><strong>${dayTotals[d.dia]}</strong></td>`; });
   html += `<td><strong>${gt}</strong></td><td></td></tr>`;
   // Contenedores para turno nocturno (subconjunto del total)
   const nocTotals = {}; let nocGt = 0;
-  menuData.dias.forEach(d => { nocTotals[d.dia] = 0; });
-  ordersData.forEach(o => { if (esNocturno(o.numEmpleado)) menuData.dias.forEach(d => { const q = (o.detalle && o.detalle[d.dia]) || 0; nocTotals[d.dia] += q; nocGt += q; }); });
+  dias.forEach(d => { nocTotals[d.dia] = 0; });
+  ordersData.forEach(o => { if (esNocturno(o.numEmpleado)) dias.forEach(d => { const q = (o.detalle && o.detalle[d.dia]) || 0; nocTotals[d.dia] += q; nocGt += q; }); });
   if (nocGt > 0) {
     html += '<tr style="background:#eef0fa"><td colspan="3">&#127769; De los cuales, contenedores turno nocturno</td>';
-    menuData.dias.forEach(d => { html += `<td>${nocTotals[d.dia] || '-'}</td>`; });
+    dias.forEach(d => { html += `<td>${nocTotals[d.dia] || '-'}</td>`; });
     html += `<td><strong>${nocGt}</strong></td><td></td></tr>`;
   }
 
-  const daysWithAlt = menuData.dias.filter(d => tieneOpciones(d));
-  if (daysWithAlt.length > 0) {
+  // Cuantas comidas salen a cada hora, por dia
+  const horas = conteoHorarios(dias);
+  if (horas.length) {
+    html += '<tr><td colspan="100%" style="padding:12px 0 4px;font-weight:700;border:none;background:transparent">Hora en que pasan por su comida:</td></tr>';
+    horas.forEach(({ dia, cuenta }) => {
+      html += `<tr><td colspan="2" style="font-weight:600">${esc(dia)}</td><td colspan="100%">`;
+      cuenta.forEach(([h, n]) => { html += `<span style="display:inline-block;margin-right:16px">${esc(h)}: <strong>${n}</strong></span>`; });
+      html += '</td></tr>';
+    });
+  }
+
+  const desglose = desgloseOpciones(dias);
+  if (desglose.length > 0) {
     html += '<tr><td colspan="100%" style="padding:12px 0 4px;font-weight:700;border:none;background:transparent">Desglose por platillo y guarnicion (para produccion):</td></tr>';
-    daysWithAlt.forEach(d => {
-      const opcCounts = {}, gCounts = {};
-      ordersData.forEach(o => {
-        const qty = (o.detalle && o.detalle[d.dia]) || 0;
-        if (qty > 0) {
-          const opcion = (o.opciones && o.opciones[d.dia]) || d.platoFuerte;
-          opcCounts[opcion] = (opcCounts[opcion] || 0) + qty;
-          const esEns = hasEns(d) && opcion === d.ensalada;
-          if (!esEns && d.complemento) {
-            const g = (o.guarniciones && o.guarniciones[d.dia]) || d.complemento;
-            gCounts[g] = (gCounts[g] || 0) + qty;
-          }
-        }
+    desglose.forEach(({ d, opcCounts, gCounts }) => {
+      html += `<tr><td colspan="2" style="font-weight:600">${esc(d.dia)}</td><td colspan="100%">`;
+      Object.entries(opcCounts).forEach(([opcion, count]) => {
+        html += `<span style="display:inline-block;margin-right:16px">${esc(opcion)}: <strong>${count}</strong></span>`;
       });
-      if (Object.keys(opcCounts).length > 0) {
-        html += `<tr><td colspan="2" style="font-weight:600">${esc(d.dia)}</td><td colspan="100%">`;
-        Object.entries(opcCounts).forEach(([opcion, count]) => {
-          html += `<span style="display:inline-block;margin-right:16px">${esc(opcion)}: <strong>${count}</strong></span>`;
+      if (Object.keys(gCounts).length > 0) {
+        html += '<span style="display:inline-block;margin-right:8px;color:var(--muted)">| Guarnicion:</span>';
+        Object.entries(gCounts).forEach(([g, count]) => {
+          html += `<span style="display:inline-block;margin-right:16px">${esc(g)}: <strong>${count}</strong></span>`;
         });
-        if (Object.keys(gCounts).length > 0) {
-          html += '<span style="display:inline-block;margin-right:8px;color:var(--muted)">| Guarnicion:</span>';
-          Object.entries(gCounts).forEach(([g, count]) => {
-            html += `<span style="display:inline-block;margin-right:16px">${esc(g)}: <strong>${count}</strong></span>`;
-          });
-        }
-        html += '</td></tr>';
       }
+      html += '</td></tr>';
     });
   }
   html += '</tbody></table></div>';
   c.innerHTML = html;
 }
 
-async function adminBorrarPedido(numEmp) {
-  if (!confirm(`¿Borrar el pedido del empleado #${numEmp}?`)) return;
-  const ok = await deleteOrder(numEmp);
-  await loadFromCloud();
+// Dias (columnas) de la semana que se esta viendo. Si es la semana del menu publicado, sus dias;
+// si es otra semana, los dias que tienen pedidos (sin los platillos del menu, que ya no esta).
+function diasVista() {
+  const { desde, hasta } = rangoSemanaVista();
+  const sem = semanaActual();
+  if (sem && sem >= desde && sem <= hasta) return menuData.dias || [];
+  const conPedido = {};
+  ordersData.forEach(o => Object.keys(o.detalle || {}).forEach(dia => { if (!conPedido[dia]) conPedido[dia] = o.semana; }));
+  return DAY_NAMES.slice(1).concat(DAY_NAMES[0])
+    .filter(dia => conPedido[dia])
+    .map(dia => ({ dia, fecha: fechaDiaSemana(conPedido[dia], dia).getDate() }));
+}
+
+// Por dia: cuantas comidas se recogen a cada hora
+function conteoHorarios(dias) {
+  return dias.map(d => {
+    const n = {};
+    ordersData.forEach(o => {
+      const qty = (o.detalle && o.detalle[d.dia]) || 0;
+      if (qty > 0) { const h = (o.horarios && o.horarios[d.dia]) || 'Sin hora'; n[h] = (n[h] || 0) + qty; }
+    });
+    return { dia: d.dia, cuenta: Object.entries(n).sort((a, b) => a[0].localeCompare(b[0])) };
+  }).filter(x => x.cuenta.length && !(x.cuenta.length === 1 && x.cuenta[0][0] === 'Sin hora'));
+}
+
+// Por dia: cuantas de cada guiso/ensalada y de cada guarnicion
+function desgloseOpciones(dias) {
+  const out = [];
+  dias.forEach(d => {
+    const opcCounts = {}, gCounts = {};
+    let conOpcion = tieneOpciones(d);
+    ordersData.forEach(o => {
+      const qty = (o.detalle && o.detalle[d.dia]) || 0;
+      if (qty <= 0) return;
+      if (o.opciones && o.opciones[d.dia]) conOpcion = true;
+      const opcion = (o.opciones && o.opciones[d.dia]) || d.platoFuerte;
+      if (!opcion) return;
+      opcCounts[opcion] = (opcCounts[opcion] || 0) + qty;
+      const esEns = hasEns(d) && opcion === d.ensalada;
+      const g = esEns ? '' : ((o.guarniciones && o.guarniciones[d.dia]) || d.complemento || '');
+      if (g) gCounts[g] = (gCounts[g] || 0) + qty;
+    });
+    if (conOpcion && Object.keys(opcCounts).length) out.push({ d, opcCounts, gCounts });
+  });
+  return out;
+}
+
+// ---- Selector de semana (admin) ----
+const MES_LARGO_MIN = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function etiquetaSemana() {
+  const { ini, fin } = rangoSemanaVista();
+  const a = `${ini.getDate()}${ini.getMonth() !== fin.getMonth() ? ' de ' + MES_LARGO_MIN[ini.getMonth()] : ''}`;
+  return `Semana del ${a} al ${fin.getDate()} de ${MES_LARGO_MIN[fin.getMonth()]} ${fin.getFullYear()}`;
+}
+function esSemanaDelMenu() {
+  const sem = semanaActual();
+  const { desde, hasta } = rangoSemanaVista();
+  return !!sem && sem >= desde && sem <= hasta;
+}
+function pintarSemanaNav() {
+  const inp = document.getElementById('semanaFecha');
+  if (!inp) return;
+  inp.value = semanaVista || semanaActual() || isoFecha(new Date());
+  document.getElementById('semanaLabel').textContent = etiquetaSemana() + (esSemanaDelMenu() ? ' · menu publicado' : '');
+  document.getElementById('semanaMenuBtn').style.display = esSemanaDelMenu() ? 'none' : '';
+}
+async function irASemana(fecha) {
+  semanaVista = fecha || null;
+  document.getElementById('ordersContainer').innerHTML = '<div class="no-orders">Cargando...</div>';
+  try { ordersData = await loadPedidosVista(); }
+  catch (e) { console.error(e); ordersData = []; showToast('No se pudieron cargar los pedidos'); }
+  renderOrders();
+}
+function cambiarSemana(n) {
+  const { ini } = rangoSemanaVista();
+  ini.setDate(ini.getDate() + 7 * n);
+  irASemana(isoFecha(ini));
+}
+
+async function adminBorrarPedido(path, numEmp) {
+  if (!confirm(`¿Borrar el pedido del empleado #${numEmp} de esta semana?`)) return;
+  const ok = await fsDelete(path);
+  ordersData = await loadPedidosVista();
   renderOrders();
   showToast(ok ? 'Pedido borrado' : 'Error al borrar');
 }
 
 // ============================================================
-//  EXPORT EXCEL (semana actual)
+//  EXPORT EXCEL (la semana que se esta viendo)
 // ============================================================
 function exportarCSV() {
-  if (!ordersData.length && !cortesiasData.length) { showToast('No hay pedidos'); return; }
+  const dias = diasVista();
+  const cortes = cortesiasVista();
+  if (!ordersData.length && !cortes.length) { showToast('No hay pedidos en esta semana'); return; }
   const hd = '#0b3d91', hd2 = '#1e88e5', lt = '#e8f1fc';
   const bdr = 'border:1px solid #bdc3c7;padding:8px 12px;';
   const sorted = sortByEmp(ordersData, 'numEmpleado');
+  const { ini } = rangoSemanaVista();
 
-  let colCount = 6;
-  menuData.dias.forEach(d => { colCount += tieneOpciones(d) ? 2 : 1; });
+  const colCount = 4 + dias.length * 2 + 1;
 
   let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"/></head><body>';
   html += '<table style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;font-size:11pt;">';
-  html += `<tr><td colspan="${colCount}" style="${bdr}background:${hd};color:#fff;font-size:16pt;font-weight:bold;text-align:center;padding:14px;">${EMPRESA} - Pedidos Semana ${menuData.semana}</td></tr>`;
-  html += `<tr><td colspan="${colCount}" style="${bdr}background:${hd2};color:#fff;font-size:11pt;text-align:center;padding:8px;">${menuData.mes} ${menuData.anio} | Generado: ${new Date().toLocaleDateString('es-MX', {day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</td></tr>`;
+  html += `<tr><td colspan="${colCount}" style="${bdr}background:${hd};color:#fff;font-size:16pt;font-weight:bold;text-align:center;padding:14px;">${EMPRESA} - Pedidos</td></tr>`;
+  html += `<tr><td colspan="${colCount}" style="${bdr}background:${hd2};color:#fff;font-size:11pt;text-align:center;padding:8px;">${etiquetaSemana()} | Generado: ${new Date().toLocaleDateString('es-MX', {day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</td></tr>`;
   html += `<tr><td colspan="${colCount}" style="height:6px;"></td></tr>`;
 
   const th = (t, bg) => `<th style="${bdr}background:${bg};color:#fff;font-weight:bold;text-align:center;">${t}</th>`;
-  html += '<tr>' + th('No. Emp', hd) + th('Nombre', hd) + th('Tipo', hd) + th('Fecha', hd) + th('Hora', hd);
-  menuData.dias.forEach(d => {
-    if (tieneOpciones(d)) html += th(d.dia, hd2) + th('Platillo', hd2);
-    else html += th(d.dia, hd);
-  });
+  html += '<tr>' + th('No. Emp', hd) + th('Nombre', hd) + th('Tipo', hd) + th('Registro', hd);
+  dias.forEach(d => { html += th(`${esc(d.dia)} ${d.fecha}`, hd2) + th('Platillo / Hora', hd2); });
   html += th('Total', hd) + '</tr>';
 
   let rowIdx = 0;
   sorted.forEach(o => {
     const bg = rowIdx % 2 === 0 ? '#fff' : lt;
     const dt = new Date(o.fecha);
-    const fecha = dt.toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'numeric'});
-    const hora = dt.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+    const registro = dt.toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'numeric'}) + ' ' + dt.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
     html += '<tr>';
     html += `<td style="${bdr}background:${bg};text-align:center;font-weight:600;">${esc(o.numEmpleado || 'S/N')}</td>`;
     html += `<td style="${bdr}background:${bg};text-align:left;">${esc(o.nombre)}</td>`;
     html += `<td style="${bdr}background:${bg};text-align:center;">${esNocturno(o.numEmpleado) ? 'Nocturno' : 'Empleado'}</td>`;
-    html += `<td style="${bdr}background:${bg};text-align:center;">${fecha}</td>`;
-    html += `<td style="${bdr}background:${bg};text-align:center;">${hora}</td>`;
-    menuData.dias.forEach(d => {
+    html += `<td style="${bdr}background:${bg};text-align:center;">${registro}</td>`;
+    dias.forEach(d => {
       const qty = (o.detalle && o.detalle[d.dia]) || 0;
-      if (tieneOpciones(d)) {
-        let opcion = (qty > 0 && o.opciones && o.opciones[d.dia]) ? o.opciones[d.dia] : '';
-        const gsel = (qty > 0 && o.guarniciones && o.guarniciones[d.dia]) ? o.guarniciones[d.dia] : '';
-        if (opcion && gsel) opcion += ' + ' + gsel;
-        const opColor = (opcion && !opcion.startsWith(d.platoFuerte)) ? 'color:#e67e22;' : 'color:#27ae60;';
-        html += `<td style="${bdr}background:${bg};text-align:center;font-weight:600;">${qty}</td>`;
-        html += `<td style="${bdr}background:${bg};${qty > 0 ? opColor : ''}font-size:10pt;">${esc(opcion)}</td>`;
-      } else {
-        html += `<td style="${bdr}background:${bg};text-align:center;font-weight:${qty > 0 ? '600' : '400'};${qty === 0 ? 'color:#ccc;' : ''}">${qty}</td>`;
+      let texto = '';
+      if (qty > 0) {
+        texto = (o.opciones && o.opciones[d.dia]) || '';
+        if (texto && o.guarniciones && o.guarniciones[d.dia]) texto += ' + ' + o.guarniciones[d.dia];
+        if (o.horarios && o.horarios[d.dia]) texto += (texto ? ' · ' : '') + o.horarios[d.dia];
       }
+      html += `<td style="${bdr}background:${bg};text-align:center;font-weight:${qty > 0 ? '600' : '400'};${qty === 0 ? 'color:#ccc;' : ''}">${qty}</td>`;
+      html += `<td style="${bdr}background:${bg};font-size:10pt;">${esc(texto)}</td>`;
     });
     html += `<td style="${bdr}background:${bg};text-align:center;font-weight:bold;font-size:12pt;">${o.total}</td></tr>`;
     rowIdx++;
   });
 
-  cortesiasData.forEach(c => {
+  cortes.forEach(c => {
     const cortBg = '#fef9e7';
     html += '<tr>';
     html += `<td style="${bdr}background:${cortBg};text-align:center;color:#ccc;">-</td>`;
     html += `<td style="${bdr}background:${cortBg};text-align:left;">${esc(c.nombre)}</td>`;
     html += `<td style="${bdr}background:#f39c12;color:#fff;font-weight:600;text-align:center;">Cortesia</td>`;
-    html += `<td style="${bdr}background:${cortBg};text-align:center;">-</td><td style="${bdr}background:${cortBg};text-align:center;">-</td>`;
+    html += `<td style="${bdr}background:${cortBg};text-align:center;">-</td>`;
     let cTotal = 0;
-    menuData.dias.forEach(d => {
+    dias.forEach(d => {
       const tiene = (c.dias && c.dias[d.dia]) ? 1 : 0;
       cTotal += tiene;
-      html += `<td style="${bdr}background:${cortBg};text-align:center;font-weight:${tiene?'600':'400'};${tiene===0?'color:#ccc;':''}">${tiene}</td>`;
-      if (tieneOpciones(d)) html += `<td style="${bdr}background:${cortBg};"></td>`;
+      html += `<td style="${bdr}background:${cortBg};text-align:center;font-weight:${tiene?'600':'400'};${tiene===0?'color:#ccc;':''}">${tiene}</td><td style="${bdr}background:${cortBg};"></td>`;
     });
     html += `<td style="${bdr}background:${cortBg};text-align:center;font-weight:bold;font-size:12pt;">${cTotal}</td></tr>`;
   });
 
   const dayTotals = {};
-  menuData.dias.forEach(d => { dayTotals[d.dia] = 0; });
-  ordersData.forEach(o => { menuData.dias.forEach(d => { dayTotals[d.dia] += (o.detalle && o.detalle[d.dia]) || 0; }); });
-  cortesiasData.forEach(c => { menuData.dias.forEach(d => { dayTotals[d.dia] += (c.dias && c.dias[d.dia]) ? 1 : 0; }); });
+  dias.forEach(d => { dayTotals[d.dia] = 0; });
+  ordersData.forEach(o => { dias.forEach(d => { dayTotals[d.dia] += (o.detalle && o.detalle[d.dia]) || 0; }); });
+  cortes.forEach(c => { dias.forEach(d => { dayTotals[d.dia] += (c.dias && c.dias[d.dia]) ? 1 : 0; }); });
   const gt = Object.values(dayTotals).reduce((a,b) => a+b, 0);
 
-  html += `<tr><td style="${bdr}background:${hd};color:#fff;font-weight:bold;text-align:center;" colspan="5">TOTAL</td>`;
-  menuData.dias.forEach(d => {
-    html += `<td style="${bdr}background:${hd};color:#fff;font-weight:bold;text-align:center;font-size:13pt;">${dayTotals[d.dia]}</td>`;
-    if (tieneOpciones(d)) html += `<td style="${bdr}background:${hd};"></td>`;
+  html += `<tr><td style="${bdr}background:${hd};color:#fff;font-weight:bold;text-align:center;" colspan="4">TOTAL</td>`;
+  dias.forEach(d => {
+    html += `<td style="${bdr}background:${hd};color:#fff;font-weight:bold;text-align:center;font-size:13pt;">${dayTotals[d.dia]}</td><td style="${bdr}background:${hd};"></td>`;
   });
   html += `<td style="${bdr}background:${hd2};color:#fff;font-weight:bold;text-align:center;font-size:14pt;">${gt}</td></tr>`;
 
-  const daysWithAlt = menuData.dias.filter(d => tieneOpciones(d));
-  if (daysWithAlt.length > 0) {
+  const resumen = (titulo, filas) => {
+    if (!filas.length) return;
     html += `<tr><td colspan="${colCount}" style="height:10px;"></td></tr>`;
-    html += `<tr><td colspan="${colCount}" style="${bdr}background:${hd2};color:#fff;font-weight:bold;font-size:12pt;text-align:center;">DESGLOSE POR OPCION</td></tr>`;
-    daysWithAlt.forEach(d => {
-      const opcCounts = {};
-      ordersData.forEach(o => {
-        const qty = (o.detalle && o.detalle[d.dia]) || 0;
-        if (qty > 0) { const op = (o.opciones && o.opciones[d.dia]) || d.platoFuerte; opcCounts[op] = (opcCounts[op] || 0) + qty; }
-      });
-      if (Object.keys(opcCounts).length > 0) {
-        html += `<tr><td colspan="2" style="${bdr}background:${lt};font-weight:bold;">${esc(d.dia)} ${d.fecha}</td><td colspan="${colCount - 2}" style="${bdr}background:${lt};">`;
-        Object.entries(opcCounts).forEach(([op, count]) => { html += `${esc(op)}: <b>${count}</b> &nbsp;&nbsp; `; });
-        html += '</td></tr>';
-      }
+    html += `<tr><td colspan="${colCount}" style="${bdr}background:${hd2};color:#fff;font-weight:bold;font-size:12pt;text-align:center;">${titulo}</td></tr>`;
+    filas.forEach(([dia, texto]) => {
+      html += `<tr><td colspan="2" style="${bdr}background:${lt};font-weight:bold;">${esc(dia)}</td><td colspan="${colCount - 2}" style="${bdr}background:${lt};">${texto}</td></tr>`;
     });
-  }
+  };
+  resumen('HORA EN QUE PASAN POR SU COMIDA', conteoHorarios(dias).map(({ dia, cuenta }) => [dia, cuenta.map(([h, n]) => `${esc(h)}: <b>${n}</b>`).join(' &nbsp;&nbsp; ')]));
+  resumen('DESGLOSE POR OPCION', desgloseOpciones(dias).map(({ d, opcCounts, gCounts }) => [`${d.dia} ${d.fecha}`,
+    Object.entries(opcCounts).map(([op, n]) => `${esc(op)}: <b>${n}</b>`).join(' &nbsp;&nbsp; ')
+    + (Object.keys(gCounts).length ? ' &nbsp;|&nbsp; Guarnicion: ' + Object.entries(gCounts).map(([g, n]) => `${esc(g)}: <b>${n}</b>`).join(' &nbsp;&nbsp; ') : '')]));
   html += '</table></body></html>';
 
   const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `pedidos_${EMPRESA_CORTA}_S${menuData.semana}_${menuData.mes}${menuData.anio}.xls`;
+  a.download = `pedidos_${EMPRESA_CORTA}_semana_${isoFecha(ini)}.xls`;
   a.click();
   showToast('Excel descargado');
 }
 
 // ============================================================
-//  HISTORIAL / ARCHIVO
+//  HISTORIAL (quincenas archivadas antes de guardar los pedidos por semana)
 // ============================================================
 function getQuincenaKey(fecha) {
   const f = new Date(fecha);
   return `${f.getFullYear()}-${f.getMonth() + 1}-${f.getDate() <= 15 ? 'Q1' : 'Q2'}`;
 }
 
-function archivarPedidos() {
-  if (ordersData.length === 0 && cortesiasData.length === 0) return;
-  ordersData.forEach(o => {
-    const key = getQuincenaKey(o.fecha);
-    if (!historialData[key]) historialData[key] = {};
-    const emp = orderDocId(o.numEmpleado);
-    if (!historialData[key][emp]) historialData[key][emp] = { nombre: o.nombre, comidas: 0, pedidos: [] };
-    if (!historialData[key][emp].pedidos) historialData[key][emp].pedidos = [];
-    historialData[key][emp].comidas += o.total || 0;
-    historialData[key][emp].pedidos.push({ fecha: o.fecha, detalle: o.detalle, opciones: o.opciones || {}, total: o.total });
-  });
-  if (cortesiasData.length > 0) {
-    const key = getQuincenaKey(new Date().toISOString());
-    if (!historialData[key]) historialData[key] = {};
-    if (!historialData[key]._cortesias) historialData[key]._cortesias = [];
-    cortesiasData.forEach(c => {
-      const dias = c.dias ? Object.keys(c.dias).length : 0;
-      if (dias > 0) historialData[key]._cortesias.push({ nombre: c.nombre, comidas: dias });
-    });
-  }
-}
-
-async function limpiarPedidos() {
-  if (!confirm('¿Borrar todos los pedidos? Se guardaran en el historial para los reportes BUK / conciliacion.')) return;
-  await loadFromCloud();
-  archivarPedidos();
-  const histOk = await Promise.all(Object.keys(historialData).map(k => saveHistorial(k)));
-  if (histOk.some(r => !r)) { showToast('Error al guardar historial, pedidos no borrados'); return; }
-  await deleteAllOrders();
-  ordersData = [];
-  cortesiasData = [];
-  await saveCortesias();
-  renderOrders();
-  renderCortesias();
-  showToast('Pedidos archivados y limpiados');
-}
-
 // ============================================================
 //  CORTESIAS
 // ============================================================
+// Cortesias de la semana que se esta viendo en pedidos
+function cortesiasVista() {
+  const { desde, hasta } = rangoSemanaVista();
+  return cortesiasSemana >= desde && cortesiasSemana <= hasta ? cortesiasData : [];
+}
+function archivarCortesia(c) {
+  const dias = c.dias ? Object.keys(c.dias).length : 0;
+  if (!dias) return null;
+  const key = getQuincenaKey(fechaDeIso(cortesiasSemana).toISOString());
+  if (!historialData[key]) historialData[key] = {};
+  if (!historialData[key]._cortesias) historialData[key]._cortesias = [];
+  historialData[key]._cortesias.push({ nombre: c.nombre, comidas: dias });
+  return key;
+}
+// Las cortesias son de la semana del menu publicado; las de una semana anterior se archivan al empezar la nueva
+async function alinearCortesiasSemana() {
+  const sem = semanaActual();
+  if (!sem || cortesiasSemana === sem) return true;
+  const keys = new Set(cortesiasData.map(archivarCortesia).filter(Boolean));
+  const ok = await Promise.all([...keys].map(k => saveHistorial(k)));
+  if (ok.some(r => !r)) return false;
+  cortesiasData = [];
+  cortesiasSemana = sem;
+  return true;
+}
+
 function renderCortesias() {
   const diasDiv = document.getElementById('cortesiaDias');
   diasDiv.style.display = 'block';
@@ -2159,7 +2313,7 @@ function renderCortesias() {
       </div>`).join('') + '</div>';
 
   const list = document.getElementById('cortesiaList');
-  if (!cortesiasData.length) { list.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:8px;">No hay cortesias registradas</div>'; return; }
+  if (!cortesiasData.length || cortesiasSemana !== semanaActual()) { list.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:8px;">No hay cortesias registradas</div>'; return; }
   list.innerHTML = cortesiasData.map((c, i) => `
     <div class="cortesia-item">
       <div>
@@ -2177,6 +2331,7 @@ async function agregarCortesia() {
   menuData.dias.forEach(d => { const cb = document.getElementById('cortDia-' + d.dia); if (cb && cb.checked) dias[d.dia] = 1; });
   if (Object.keys(dias).length === 0) { showToast('Selecciona al menos un dia'); return; }
   await loadFromCloud();
+  if (!(await alinearCortesiasSemana())) { showToast('Error al archivar las cortesias anteriores'); return; }
   cortesiasData.push({ nombre, dias });
   const ok = await saveCortesias();
   if (!ok) { showToast('Error al guardar cortesia'); return; }
@@ -2189,16 +2344,7 @@ async function agregarCortesia() {
 async function quitarCortesia(idx) {
   await loadFromCloud();
   const cortesia = cortesiasData[idx];
-  let histKey = null;
-  if (cortesia) {
-    const dias = cortesia.dias ? Object.keys(cortesia.dias).length : 0;
-    if (dias > 0) {
-      histKey = getQuincenaKey(new Date().toISOString());
-      if (!historialData[histKey]) historialData[histKey] = {};
-      if (!historialData[histKey]._cortesias) historialData[histKey]._cortesias = [];
-      historialData[histKey]._cortesias.push({ nombre: cortesia.nombre, comidas: dias });
-    }
-  }
+  const histKey = cortesia ? archivarCortesia(cortesia) : null;
   cortesiasData.splice(idx, 1);
   await saveCortesias();
   if (histKey) await saveHistorial(histKey);
@@ -2402,8 +2548,7 @@ async function buscarPedido() {
   const num = document.getElementById('cancelNumEmp').value.trim();
   if (!num) { showToast('Escribe tu numero de empleado'); return; }
   await loadMyOrder(num);
-  const numNorm = normEmp(num);
-  const order = ordersData.find(o => normEmp(o.numEmpleado) === numNorm);
+  const order = miPedido && (miPedido.total || 0) > 0 ? miPedido : null;
   const container = document.getElementById('cancelResults');
   if (!order) { container.innerHTML = '<div class="cancel-empty">No se encontraron pedidos con ese numero</div>'; return; }
 
@@ -2413,6 +2558,7 @@ async function buscarPedido() {
   dias.forEach(dia => {
     let opcion = order.opciones && order.opciones[dia] ? order.opciones[dia] : '';
     if (opcion && order.guarniciones && order.guarniciones[dia]) opcion += ' + ' + order.guarniciones[dia];
+    if (order.horarios && order.horarios[dia]) opcion += (opcion ? ' · ' : '') + 'pasa a las ' + order.horarios[dia];
     const pasado = !adminVisible && diaYaPaso(dia);
     html += `
       <div class="cancel-day-item">
@@ -2429,20 +2575,21 @@ async function cancelarDia(numEmp, dia) {
   if (!isAdminLevel() && !isCancelOpen()) { showToast('No se puede cancelar'); return; }
   if (!isAdminLevel() && diaYaPaso(dia)) { showToast('Ese dia ya paso, no se puede cancelar'); return; }
   await loadMyOrder(numEmp);
-  const order = ordersData.find(o => normEmp(o.numEmpleado) === normEmp(numEmp));
-  if (!order) { showToast('Pedido no encontrado'); return; }
+  const order = miPedido;
+  if (!order || !order.detalle || !order.detalle[dia]) { showToast('Pedido no encontrado'); return; }
   delete order.detalle[dia];
   if (order.opciones) delete order.opciones[dia];
   if (order.guarniciones) delete order.guarniciones[dia];
+  if (order.horarios) delete order.horarios[dia];
   order.total = Object.values(order.detalle).reduce((a,b) => a+b, 0);
-  const ok = Object.keys(order.detalle).length === 0 ? await deleteOrder(order.numEmpleado) : await saveOrder(order);
+  const ok = Object.keys(order.detalle).length === 0 ? await deleteOrder(order) : await saveOrder(order);
   await loadMyOrder(numEmp);
   if (!ok) { showToast('Error al cancelar, intenta de nuevo'); buscarPedido(); return; }
   showToast(`${dia} cancelado`);
   buscarPedido();
   mostrarMisPedidos();
   preMarcarDias();
-  if (adminVisible) renderOrders();
+  if (adminVisible) { ordersData = await loadPedidosVista(); renderOrders(); }
 }
 
 // ============================================================
@@ -2453,7 +2600,7 @@ function mostrarMisPedidos() {
   const el = document.getElementById('misPedidos');
   if (!num) { el.classList.remove('visible'); return; }
   const numNorm = normEmp(num);
-  const misPedidos = ordersData.filter(o => normEmp(o.numEmpleado) === numNorm);
+  const misPedidos = miPedido && normEmp(miPedido.numEmpleado) === numNorm ? [miPedido] : [];
   const now = new Date();
   const qKey = getQuincenaKey(now.toISOString());
 
@@ -2462,7 +2609,7 @@ function mostrarMisPedidos() {
   misPedidos.forEach(o => {
     semanaComidas += o.total || 0;
     Object.entries(o.detalle || {}).forEach(([dia, qty]) => {
-      if (qty > 0) dias.push(`${dia}: ${o.opciones?.[dia] || 'Plato del dia'}${o.guarniciones?.[dia] ? ' + ' + o.guarniciones[dia] : ''}`);
+      if (qty > 0) dias.push(`${dia}: ${o.opciones?.[dia] || 'Plato del dia'}${o.guarniciones?.[dia] ? ' + ' + o.guarniciones[dia] : ''}${o.horarios?.[dia] ? ' · ' + o.horarios[dia] : ''}`);
     });
   });
 
@@ -2629,7 +2776,28 @@ function selQuincena(q) {
   document.getElementById('bukQ2').className = 'buk-q-btn' + (q === 2 ? ' buk-q-active' : '');
 }
 
-function exportarBUK() {
+// Pedidos (semanales y del formato anterior) que pueden tener dias entre fechaDesde y fechaHasta
+async function pedidosEnPeriodo(fechaDesde, fechaHasta) {
+  const ini = new Date(fechaDesde); ini.setDate(ini.getDate() - 6);
+  const desde = isoFecha(ini), hasta = isoFecha(fechaHasta);
+  const lista = await loadPedidosRango(desde, hasta);
+  if (SEMANA_LEGADO >= desde && SEMANA_LEGADO <= hasta) {
+    const yaSemanal = new Set(lista.filter(o => o.semana === SEMANA_LEGADO).map(o => orderDocId(o.numEmpleado)));
+    (await loadFsCollection('orders')).forEach(o => { if (!yaSemanal.has(orderDocId(o.numEmpleado))) lista.push(Object.assign(o, { semana: SEMANA_LEGADO })); });
+  }
+  return lista;
+}
+// Suma en acc[dia del mes] las comidas del pedido cuya fecha real cae en el periodo
+function diasDelPedido(semana, detalle, fechaDesde, fechaHasta, acc) {
+  Object.entries(detalle || {}).forEach(([dia, qty]) => {
+    const f = fechaDiaSemana(semana, dia);
+    if (!f) return;
+    f.setHours(12, 0, 0, 0);
+    if (f >= fechaDesde && f <= fechaHasta) acc[f.getDate()] = (acc[f.getDate()] || 0) + qty;
+  });
+}
+
+async function exportarBUK() {
   const mes = parseInt(document.getElementById('bukMes').value);
   const anio = parseInt(document.getElementById('bukAnio').value);
   const desde = bukQuincena === 1 ? 1 : 16;
@@ -2645,13 +2813,17 @@ function exportarBUK() {
       conteo[emp] = { nombre: data.nombre, comidas: data.comidas };
     });
   }
-  ordersData.forEach(o => {
-    const f = new Date(o.fecha);
-    if (f >= fechaDesde && f <= fechaHasta) {
-      const key = orderDocId(o.numEmpleado);
-      if (!conteo[key]) conteo[key] = { nombre: o.nombre, comidas: 0 };
-      conteo[key].comidas += o.total || 0;
-    }
+  let pedidos;
+  try { pedidos = await pedidosEnPeriodo(fechaDesde, fechaHasta); }
+  catch (e) { console.error(e); showToast('No se pudieron leer los pedidos'); return; }
+  pedidos.forEach(o => {
+    const acc = {};
+    diasDelPedido(o.semana, o.detalle, fechaDesde, fechaHasta, acc);
+    const n = Object.values(acc).reduce((a, b) => a + b, 0);
+    if (!n) return;
+    const key = orderDocId(o.numEmpleado);
+    if (!conteo[key]) conteo[key] = { nombre: o.nombre, comidas: 0 };
+    conteo[key].comidas += n;
   });
 
   let csv = 'Numero de Documento,Ficha/Col,Valor\n';
@@ -2705,7 +2877,7 @@ function fechasDePedido(fechaRegistro, detalle, fechaDesde, fechaHasta, acc) {
   });
 }
 
-function construirConciliacion() {
+async function construirConciliacion() {
   const mes = parseInt(document.getElementById('facturaMes').value);
   const anio = parseInt(document.getElementById('facturaAnio').value);
   const desde = facturaQuincena === 1 ? 1 : 16;
@@ -2733,14 +2905,14 @@ function construirConciliacion() {
       }
     });
   }
-  ordersData.forEach(o => {
-    const f = new Date(o.fecha);
-    if (f >= fechaDesde && f <= fechaHasta) {
-      const emp = orderDocId(o.numEmpleado);
-      const cat = findCatEntry(emp);
-      if (!personas[emp]) personas[emp] = { nombre: cat ? cat.nombre : o.nombre, dias: {} };
-      fechasDePedido(o.fecha, o.detalle, fechaDesde, fechaHasta, personas[emp].dias);
-    }
+  (await pedidosEnPeriodo(fechaDesde, fechaHasta)).forEach(o => {
+    const acc = {};
+    diasDelPedido(o.semana, o.detalle, fechaDesde, fechaHasta, acc);
+    if (!Object.keys(acc).length) return;
+    const emp = orderDocId(o.numEmpleado);
+    const cat = findCatEntry(emp);
+    if (!personas[emp]) personas[emp] = { nombre: cat ? cat.nombre : o.nombre, dias: {} };
+    Object.entries(acc).forEach(([d, q]) => { personas[emp].dias[d] = (personas[emp].dias[d] || 0) + q; });
   });
 
   const cortesiasList = [];
@@ -2749,7 +2921,7 @@ function construirConciliacion() {
   }
   cortesiasData.forEach(c => {
     const entry = { nombre: c.nombre, comidas: 0, dias: {} };
-    fechasDePedido(new Date().toISOString(), c.dias, fechaDesde, fechaHasta, entry.dias);
+    diasDelPedido(cortesiasSemana, c.dias, fechaDesde, fechaHasta, entry.dias);
     entry.comidas = Object.values(entry.dias).reduce((a,b)=>a+b, 0);
     if (entry.comidas > 0) cortesiasList.push(entry);
   });
@@ -2762,8 +2934,9 @@ function construirConciliacion() {
   return { mes, anio, allDays, personas: sorted, cortesiasList, dayHeaders, fechaDesdeStr, fechaHastaStr };
 }
 
-function exportarFactura() {
-  const c = construirConciliacion();
+async function exportarFactura() {
+  let c;
+  try { c = await construirConciliacion(); } catch (e) { console.error(e); showToast('No se pudieron leer los pedidos'); return; }
   let totalColaboradores = 0, totalDescuentos = 0, cortTotalComidas = 0;
   let csv = `${EMPRESA} - COMEDOR\nReporte del ${c.fechaDesdeStr} al ${c.fechaHastaStr}\n\n`;
   csv += `No. Empleado,Nombre,${c.dayHeaders.join(',')},TOTAL,TOTAL DESCUENTOS\n`;
@@ -2794,9 +2967,10 @@ function exportarFactura() {
   showToast('Reporte de conciliacion descargado');
 }
 
-function exportarFacturaXLSX() {
+async function exportarFacturaXLSX() {
   if (typeof XLSX === 'undefined') { showToast('Libreria Excel no disponible, usa CSV'); return; }
-  const c = construirConciliacion();
+  let c;
+  try { c = await construirConciliacion(); } catch (e) { console.error(e); showToast('No se pudieron leer los pedidos'); return; }
   const wb = XLSX.utils.book_new();
   const rows = [];
   rows.push([`${EMPRESA} - COMEDOR`]);
