@@ -1452,6 +1452,7 @@ function renderMenu() {
   const numEmpNorm = normEmp(document.getElementById('numEmpleado').value.trim());
   const pedidoPrevioActivo = !!(numEmpNorm && miPedido && normEmp(miPedido.numEmpleado) === numEmpNorm);
   const MES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const pideHora = !esNocturnoActual();   // la hora para pasar es solo del turno de dia
 
   dias.forEach((d, i) => {
     quantities[i] = quantities[i] || 0;
@@ -1537,7 +1538,7 @@ function renderMenu() {
         <button class="order-toggle ${quantities[i]>0?'active':''} ${passed && yaPedido ? 'locked' : ''}" id="qty-${i}" onclick="toggleDay(${i})">
           ${passed && yaPedido ? '&#10003; Ya pedido' : quantities[i]>0 ? '&#10003; Pedido' : 'Pedir'}
         </button>
-        ${quantities[i] > 0 ? (passed && yaPedido
+        ${quantities[i] > 0 && pideHora ? (passed && yaPedido
           ? (horaSel[i] ? `<div class="hora-recoger">Pasas a las <strong>${esc(horaSel[i])}</strong></div>` : '')
           : `<label class="hora-recoger">Hora en que pasas
               <select onchange="selectHora(${i}, this.value)" class="${horaSel[i] ? '' : 'falta'}">
@@ -1645,7 +1646,8 @@ async function enviarPedido() {
   const total = Object.values(quantities).reduce((a,b)=>a+b, 0);
   if (total === 0) return;
 
-  const sinHora = menuData.dias.filter((d, i) => quantities[i] > 0 && (adminVisible || !isDayPassed(d.dia)) && !horaSel[i]).map(d => d.dia);
+  const pideHora = !esNocturno(numEmp);   // nocturnos: contenedor rotulado, sin hora
+  const sinHora = !pideHora ? [] : menuData.dias.filter((d, i) => quantities[i] > 0 && (adminVisible || !isDayPassed(d.dia)) && !horaSel[i]).map(d => d.dia);
   if (sinHora.length) { showToast('Elige la hora en que pasas: ' + sinHora.join(', ')); return; }
 
   await loadMyOrder(numEmp);
@@ -1659,7 +1661,7 @@ async function enviarPedido() {
   menuData.dias.forEach((d, i) => {
     if (quantities[i] > 0 && (adminVisible || !isDayPassed(d.dia))) {
       nuevosDias[d.dia] = quantities[i];
-      nuevasHoras[d.dia] = horaSel[i];
+      if (pideHora) nuevasHoras[d.dia] = horaSel[i];
       if (tieneOpciones(d)) {
         nuevasOpciones[d.dia] = platoElegido(d, selections[i]);
         const g = hasG2(d) ? guarnicionElegida(d, selections[i], sideSel[i]) : '';

@@ -8,7 +8,7 @@ Un solo `index.html` (CSS/JS inline) + Firestore via REST, hospedado en GitHub P
 - Pedidos y cancelaciones: **a cualquier hora, cualquier dia, siempre para el dia siguiente en adelante**. El dia de hoy nunca se toca (acordado con Talento Humano 2026-09-25).
 - El comedor publica el menu de la semana siguiente el **jueves**
 - Servicio de comedor: **12:30 - 17:30**
-- Al pedir, cada dia lleva la **hora en que pasa por su comida** (12:30, inicio del servicio, y luego cada hora de 13:00 a 22:00; `HORARIOS_RECOGER` en `index.html`). Pedido de Axel Avila, 2026-10-07.
+- Al pedir, el turno de dia (no los nocturnos) elige por cada dia la **hora en que pasa por su comida** (12:30, inicio del servicio, y luego cada hora de 13:00 a 22:00; `HORARIOS_RECOGER` en `index.html`). Pedido de Axel Avila, 2026-10-07.
 - Los pedidos se guardan **por semana** y no se borran: en el panel se elige la semana con las flechas o con una fecha, y el Excel sale solo de esa semana. Ya no hay que "Limpiar / Archivar".
 - Turno nocturno: solicitud por Teams con Axel Avila (contenedor rotulado)
 
