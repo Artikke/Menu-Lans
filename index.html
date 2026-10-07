@@ -925,7 +925,8 @@ const PRECIO_BASE_PROVEEDOR = 103.45;         // precio proveedor sin IVA
 const IVA_RATE = 0.16;
 
 // Hora en que el empleado pasa por su comida (pedido de Axel Avila, 2026-10-07): desde 12:30, inicio del servicio, hasta 22:00
-const HORARIOS_RECOGER = ['12:30','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'];
+const HORARIOS_RECOGER = [];   // cada media hora: 12:30, 13:00, 13:30 ... 22:00
+for (let m = 12 * 60 + 30; m <= 22 * 60; m += 30) HORARIOS_RECOGER.push(`${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`);
 // Los pedidos de antes de guardarlos por semana (coleccion orders/{numEmp}) eran del menu del lunes 5 de octubre
 const SEMANA_LEGADO = '2026-10-05';
 
