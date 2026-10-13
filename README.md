@@ -1,16 +1,35 @@
-# Menu LANS - Sistema de pedidos de comedor
+# Menu LANS — Sistema de pedidos del comedor
 
+## Descripción
 Sistema de pedidos para el comedor de **LANS Laboratorios de Referencia** (~143 colaboradores).
-Un solo `index.html` (CSS/JS inline) + Firestore via REST, hospedado en GitHub Pages.
+Los empleados apartan desde el celular su comida de la semana; el comedor sabe cuántos platillos preparar
+y a qué hora pasa cada quien, y Recursos Humanos saca el descuento de nómina (BUK) y la conciliación
+de la factura del proveedor. Tarjeta de la app para desarrollo: [CLAUDE.md](CLAUDE.md).
 
-- URL: https://artikke.github.io/Menu-Lans/
-- Firebase project: `menu-lans`
-- Pedidos y cancelaciones: **a cualquier hora, cualquier dia, siempre para el dia siguiente en adelante**. El dia de hoy nunca se toca (acordado con Talento Humano 2026-09-25).
-- El comedor publica el menu de la semana siguiente el **jueves**
-- Servicio de comedor: **12:30 - 17:30**
-- Al pedir, el turno de dia (no los nocturnos) elige por cada dia la **hora en que pasa por su comida** (cada media hora de 12:30, inicio del servicio, a 22:00; `HORARIOS_RECOGER` en `index.html`). Pedido de Axel Avila, 2026-10-07.
-- Los pedidos se guardan **por semana** y no se borran: en el panel se elige la semana con las flechas o con una fecha, y el Excel sale solo de esa semana. Ya no hay que "Limpiar / Archivar".
-- Turno nocturno: solicitud por Teams con Axel Avila (contenedor rotulado)
+## Cómo funciona
+1. **El comedor publica el menú** de la semana siguiente (normalmente el jueves): entrada, guiso 1 y 2, ensalada, guarniciones y postre por día.
+2. **El empleado pide** con su número de empleado (el nombre se llena solo desde el catálogo). Marca los días, elige guiso, guarnición o ensalada y, si es de turno de día, la **hora en que pasa** (12:30 a 22:00, cada media hora). Siempre para el día siguiente en adelante: el día de hoy no se pide ni se cancela.
+3. **Puede cancelar** días futuros con el botón "Cancelar Pedido" y ver su resumen.
+4. **El comedor ve los pedidos** en el panel por semana (flechas o fecha): totales por día, desglose por platillo y guarnición, conteo por hora y contenedores del turno nocturno.
+5. **RRHH** administra catálogo, RFC y cortesías, y descarga el Excel de la semana, el CSV para **BUK** y la **conciliación** de la factura por quincena.
+6. Cualquiera puede dejar un **comentario anónimo** en el buzón (texto y foto opcional).
+
+Reglas acordadas con Talento Humano: pedidos y cancelaciones a cualquier hora, siempre para el día siguiente en adelante (2026-09-25); hora para pasar solo turno de día, 12:30 a 22:00 (2026-10-07); servicio del comedor 12:30 a 17:30. Turno nocturno: se entrega en contenedor rotulado.
+
+## Tecnología
+- Un solo `index.html` (HTML, CSS y JavaScript inline, sin build ni dependencias de npm).
+- **Firebase Auth anónimo** y **Cloud Firestore** por REST (sin SDK); la seguridad está en [`firestore.rules`](firestore.rules).
+- **GitHub Pages** sirve la app desde la rama `main`.
+- Librerías por CDN: `xlsx-js-style` (Excel de conciliación) y Google Fonts.
+- Scripts de Node en `setup/` para cargar el catálogo y marcar nocturnos.
+
+## Acceso
+- **Empleados:** https://artikke.github.io/Menu-Lans/ (solo funciona en ese dominio y en `localhost`).
+- **Administración:** en la misma URL, botón **Admin** (arriba a la derecha) y PIN:
+  - PIN de **comedor** (`adminPin`): publicar menú, ver pedidos y comentarios.
+  - PIN de **RRHH** (`superPin`): todo, incluido catálogo, cortesías y reportes.
+  - Los PINs viven en Firestore `config/secrets` (nadie los puede leer desde la app). Los entrega: [completar].
+- **Firebase Console:** proyecto `menu-lans`. Acceso: [completar quién tiene permisos].
 
 ---
 
@@ -37,7 +56,7 @@ Un solo `index.html` (CSS/JS inline) + Firestore via REST, hospedado en GitHub P
 1. https://console.firebase.google.com/project/menu-lans/firestore/data
 2. Crear coleccion `config` > documento `secrets` con dos campos tipo **string**:
    - `adminPin` -> PIN del comedor: editar/publicar el menu y ver los pedidos. Nada mas.
-   - `superPin` -> PIN de Recursos Humanos: todo (cortesias, reportes, limpiar, borrar comentarios, catalogo)
+   - `superPin` -> PIN de Recursos Humanos: todo (cortesias, reportes, borrar pedidos y comentarios, catalogo)
 3. Recomendado: **6 digitos** (las reglas validan el PIN en el servidor; nadie puede leer `config/secrets`).
 
 ### 1.5 Cargar el catalogo de empleados (143)
@@ -49,7 +68,7 @@ El script inicia sesion anonima, valida el super PIN contra las reglas y escribe
 Alternativa sin Node: entrar como super en la app > **Catalogo de Empleados** > **Carga masiva** > pegar `setup/catalogo_lans.txt`.
 
 ### 1.5b Turno nocturno
-Los empleados con `turno: "noche"` en el catalogo piden igual que todos; solo se distinguen en la tabla de pedidos con etiqueta "Nocturno" y una fila de contenedores por dia (se les entrega en contenedor rotulado). No hay modo ni boton especial en la pantalla.
+Los empleados con `turno: "noche"` en el catalogo piden igual que todos pero sin elegir hora; se distinguen en la tabla de pedidos con etiqueta "Nocturno" y una fila de contenedores por dia (se les entrega en contenedor rotulado). No hay modo ni boton especial en la pantalla.
 Se marcan desde el panel super (boton "Nocturno/Dia" en el catalogo) o con la lista `setup/nocturnos.txt`:
 ```bash
 node setup/marcar_nocturnos.mjs
@@ -106,22 +125,8 @@ Limitaciones conocidas (mismas que PROESA por diseño sin login de empleado):
 ---
 
 ## 3. Estructura en Firestore
-
-```
-config/menu        { mes, mesNum, semana, anio, dias:[{dia, fecha, entrada, platoFuerte (guiso 1), platoAlternativo (guiso 2), ensalada, complemento (guarnicion 1), guarnicion2, postre}] }
-config/catalogo    { "952": { nombre }, "981": { nombre, turno:"noche" }, ... }   <- legible por empleados
-config/catalogo_rfc { "952": "AAMJ0006075S6", ... }              <- solo super (reporte BUK)
-config/secrets     { adminPin, superPin }          <- solo lectura por reglas
-config/cortesias   { items: [{ nombre, dias: { Lunes:1, ... } }], semana }   <- semana del menu; al agregar en otra semana las anteriores se archivan en historial
-pedidos/{semana}_{numEmp}  { nombre, numEmpleado, semana:"2026-10-12", fecha, total, detalle:{Lunes:1}, opciones:{Lunes:"Guiso"}, guarniciones:{Lunes:"Arroz"}, horarios:{Lunes:"14:00"} }
-orders/{numEmp}    formato anterior (semana del 5 de octubre 2026, SEMANA_LEGADO). Solo lectura; cuenta en esa semana mientras el empleado no tenga pedido semanal.
-historial/{AAAA-M-Qn}  { "952": { nombre, comidas, pedidos:[...] }, _cortesias:[...] }   <- quincenas archivadas antes de los pedidos semanales
-admin_sessions/{uid}   { pin, level:'admin'|'super', createdAt }
-comentarios/{autoId}   { texto, fecha }   <- buzon anonimo
-```
-
-`semana` es la fecha del primer dia del menu publicado (`AAAA-MM-DD`). Las reglas solo dejan escribir la semana
-del menu publicado; las semanas pasadas quedan guardadas y BUK / conciliacion las leen por fecha real de cada dia.
+Colecciones, campos, quién lee y escribe y sensibilidad de cada dato: [docs/contrato.md](docs/contrato.md).
+Resumen en [CLAUDE.md](CLAUDE.md#colecciones-en-firestore).
 
 ## 4. Precios de reportes
 En `index.html` (ajustar con el proveedor de LANS):
@@ -136,3 +141,6 @@ const IVA_RATE = 0.16;
 npx -y http-server -p 8765 -c-1
 ```
 Abrir http://localhost:8765 (el guard de dominio permite `localhost`).
+
+## 6. Diagnóstico
+Comparación contra el estándar de Soluciones Digitales PROESA, deuda priorizada y plan por fases: [docs/diagnostico.md](docs/diagnostico.md).
