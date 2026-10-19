@@ -3,7 +3,7 @@
 Sistema de pedidos para el comedor de **LANS Laboratorios de Referencia** (~143 colaboradores).
 Un solo `index.html` (CSS/JS inline) + Firestore via REST, hospedado en GitHub Pages.
 
-- URL: https://artikke.github.io/Menu-Lans/
+- URL: https://comedor-lans.grupoproesa.mx/ (GitHub Pages, repo Grupo-PROESA/Menu-Lans)
 - Firebase project: `menu-lans`
 - Pedidos y cancelaciones: **a cualquier hora, cualquier dia, siempre para el dia siguiente en adelante**. El dia de hoy nunca se toca (acordado con Talento Humano 2026-09-25).
 - El comedor publica el menu de la semana siguiente el **jueves**
@@ -59,15 +59,15 @@ node setup/marcar_nocturnos.mjs
 1. https://console.cloud.google.com/apis/credentials?project=menu-lans
 2. Abrir la key **Browser key (auto created by Firebase)**.
 3. **Application restrictions** > *Websites* > agregar:
-   - `https://artikke.github.io/*`
+   - `https://comedor-lans.grupoproesa.mx/*`
    - `http://localhost:*` (solo para pruebas locales; quitar despues)
 4. **API restrictions** > *Restrict key* > marcar: `Identity Toolkit API`, `Token Service API`, `Cloud Firestore API`.
 5. Guardar.
 
 ### 1.7 GitHub Pages
-1. https://github.com/Artikke/Menu-Lans/settings/pages
+1. https://github.com/Grupo-PROESA/Menu-Lans/settings/pages
 2. **Source**: Deploy from a branch > `main` / `/ (root)` > Save.
-3. En 1-2 min queda en https://artikke.github.io/Menu-Lans/
+3. Custom domain: `comedor-lans.grupoproesa.mx` (CNAME a `grupo-proesa.github.io`), con Enforce HTTPS.
 
 ### 1.8 Logo
 `logo.png` (512x512) esta en la raiz del repo. Si faltara, se muestra "LANS" como texto.
