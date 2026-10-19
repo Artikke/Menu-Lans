@@ -92,7 +92,7 @@ Si elige Ensalada no elige guarnicion. En la tabla de pedidos cada celda muestra
 | Dominio | Ninguno | Guard en JS + restriccion de API key por referrer |
 | Horarios | Solo en el navegador | Sin ventanas. Regla unica en reglas (hora de Mexico): el dia de hoy nunca se agrega ni se quita de un pedido; si el menu publicado es de una semana futura, todos sus dias estan disponibles |
 | Lecturas | Cada empleado descarga todos los pedidos | Cada empleado lee solo su pedido; listar requiere admin |
-| RFC | Visible para cualquier empleado | Documento aparte, solo super |
+| RFC | Visible para cualquier empleado | No se guarda: el reporte BUK sale por numero de empleado y Nomina pone el RFC desde el Gestor |
 
 Flujo de admin: el navegador escribe `admin_sessions/{uid}` con `{pin, level, createdAt}`.
 Las reglas comparan `pin` con `config/secrets`; si no coincide la escritura falla (403) y el
@@ -110,7 +110,6 @@ Limitaciones conocidas (mismas que PROESA por diseño sin login de empleado):
 ```
 config/menu        { mes, mesNum, semana, anio, dias:[{dia, fecha, entrada, platoFuerte (guiso 1), platoAlternativo (guiso 2), ensalada, complemento (guarnicion 1), guarnicion2, postre}] }
 config/catalogo    { "952": { nombre }, "981": { nombre, turno:"noche" }, ... }   <- legible por empleados
-config/catalogo_rfc { "952": "AAMJ0006075S6", ... }              <- solo super (reporte BUK)
 config/secrets     { adminPin, superPin }          <- solo lectura por reglas
 config/cortesias   { items: [{ nombre, dias: { Lunes:1, ... } }], semana }   <- semana del menu; al agregar en otra semana las anteriores se archivan en historial
 pedidos/{semana}_{numEmp}  { nombre, numEmpleado, semana:"2026-10-12", fecha, total, detalle:{Lunes:1}, opciones:{Lunes:"Guiso"}, guarniciones:{Lunes:"Arroz"}, horarios:{Lunes:"14:00"} }

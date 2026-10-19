@@ -4,7 +4,7 @@ rules_version = '2';
 //  - Todo requiere token (Firebase Auth anonimo). Sin token = nada.
 //  - PINs en config/secrets, ilegibles desde el cliente:
 //      adminPin -> nivel "admin": comedor, editar menu y ver pedidos
-//      superPin -> nivel "super": RRHH, todo (cortesias, reportes, limpiar, catalogo, RFC)
+//      superPin -> nivel "super": RRHH, todo (cortesias, reportes, limpiar, catalogo)
 //  - El admin "inicia sesion" creando admin_sessions/{uid} con el PIN;
 //    las reglas comparan el PIN contra config/secrets y guardan el nivel. Expira a las 12 h.
 //  - Regla unica de pedidos (acordada con Talento Humano 2026-09-25):
@@ -15,7 +15,7 @@ rules_version = '2';
 //    ('AAAA-MM-DD'). Solo se escribe la semana del menu publicado; las anteriores quedan guardadas.
 //    orders/{numEmp} es el formato anterior (semana del 5 de octubre 2026): ya no se escribe.
 //  - Empleados solo pueden leer SU pedido (get); listar todos requiere admin.
-//  - RFCs viven en config/catalogo_rfc, solo super.
+//  - Sin RFC: el reporte de descuentos sale por numero de empleado y Nomina pone el RFC desde el Gestor.
 //  - comentarios/{id}: buzon anonimo. Cualquiera crea; admin/super leen; solo super borra.
 // ============================================================
 service cloud.firestore {
@@ -134,10 +134,9 @@ service cloud.firestore {
     // --- Configuracion ---
     match /config/{doc} {
       allow read: if (signedIn() && doc in ['menu', 'catalogo'])
-        || (isAdmin() && doc == 'cortesias')
-        || (isSuper() && doc == 'catalogo_rfc');
+        || (isAdmin() && doc == 'cortesias');
       allow write: if (doc == 'menu' && isAdmin())
-        || (doc in ['cortesias', 'catalogo', 'catalogo_rfc'] && isSuper());
+        || (doc in ['cortesias', 'catalogo'] && isSuper());
     }
 
     // --- Historial por quincena (solo reportes) ---

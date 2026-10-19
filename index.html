@@ -801,7 +801,6 @@ body {
     <div class="cortesia-add">
       <input type="text" id="catNumEmp" placeholder="No. empleado" style="flex:1;max-width:120px" />
       <input type="text" id="catNombre" placeholder="Nombre completo" style="flex:2" />
-      <input type="text" id="catRFC" placeholder="RFC" style="flex:1.5" />
       <label style="display:flex;align-items:center;gap:4px;font-size:0.8rem;white-space:nowrap;"><input type="checkbox" id="catNoche" /> &#127769; Nocturno</label>
       <button onclick="agregarEmpleado()">Agregar</button>
     </div>
@@ -811,8 +810,8 @@ body {
     <div class="cortesia-list" id="catalogoList" style="max-height:300px;overflow-y:auto;margin-top:8px;"></div>
     <details class="bulk-import" style="margin-top:12px;">
       <summary style="cursor:pointer;font-size:0.85rem;color:var(--primary);font-weight:600;">Carga masiva (pegar lista)</summary>
-      <p style="font-size:0.78rem;color:var(--muted);margin:8px 0;">Una linea por empleado: <code>Codigo | Nombre | RFC | noche</code> (la cuarta columna es opcional; tambien acepta tabulador o coma).</p>
-      <textarea id="bulkCatalogo" placeholder="952 | Anaya Minjarez Jorge Esteban | AAMJ0006075S6"></textarea>
+      <p style="font-size:0.78rem;color:var(--muted);margin:8px 0;">Una linea por empleado: <code>Codigo | Nombre | noche</code> (la tercera columna es opcional; tambien acepta tabulador o coma).</p>
+      <textarea id="bulkCatalogo" placeholder="952 | Anaya Minjarez Jorge Esteban"></textarea>
       <button class="btn-export" onclick="importarCatalogoMasivo()">Importar al catalogo</button>
     </details>
   </div>
@@ -1174,7 +1173,6 @@ let cortesiasSemana = SEMANA_LEGADO;   // semana del menu a la que pertenecen la
 let catalogoData = {};
 let historialData = {};
 let comentariosData = [];
-let catalogoRfcData = {};   // solo super: { num: rfc }
 let lastLoadAt = 0;
 let quantities = {};
 let selections = {};   // por dia: 'principal' | 'alternativa' | 'ensalada'
@@ -1305,17 +1303,16 @@ function setSyncStatus(s, m) {
 }
 
 // Empleado: solo lee menu, catalogo (nombres) y SU pedido (3 lecturas).
-// Admin/super: carga completa (pedidos, cortesias, historial, comentarios, RFC).
+// Admin/super: carga completa (pedidos, cortesias, historial, comentarios).
 async function loadFromCloud() {
   setSyncStatus('loading', 'Cargando...');
   try {
     await ensureAuth();
     if (adminAuth) {
-      const [menuDoc, cortDoc, catDoc, rfcDoc, histList, comList] = await Promise.all([
+      const [menuDoc, cortDoc, catDoc, histList, comList] = await Promise.all([
         fsRead('config/menu'),
         fsRead('config/cortesias'),
         fsRead('config/catalogo'),
-        fsRead('config/catalogo_rfc'),
         loadFsCollection('historial', 100),
         loadFsCollection('comentarios', 100)
       ]);
@@ -1325,7 +1322,6 @@ async function loadFromCloud() {
       cortesiasData = Array.isArray(cortDoc?.items) ? cortDoc.items : [];
       cortesiasSemana = cortDoc?.semana || SEMANA_LEGADO;
       if (catDoc && typeof catDoc === 'object') catalogoData = catDoc;
-      if (rfcDoc && typeof rfcDoc === 'object') catalogoRfcData = rfcDoc;
       historialData = {};
       histList.forEach(h => { const id = h._id; delete h._id; historialData[id] = h; });
       comentariosData = comList.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
@@ -1411,7 +1407,6 @@ async function saveCatalogo() {
   catalogoData = clean;
   return fsWrite('config/catalogo', clean);
 }
-async function saveCatalogoRfc() { return fsWrite('config/catalogo_rfc', catalogoRfcData); }
 async function saveCortesias() { return fsWrite('config/cortesias', { items: cortesiasData, semana: cortesiasSemana }); }
 
 // ============================================================
@@ -2665,14 +2660,13 @@ function renderCatalogo(filtro) {
     const f = filtro.toLowerCase();
     // Buscar "noche" o "nocturno" lista a los de turno nocturno
     const buscaNoche = /^noc|^noche|^nocturno/.test(f);
-    filtered = entries.filter(({ k, v }) => (buscaNoche && v.turno === 'noche') || k.toLowerCase().includes(f) || (v.nombre || '').toLowerCase().includes(f) || (catalogoRfcData[k] || '').toLowerCase().includes(f));
+    filtered = entries.filter(({ k, v }) => (buscaNoche && v.turno === 'noche') || k.toLowerCase().includes(f) || (v.nombre || '').toLowerCase().includes(f));
   }
   if (filtered.length === 0) { list.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:8px;">No se encontraron empleados</div>'; return; }
   list.innerHTML = filtered.slice(0, 60).map(({ k, v }) => `
     <div class="cortesia-item">
       <div>
         <span class="cortesia-info"><strong>#${esc(k)}</strong> — ${esc(v.nombre || 'Sin nombre')}${v.turno === 'noche' ? '<span class="badge-noche">&#127769; Nocturno</span>' : ''}</span>
-        <div class="cortesia-dias">${esc(catalogoRfcData[k] || 'Sin RFC')}</div>
       </div>
       <div style="white-space:nowrap;">
         <button class="cat-noche-btn ${v.turno === 'noche' ? 'on' : ''}" onclick="toggleNocturno('${esc(k)}')" title="Marcar o quitar turno nocturno">&#127769; ${v.turno === 'noche' ? 'Nocturno' : 'Dia'}</button>
@@ -2697,7 +2691,6 @@ function buscarEmpleadoCat() { renderCatalogo(document.getElementById('catBuscar
 async function agregarEmpleado() {
   const num = document.getElementById('catNumEmp').value.trim();
   const nombre = document.getElementById('catNombre').value.trim();
-  const rfc = document.getElementById('catRFC').value.trim().toUpperCase();
   if (!num || !nombre) { showToast('Escribe el numero y nombre'); return; }
   if (!/^[a-zA-Z0-9]+$/.test(num)) { showToast('El numero de empleado no es valido'); return; }
   const numNorm = normEmp(num);
@@ -2705,12 +2698,10 @@ async function agregarEmpleado() {
   const noche = document.getElementById('catNoche').checked;
   await loadFromCloud();
   catalogoData[numNorm] = noche ? { nombre, turno: 'noche' } : { nombre };
-  if (rfc) catalogoRfcData[numNorm] = rfc;
-  const ok = (await saveCatalogo()) && (await saveCatalogoRfc());
+  const ok = await saveCatalogo();
   if (!ok) { showToast('Error al guardar (¿PIN super?): ' + lastFsError); return; }
   document.getElementById('catNumEmp').value = '';
   document.getElementById('catNombre').value = '';
-  document.getElementById('catRFC').value = '';
   document.getElementById('catNoche').checked = false;
   renderCatalogo();
   showToast(`Empleado #${numNorm} agregado`);
@@ -2721,9 +2712,7 @@ async function quitarEmpleado(num) {
   await loadFromCloud();
   delete catalogoData[num];
   delete catalogoData[normEmp(num)];
-  delete catalogoRfcData[num];
-  delete catalogoRfcData[normEmp(num)];
-  const ok = (await saveCatalogo()) && (await saveCatalogoRfc());
+  const ok = await saveCatalogo();
   renderCatalogo(document.getElementById('catBuscar').value.trim());
   showToast(ok ? 'Empleado eliminado' : 'Error al guardar');
 }
@@ -2737,8 +2726,8 @@ function parseCatalogoTexto(txt) {
     if (parts.length < 2) return;
     const num = normEmp(parts[0]);
     if (!/^[A-Z0-9]+$/.test(num)) return;
-    out[num] = { nombre: parts[1], rfc: (parts[2] || '').toUpperCase() };
-    if (/^noche|nocturno$/i.test(parts[3] || '')) out[num].turno = 'noche';
+    out[num] = { nombre: parts[1] };
+    if (parts.slice(2).some(p => /^noche|nocturno$/i.test(p))) out[num].turno = 'noche';
   });
   return out;
 }
@@ -2752,9 +2741,8 @@ async function importarCatalogoMasivo() {
   await loadFromCloud();
   for (const [k, v] of Object.entries(parsed)) {
     catalogoData[k] = v.turno === 'noche' ? { nombre: v.nombre, turno: 'noche' } : { nombre: v.nombre };
-    if (v.rfc) catalogoRfcData[k] = v.rfc;
   }
-  const ok = (await saveCatalogo()) && (await saveCatalogoRfc());
+  const ok = await saveCatalogo();
   if (!ok) { showToast('Error al guardar: ' + lastFsError); return; }
   document.getElementById('bulkCatalogo').value = '';
   renderCatalogo();
@@ -2829,13 +2817,12 @@ async function exportarBUK() {
     conteo[key].comidas += n;
   });
 
-  let csv = 'Numero de Documento,Ficha/Col,Valor\n';
+  // Por numero de empleado; Nomina agrega el RFC desde el Gestor
+  const csvCampo = t => `"${String(t || '').replace(/"/g, '""')}"`;
+  let csv = 'Ficha/Col,Nombre,Valor\n';
   const sorted = sortByEmp(Object.entries(conteo).map(([k, v]) => ({ k, v })), 'k');
-  const sinRFC = [];
   sorted.forEach(({ k, v }) => {
-    const rfc = catalogoRfcData[k] || catalogoRfcData[normEmp(k)] || '';
-    if (!rfc) sinRFC.push(k);
-    csv += `${rfc || 'NO ENCONTRADO'},${k},${(v.comidas * PRECIO_DESCUENTO_COLABORADOR).toFixed(2)}\n`;
+    csv += `${k},${csvCampo(v.nombre)},${(v.comidas * PRECIO_DESCUENTO_COLABORADOR).toFixed(2)}\n`;
   });
 
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -2844,7 +2831,7 @@ async function exportarBUK() {
   a.download = `BUK_Comedor_${EMPRESA_CORTA}_${MONTH_NAMES[mes - 1]}${anio}_Q${bukQuincena}.csv`;
   a.click();
   cerrarBukModal();
-  showToast(sinRFC.length > 0 ? `${sinRFC.length} empleado(s) sin RFC en catalogo` : 'Reporte BUK descargado');
+  showToast('Reporte BUK descargado');
 }
 
 // ============================================================
