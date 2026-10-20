@@ -82,7 +82,8 @@ Si elige Ensalada no elige guarnicion. En la tabla de pedidos cada celda muestra
 
 | Tema | PROESA | LANS |
 |---|---|---|
-| Acceso a Firestore | Abierto (sin token) | Requiere token de Firebase Auth anonimo |
+| Acceso a Firestore | Abierto (sin token) | Requiere token de Firebase Auth (portal o anonimo) |
+| Login de empleado | Ninguno | Portal PROESA (SSO): el numero de empleado viene del token y cada quien solo pide/cancela lo suyo |
 | Reglas | read/write libre | Restrictivas por coleccion + validacion de forma de pedidos |
 | PINs | Hardcodeados en el HTML | En `config/secrets`, ilegible desde el cliente; validados por reglas |
 | Sesion admin | Solo en el navegador | `admin_sessions/{uid}` creada por reglas, expira a las 12 h |
@@ -99,8 +100,15 @@ Las reglas comparan `pin` con `config/secrets`; si no coincide la escritura fall
 panel no se abre. Todas las escrituras de admin (menu, cortesias, historial, borrar pedidos)
 exigen que exista esa sesion y que tenga menos de 12 h.
 
-Limitaciones conocidas (mismas que PROESA por diseño sin login de empleado):
-- Cualquier persona con el link puede pedir/cancelar con cualquier numero de empleado del catalogo.
+Empleados: entran desde el Portal PROESA. La Cloud Function `ssoCallback` valida el JWT del portal,
+pide el numero de empleado al Gestor de Personal y regresa a la app con un custom token (`#ct=...`)
+con el claim `numEmp` (normalizado igual que `normEmp()`). El numero queda fijo en pantalla y las
+reglas solo dejan leer, pedir, modificar o cancelar `pedidos/{semana}_{numEmp}` propio. Quien abre el
+link sin pasar por el portal entra como anonimo: ve el menu y un aviso con boton "Ir al Portal PROESA",
+pero no puede pedir. El anonimo queda para el acceso de admin con PIN. "No soy yo" cierra la sesion
+del portal en ese navegador (equipos compartidos). Ver seccion 6.
+
+Limitaciones conocidas:
 - Un PIN de 4 digitos se puede adivinar por fuerza bruta contra las reglas; usar 6+ digitos.
 
 ---
@@ -135,3 +143,52 @@ const IVA_RATE = 0.16;
 npx -y http-server -p 8765 -c-1
 ```
 Abrir http://localhost:8765 (el guard de dominio permite `localhost`).
+
+## 6. Login por el portal (SSO) - issue #2
+Archivos: `functions/index.js` (Cloud Function `ssoCallback`, Node 20, 2nd gen), `firebase.json`, `.firebaserc`.
+Valores: `appCode` = `comedor-lans`; JWKS `https://portal.grupoproesa.mx/.well-known/jwks.json`;
+Gestor `https://proesa-team.grupoproesa.mx/api/integracion/v1/empleado?email=...` con header `X-Integracion-Token`.
+
+**Prerrequisito: plan Blaze.** `menu-lans` esta en Spark y Cloud Functions + Secret Manager requieren Blaze.
+Firebase Console > `menu-lans` > Uso y facturacion > Modificar plan > Blaze, y crear una alerta de
+presupuesto (p. ej. 5 USD). Con ~143 colaboradores el uso queda dentro de la capa gratuita.
+
+**Deploy (en tu maquina, con firebase CLI):**
+```
+npm install -g firebase-tools        # si no lo tienes
+firebase login
+cd Menu-Lans
+firebase use menu-lans
+(cd functions && npm install)
+firebase functions:secrets:set GESTOR_TOKEN   # pega el token que te de TI; NUNCA en el repo
+firebase deploy --only functions:ssoCallback
+```
+El deploy imprime la URL (p. ej. `https://us-central1-menu-lans.cloudfunctions.net/ssoCallback`);
+se la pasas a TI para registrarla como **SSO callback** del portal.
+
+**Permiso para firmar custom tokens (una sola vez):** `createCustomToken` firma con la cuenta de servicio
+de la Function (2nd gen usa la de Compute: `<NUMERO_DE_PROYECTO>-compute@developer.gserviceaccount.com`).
+En Google Cloud Console > IAM, darle a esa cuenta el rol **Service Account Token Creator**
+(`roles/iam.serviceAccountTokenCreator`). O por CLI:
+```
+gcloud projects add-iam-policy-binding menu-lans \
+  --member="serviceAccount:<NUMERO_DE_PROYECTO>-compute@developer.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountTokenCreator"
+```
+Sin ese rol el callback regresa `?error=sso` y en los logs de la Function sale `iam.serviceAccounts.signBlob`.
+
+**Reglas:** despues del deploy de la Function y de que TI registre el callback, publicar
+[`firestore.rules`](firestore.rules) junto con el `index.html` nuevo (consola o
+`firebase deploy --only firestore:rules`). Desde ese momento solo se puede pedir entrando por el portal.
+Los scripts de `setup/` siguen funcionando (usan sesion anonima + super PIN).
+
+**API key:** ya esta restringida por dominio (1.6); `signInWithCustomToken` usa Identity Toolkit, que ya
+esta permitida. No hay que cambiar nada.
+
+**Errores que muestra la app** (`?error=` del callback): `sin_ficha` (el correo no tiene numero de
+empleado en el Gestor), `gestor`, `sin_correo`, `sin_token`, `sso` (JWT invalido/expirado o error al firmar).
+
+**Pruebas de reglas** (emulador de Firestore, necesita Java 11+):
+```
+cd tests && npm install && npm test
+```

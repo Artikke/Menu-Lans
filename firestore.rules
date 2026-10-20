@@ -1,7 +1,11 @@
 rules_version = '2';
 // ============================================================
 //  Reglas de Firestore - Menu LANS
-//  - Todo requiere token (Firebase Auth anonimo). Sin token = nada.
+//  - Todo requiere token (Firebase Auth). Sin token = nada.
+//  - Empleados: entran desde el Portal PROESA (Cloud Function ssoCallback). Su token trae
+//    el claim numEmp (normalizado como normEmp: mayusculas, sin ceros a la izquierda).
+//    Cada quien solo lee, crea, modifica y borra SU pedido. El anonimo (sin numEmp) ya no
+//    puede pedir; solo sirve para ver el menu y para el acceso de admin con PIN.
 //  - PINs en config/secrets, ilegibles desde el cliente:
 //      adminPin -> nivel "admin": comedor, editar menu y ver pedidos
 //      superPin -> nivel "super": RRHH, todo (cortesias, reportes, limpiar, catalogo)
@@ -14,7 +18,7 @@ rules_version = '2';
 //  - Pedidos por semana: pedidos/{semana}_{numEmp}, semana = fecha del primer dia del menu
 //    ('AAAA-MM-DD'). Solo se escribe la semana del menu publicado; las anteriores quedan guardadas.
 //    orders/{numEmp} es el formato anterior (semana del 5 de octubre 2026): ya no se escribe.
-//  - Empleados solo pueden leer SU pedido (get); listar todos requiere admin.
+//  - Empleados solo pueden leer SU pedido (get, por el claim numEmp); listar todos requiere admin.
 //  - Sin RFC: el reporte de descuentos sale por numero de empleado y Nomina pone el RFC desde el Gestor.
 //  - comentarios/{id}: buzon anonimo. Cualquiera crea; admin/super leen; solo super borra.
 // ============================================================
@@ -118,6 +122,20 @@ service cloud.firestore {
         && d.numEmpleado in catalogo();
     }
 
+    // numEmp del token del portal; null si es anonimo
+    function numEmp() {
+      return signedIn() && request.auth.token.get('numEmp', null) is string
+        ? request.auth.token.numEmp : null;
+    }
+    // pedidos/{semana}_{numEmp}: el id es del empleado de la sesion
+    function esMiId(id) {
+      return numEmp() != null && id.split('_').size() == 2 && id.split('_')[1] == numEmp();
+    }
+    // d = request.resource.data o resource.data
+    function esMiPedido(d) {
+      return numEmp() != null && d.numEmpleado == numEmp();
+    }
+
     function validComentario() {
       let d = request.resource.data;
       return d.keys().hasOnly(['texto', 'fecha', 'foto'])
@@ -160,15 +178,17 @@ service cloud.firestore {
 
     // --- Pedidos por semana: un documento por semana y numero de empleado ---
     match /pedidos/{id} {
-      allow get: if signedIn();
+      allow get: if isAdmin() || esMiId(id);
       allow list: if isAdmin();
-      allow create, update: if isSuper() || (signedIn() && validPedido(id) && noTocaHoyPedido());
-      allow delete: if isSuper() || (signedIn() && esSemanaDelMenu(resource.data.semana) && noQuitaHoy());
+      allow create, update: if isSuper()
+        || (validPedido(id) && esMiPedido(request.resource.data) && noTocaHoyPedido());
+      allow delete: if isSuper()
+        || (esMiPedido(resource.data) && esSemanaDelMenu(resource.data.semana) && noQuitaHoy());
     }
 
     // --- Formato anterior: un documento por numero de empleado (solo lectura salvo super) ---
     match /orders/{id} {
-      allow get: if signedIn();
+      allow get: if isAdmin() || (numEmp() != null && numEmp() == id);
       allow list: if isAdmin();
       allow create, update: if isSuper();
       allow delete: if isSuper();
