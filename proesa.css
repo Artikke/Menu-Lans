@@ -1,0 +1,117 @@
+/*
+ * Tokens canónicos del ecosistema PROESA.
+ *
+ * Este archivo es la única fuente de verdad para color, tipografía y
+ * espaciado del ecosistema. Importable desde cualquier stack (Vite,
+ * Tailwind, vanilla CSS, Antd, Refine) sin paso de build.
+ *
+ * Uso:
+ *   @import "@proesa/design/tokens";   // Vite / cualquier bundler
+ *   <link rel="stylesheet" href="..."> // sitios estáticos
+ *
+ * Ver: docs/ui-pattern.md §"Color y tipografía".
+ */
+
+:root {
+  /* PROESA navy — wordmark, sidebar, primary actions */
+  --proesa-navy-900: #14275A;
+  --proesa-navy-800: #1B3373;
+  --proesa-navy-700: #204590; /* PRIMARY brand */
+  --proesa-navy-500: #4B86C7;
+  --proesa-navy-300: #8CC4EA;
+  --proesa-navy-200: #BFDBF1;
+  --proesa-navy-100: #E3EEF8;
+  --proesa-navy-50:  #F2F7FC;
+
+  /* PROESA teal — accent, brand mark gradient */
+  --proesa-teal-900: #1F6056;
+  --proesa-teal-700: #2C8A7A;
+  --proesa-teal-600: #37A992; /* PRIMARY accent */
+  --proesa-teal-500: #41B292;
+  --proesa-teal-300: #7BC4B0;
+  --proesa-teal-100: #E2F2EC;
+
+  /* Neutrals */
+  --proesa-mist: #F4F6FA; /* canvas / body bg */
+  --proesa-fog:  #E7EAF1; /* borders */
+  --proesa-ink:  #0F1626; /* primary text */
+
+  /* Brand mark gradient — invariable */
+  --proesa-brand-gradient: linear-gradient(
+    135deg,
+    var(--proesa-navy-700) 0%,
+    var(--proesa-teal-600) 100%
+  );
+
+  /* Typography */
+  --proesa-font-sans: "Source Sans 3", "Calibri", "Segoe UI", system-ui, sans-serif;
+  --proesa-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Radii */
+  --proesa-radius-sm: 8px;  /* inputs, botones, tiles */
+  --proesa-radius-md: 12px; /* cards, modales */
+  --proesa-radius-pill: 999px;
+
+  /* Shadow (chrome) */
+  --proesa-shadow-card: 0 1px 2px 0 rgba(15, 22, 38, 0.06);
+  --proesa-shadow-card-hover: 0 4px 12px -2px rgba(15, 22, 38, 0.10);
+  --proesa-shadow-modal: 0 25px 50px -12px rgba(15, 22, 38, 0.25);
+  --proesa-shadow-brand: 0 8px 16px -6px rgba(20, 39, 90, 0.4);
+}
+
+/* PortalChip — componente compartido por todas las apps del ecosistema.
+   Vive en tokens (no en src/) para que apps no-React también puedan
+   adoptarlo. */
+.portal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 5px 5px;
+  border-radius: var(--proesa-radius-pill);
+  background: var(--proesa-navy-50);
+  border: 1px solid var(--proesa-navy-100);
+  color: var(--proesa-navy-700);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: all 180ms ease;
+  text-decoration: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.portal-chip:hover {
+  background: var(--proesa-navy-100);
+  border-color: var(--proesa-navy-200);
+  transform: translateX(-1px);
+}
+
+.portal-chip__avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--proesa-radius-pill);
+  background: var(--proesa-brand-gradient);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.portal-chip__back {
+  opacity: 0.6;
+  transition: opacity 180ms ease;
+}
+
+.portal-chip:hover .portal-chip__back {
+  opacity: 1;
+}
+
+@media (max-width: 639px) {
+  .portal-chip > span:last-child {
+    display: none;
+  }
+}
