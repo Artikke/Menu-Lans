@@ -149,9 +149,8 @@ Archivos: `functions/index.js` (Cloud Function `ssoCallback`, Node 20, 2nd gen),
 Valores: `appCode` = `comedor-lans`; JWKS `https://portal.grupoproesa.mx/.well-known/jwks.json`;
 Gestor `https://proesa-team.grupoproesa.mx/api/integracion/v1/empleado?email=...` con header `X-Integracion-Token`.
 
-**Prerrequisito: plan Blaze.** `menu-lans` esta en Spark y Cloud Functions + Secret Manager requieren Blaze.
-Firebase Console > `menu-lans` > Uso y facturacion > Modificar plan > Blaze, y crear una alerta de
-presupuesto (p. ej. 5 USD). Con ~143 colaboradores el uso queda dentro de la capa gratuita.
+**Plan Blaze:** `menu-lans` ya esta en Blaze (2026-10-20); Cloud Functions y Secret Manager lo requieren.
+Conviene tener una alerta de presupuesto (p. ej. 5 USD); con ~143 colaboradores el uso queda en la capa gratuita.
 
 **Deploy (en tu maquina, con firebase CLI):**
 ```
