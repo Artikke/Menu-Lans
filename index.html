@@ -1056,7 +1056,9 @@ function mostrarErrorSSO() {
 
 // Fija (o libera) el numero de empleado segun la sesion. El admin con el panel abierto
 // puede escribir cualquier numero; un empleado del Gestor solo el suyo.
-function fijarEmpleadoUI() {
+// refrescar=true vuelve a llenar nombre y pedido aunque el numero no haya cambiado
+// (al arrancar, el login llega antes que el catalogo y los pedidos).
+function fijarEmpleadoUI(refrescar) {
   const inp = document.getElementById('numEmpleado');
   const bar = document.getElementById('ssoBar');
   if (!inp || !bar) return;
@@ -1064,7 +1066,7 @@ function fijarEmpleadoUI() {
     inp.readOnly = false; inp.classList.remove('bloqueado');
   } else if (AUTH.numEmp) {
     inp.readOnly = true; inp.classList.add('bloqueado');
-    if (inp.value !== AUTH.numEmp) { inp.value = AUTH.numEmp; onNumEmpInput(); }
+    if (refrescar || inp.value !== AUTH.numEmp) { inp.value = AUTH.numEmp; onNumEmpInput(); }
   } else {
     inp.value = ''; inp.readOnly = true; inp.classList.add('bloqueado');
   }
@@ -3225,7 +3227,7 @@ document.addEventListener('visibilitychange', async () => {
   mostrarErrorSSO();
   await iniciarDesdeSSO(); // si no hay #ct, ensureAuth usa la sesion guardada o el anonimo (solo menu y admin con PIN)
   await loadFromCloud();
-  fijarEmpleadoUI();
+  fijarEmpleadoUI(true);
   renderMenu();
   renderComentarios();
   checkOrderLock();
