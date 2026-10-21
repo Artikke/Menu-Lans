@@ -5,6 +5,7 @@ Un solo `index.html` (CSS/JS inline) + Firestore via REST, hospedado en GitHub P
 
 - URL: https://comedor-lans.grupoproesa.mx/ (GitHub Pages, repo Grupo-PROESA/Menu-Lans)
 - Firebase project: `menu-lans`
+- Acceso de colaboradores: desde el Gestor de Personal > Comedor LANS (desde 2026-10-21). Ver seccion 6.
 - Pedidos y cancelaciones: **a cualquier hora, cualquier dia, siempre para el dia siguiente en adelante**. El dia de hoy nunca se toca (acordado con Talento Humano 2026-09-25).
 - El comedor publica el menu de la semana siguiente el **jueves**
 - Servicio de comedor: **12:30 - 17:30**
