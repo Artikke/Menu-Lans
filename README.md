@@ -82,7 +82,8 @@ Si elige Ensalada no elige guarnicion. En la tabla de pedidos cada celda muestra
 
 | Tema | PROESA | LANS |
 |---|---|---|
-| Acceso a Firestore | Abierto (sin token) | Requiere token de Firebase Auth anonimo |
+| Acceso a Firestore | Abierto (sin token) | Requiere token de Firebase Auth (Gestor o anonimo) |
+| Login de empleado | Ninguno | Desde el Gestor de Personal: el numero de empleado viene del token y cada quien solo pide/cancela lo suyo |
 | Reglas | read/write libre | Restrictivas por coleccion + validacion de forma de pedidos |
 | PINs | Hardcodeados en el HTML | En `config/secrets`, ilegible desde el cliente; validados por reglas |
 | Sesion admin | Solo en el navegador | `admin_sessions/{uid}` creada por reglas, expira a las 12 h |
@@ -99,8 +100,15 @@ Las reglas comparan `pin` con `config/secrets`; si no coincide la escritura fall
 panel no se abre. Todas las escrituras de admin (menu, cortesias, historial, borrar pedidos)
 exigen que exista esa sesion y que tenga menos de 12 h.
 
-Limitaciones conocidas (mismas que PROESA por diseño sin login de empleado):
-- Cualquier persona con el link puede pedir/cancelar con cualquier numero de empleado del catalogo.
+Empleados: entran desde la seccion Comedor del Gestor de Personal. La Cloud Function `ssoCallback` valida
+el token firmado que manda el Gestor y regresa a la app con un custom token (`#ct=...`)
+con el claim `numEmp` (normalizado igual que `normEmp()`). El numero queda fijo en pantalla y las
+reglas solo dejan leer, pedir, modificar o cancelar `pedidos/{semana}_{numEmp}` propio. Quien abre el
+link sin pasar por el Gestor entra como anonimo: ve el menu y un aviso con boton "Ir al Gestor de Personal",
+pero no puede pedir. El anonimo queda para el acceso de admin con PIN. "No soy yo" cierra la sesion
+en ese navegador (equipos compartidos). Ver seccion 6.
+
+Limitaciones conocidas:
 - Un PIN de 4 digitos se puede adivinar por fuerza bruta contra las reglas; usar 6+ digitos.
 
 ---
@@ -135,3 +143,50 @@ const IVA_RATE = 0.16;
 npx -y http-server -p 8765 -c-1
 ```
 Abrir http://localhost:8765 (el guard de dominio permite `localhost`).
+
+## 6. Entrada desde el Gestor de Personal - issue #2
+Los colaboradores entran desde la seccion **Comedor** del Gestor de Personal (opcion 2 acordada con TI).
+El Gestor redirige a la Function `ssoCallback` con `?t=<JWT HS256>` firmado con `HANDOFF_SECRET`
+(`iss` = `gestor-personal`, `aud` = `comedor-lans`, trae `numEmp`, `nombre`, `correo`). La Function lo valida y
+regresa a la app con un custom token (`#ct=...`) con el claim `numEmp`.
+Archivos: `functions/index.js` (Node 22, 2nd gen), `firebase.json`, `.firebaserc`.
+
+**Plan Blaze:** `menu-lans` ya esta en Blaze (2026-10-20); Cloud Functions y Secret Manager lo requieren.
+
+**Deploy (Cloud Shell o tu maquina, con firebase CLI):**
+```
+firebase use menu-lans
+(cd functions && npm install)
+firebase functions:secrets:set HANDOFF_SECRET   # pega el secreto que te de TI; NUNCA en el repo
+firebase deploy --only functions:ssoCallback
+```
+URL: `https://us-central1-menu-lans.cloudfunctions.net/ssoCallback`. El mismo `HANDOFF_SECRET` lo tiene TI en el
+`.env` del Gestor; si lo rotan, se vuelve a correr `secrets:set` (y contestar Y para re-desplegar).
+El `GESTOR_TOKEN` del flujo anterior (portal) ya no se usa: se puede borrar con
+`firebase functions:secrets:destroy GESTOR_TOKEN`.
+
+**Permiso para firmar custom tokens (una sola vez, ya hecho):** la cuenta de servicio de la Function
+(`<NUMERO_DE_PROYECTO>-compute@developer.gserviceaccount.com`) necesita el rol **Service Account Token Creator**:
+```
+gcloud projects add-iam-policy-binding menu-lans \
+  --member="serviceAccount:<NUMERO_DE_PROYECTO>-compute@developer.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountTokenCreator"
+```
+
+**Orden para publicar:** (1) Function con `HANDOFF_SECRET`; (2) merge a `main` del `index.html` nuevo (funciona
+tambien con las reglas actuales); (3) prueba con un colaborador real entrando desde el Gestor; (4) publicar
+[`firestore.rules`](firestore.rules) (consola o `firebase deploy --only firestore:rules`). No publicar las reglas
+antes del `index.html`: el anterior lista todos los pedidos y con las reglas nuevas eso ya no se permite.
+Desde el paso 4 solo se puede pedir entrando desde el Gestor.
+Los scripts de `setup/` siguen funcionando (usan sesion anonima + super PIN).
+
+**API key:** ya esta restringida por dominio (1.6); `signInWithCustomToken` usa Identity Toolkit, que ya
+esta permitida. No hay que cambiar nada.
+
+**Errores que muestra la app** (`?error=` del callback): `sin_token` (se abrio la Function sin token),
+`sin_numero` (el token no trae numero de empleado), `sso` (token invalido, expirado, de otro comedor o error al firmar).
+
+**Pruebas de reglas** (emulador de Firestore, necesita Java 11+):
+```
+cd tests && npm install && npm test
+```
