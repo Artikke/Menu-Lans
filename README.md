@@ -145,7 +145,7 @@ npx -y http-server -p 8765 -c-1
 Abrir http://localhost:8765 (el guard de dominio permite `localhost`).
 
 ## 6. Login por el portal (SSO) - issue #2
-Archivos: `functions/index.js` (Cloud Function `ssoCallback`, Node 20, 2nd gen), `firebase.json`, `.firebaserc`.
+Archivos: `functions/index.js` (Cloud Function `ssoCallback`, Node 22, 2nd gen), `firebase.json`, `.firebaserc`.
 Valores: `appCode` = `comedor-lans`; JWKS `https://portal.grupoproesa.mx/.well-known/jwks.json`;
 Gestor `https://proesa-team.grupoproesa.mx/api/integracion/v1/empleado?email=...` con header `X-Integracion-Token`.
 
