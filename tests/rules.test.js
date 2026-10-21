@@ -45,7 +45,7 @@ beforeEach(async () => {
   });
 });
 
-// Empleado que entro por el portal: custom token con claim numEmp
+// Empleado que entro por el Gestor: custom token con claim numEmp
 const emp = (n) => env.authenticatedContext(`emp_${n}`, { numEmp: n }).firestore();
 const anon = () => env.authenticatedContext('anon_1', { firebase: { sign_in_provider: 'anonymous' } }).firestore();
 async function adminDb(level, pin, uid = 'anon_admin') {
@@ -86,7 +86,7 @@ test('se conservan las validaciones de validPedido', async () => {
   await assertFails(setDoc(doc(emp('777'), `pedidos/${SEM}_777`), pedido('777'))); // no esta en el catalogo
 });
 
-test('anonimo (sin portal) no pide, no cancela, no lee pedidos; si ve el menu', async () => {
+test('anonimo (sin Gestor) no pide, no cancela, no lee pedidos; si ve el menu', async () => {
   const db = anon();
   await assertFails(setDoc(doc(db, `pedidos/${SEM}_123`), pedido('123')));
   await assertFails(deleteDoc(doc(db, `pedidos/${SEM}_456`)));
@@ -122,7 +122,7 @@ test('super (RRHH) con PIN sigue pudiendo todo', async () => {
   await assertFails(getDoc(doc(db, 'config/secrets')));
 });
 
-test('super con PIN desde una sesion del portal (uid emp_*) tambien funciona', async () => {
+test('super con PIN desde una sesion del Gestor (uid emp_*) tambien funciona', async () => {
   const uid = 'emp_123';
   const db = env.authenticatedContext(uid, { numEmp: '123' }).firestore();
   await assertSucceeds(setDoc(doc(db, `admin_sessions/${uid}`), { pin: SUPER_PIN, level: 'super', createdAt: serverTimestamp() }));

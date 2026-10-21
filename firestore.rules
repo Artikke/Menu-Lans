@@ -2,7 +2,7 @@ rules_version = '2';
 // ============================================================
 //  Reglas de Firestore - Menu LANS
 //  - Todo requiere token (Firebase Auth). Sin token = nada.
-//  - Empleados: entran desde el Portal PROESA (Cloud Function ssoCallback). Su token trae
+//  - Empleados: entran desde el Gestor de Personal (Cloud Function ssoCallback). Su token trae
 //    el claim numEmp (normalizado como normEmp: mayusculas, sin ceros a la izquierda).
 //    Cada quien solo lee, crea, modifica y borra SU pedido. El anonimo (sin numEmp) ya no
 //    puede pedir; solo sirve para ver el menu y para el acceso de admin con PIN.
@@ -122,7 +122,7 @@ service cloud.firestore {
         && d.numEmpleado in catalogo();
     }
 
-    // numEmp del token del portal; null si es anonimo
+    // numEmp del token del Gestor; null si es anonimo
     function numEmp() {
       return signedIn() && request.auth.token.get('numEmp', null) is string
         ? request.auth.token.numEmp : null;
