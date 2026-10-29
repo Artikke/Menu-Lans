@@ -75,8 +75,8 @@ No ofrece datos a otras apps (ver `docs/contrato.md`). Lo que **consume**:
 - **Login por el Gestor en lugar de PROESA Gateway (R5):** el acceso de colaboradores lo diseñó y
   aprobó TI (Luis) en octubre de 2026 (issue #2).
 
-Detalle y fechas en `docs/decisiones.md`. [completar: liga a la aprobación formal en el repo del
-playbook (issue con etiqueta `excepcion`), si existe]
+Detalle y fechas en `docs/decisiones.md`. La excepción la aprobó Luis (TI) en octubre de 2026, sin
+issue formal en el repo del playbook.
 
 ## Deuda conocida
 
