@@ -9,8 +9,8 @@
 - **Proceso que resuelve:** pedidos de comida del comedor de LANS Laboratorios de Referencia. Cada
   colaborador pide y cancela su comida y la hora en que pasa, el comedor ve los pedidos por semana y
   Talento Humano saca los reportes de descuento (BUK) y conciliación con el proveedor.
-- **Área dueña / dueño del proceso:** [completar]
-- **Especialista responsable:** Jorge Anaya (Soluciones Digitales)
+- **Área dueña / dueño del proceso:** Talento Humano. Contacto en el área: Axel Ávila
+- **Especialista responsable:** Jorge Anaya (Soluciones Digitales), supervisa el sistema de los dos comedores
 - **Cómo se entra:** Portal PROESA → Proesa-Teams (Gestor de Personal) → menú **Comedor** →
   **Comedor LANS**. El proveedor del comedor entra directo a la URL con el botón ADMIN y su PIN.
 - **URL:** https://comedor-lans.grupoproesa.mx · proyecto Firebase `menu-lans`

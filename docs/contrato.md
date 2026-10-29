@@ -2,7 +2,7 @@
 
 Lo que esta app ofrece a otras apps PROESA.
 
-- **Dueño de la app:** [completar] (a quien se le piden datos nuevos)
+- **Dueño de la app:** Talento Humano (contacto: Axel Ávila). Los datos nuevos se piden al especialista responsable
 - **Especialista responsable:** Jorge Anaya
 - **Endpoints de integración:** **todavía no ofrece ninguno.** La app no tiene backend propio (es
   una página estática con Firestore, ver excepciones en `CLAUDE.md`). Si otra app necesita sus datos,
